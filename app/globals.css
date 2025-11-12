@@ -4,9 +4,9 @@
   --mle-blue-darker: #131f3a;
   --mle-gold: #f2b632;
 
-  --bg-body: #05060b;
+  --bg-body: #2F3438;
   --bg-surface: var(--mle-blue-darker);
-  --bg-surface-alt: #050814;
+  --bg-surface-alt: #373C3F;
 
   --border-subtle: #1b2842;
 
@@ -18,7 +18,7 @@
   --radius-lg: 16px;
   --radius-md: 10px;
 
-  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 18px 40px rgba(30, 29, 29, 0.5);
 }
 
 /* --- Base Reset --- */
@@ -183,3 +183,219 @@ main {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* --- Dropdown in navbar --- */
+.nav-item {
+  position: relative;
+}
+
+.nav-link-button {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  cursor: default;
+}
+
+.nav-item.dropdown:hover .nav-link-button,
+.nav-item.dropdown.nav-link-active .nav-link-button {
+  color: var(--accent);
+  background-color: rgba(42, 75, 130, 0.55);
+  border-color: var(--accent-soft);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 280px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: radial-gradient(circle at top left, var(--mle-blue-dark), #020617);
+  border: 1px solid rgba(15, 23, 42, 0.85);
+  box-shadow: var(--shadow-soft);
+  border-radius: 12px;
+  padding: 0.4rem;
+  display: none;             /* hidden by default */
+  z-index: 50;
+}
+
+.nav-item.dropdown:hover .dropdown-menu {
+  display: block;            /* show on hover desktop */
+}
+
+.dropdown-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  color: var(--text-main);
+  transition: background-color 0.12s ease-out;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.dropdown-item .mgr-name {
+  font-weight: 600;
+}
+
+.dropdown-item .mgr-team {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform .05s ease, background-color .15s ease, border-color .15s ease, opacity .15s ease;
+  user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: linear-gradient(90deg, var(--mle-blue-dark), var(--mle-blue));
+  color: white;
+  border-color: rgba(255,255,255,0.12);
+}
+.btn-primary:hover { opacity: 0.92; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-main);
+  border-color: rgba(255,255,255,0.08);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.06); }
+
+.btn-warning {
+  background: var(--accent);
+  color: #0b0b0b;
+  border-color: rgba(0,0,0,0.2);
+}
+
+/* ---------- Pills / Tags ---------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--accent-soft);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pill-muted {
+  color: var(--text-muted);
+  border-color: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+
+/* ---------- Card variants ---------- */
+.card-outline { background: transparent; border: 1px dashed rgba(255,255,255,0.15); }
+.card-solid { background: #0c1222; }
+.card-bump { box-shadow: 0 10px 30px rgba(0,0,0,0.55); }
+
+/* ---------- Stat grid ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 0.75rem;
+}
+@media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+
+.stat {
+  background: linear-gradient(180deg, rgba(42,75,130,0.22), rgba(19,31,58,0.7));
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 0.9rem;
+}
+.stat .label { color: var(--text-muted); font-size: 0.8rem; }
+.stat .value { font-size: 1.4rem; font-weight: 700; }
+
+/* ---------- Progress / bars ---------- */
+.progress {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.progress > .bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--mle-blue), var(--mle-gold));
+  width: 40%; /* set in-line */
+}
+
+/* ---------- Tabs (content) ---------- */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 0.8rem;
+}
+.tab {
+  padding: 0.45rem 0.8rem;
+  border-radius: 10px 10px 0 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.tab.active {
+  color: var(--text-main);
+  border-color: rgba(255,255,255,0.1);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+}
+
+/* ---------- Table alt variant ---------- */
+.table-compact .table th, .table-compact .table td { padding: 0.35rem 0.5rem; font-size: 0.82rem; }
+
+/* ---------- Alert banners ---------- */
+.alert {
+  display: flex; gap: 0.7rem; align-items: center;
+  padding: 0.7rem 0.9rem; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(42,75,130,0.18);
+}
+.alert.warn { background: rgba(242,182,50,0.14); border-color: rgba(242,182,50,0.25); color: #f8e7bf; }
+.alert.ok { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.25); color: #c8f3d8; }
+
+/* ---------- Modal (simple) ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center; z-index: 80;
+}
+.modal {
+  width: min(560px, 92vw);
+  background: #0b1221;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: var(--shadow-soft);
+}
+
+/* ---------- Tooltip (pure CSS) ---------- */
+.tip {
+  position: relative; display: inline-flex; align-items: center; gap: .4rem;
+}
+.tip .tiptext {
+  visibility: hidden; opacity: 0; transition: opacity .12s ease;
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  background: #0b1221; color: var(--text-main); font-size: 0.8rem;
+  border: 1px solid rgba(255,255,255,0.12); padding: 0.4rem 0.6rem; border-radius: 8px; white-space: nowrap;
+}
+.tip:hover .tiptext { visibility: visible; opacity: 1; }
