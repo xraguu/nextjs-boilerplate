@@ -4,7 +4,7 @@ export default function HomePage() {
       <div style={{ marginBottom: "1.25rem" }}>
         <h1 className="page-heading">MLE Rocket League Fantasy</h1>
         <p className="page-subtitle">
-          It’s like fantasy sports, but for Minor League Esports!
+          It’s like fantasy football, but for Rocket League
         </p>
       </div>
 
@@ -22,7 +22,7 @@ export default function HomePage() {
 
           <ul style={{ paddingLeft: "1.1rem", margin: 0, marginTop: "0.5rem" }}>
             <li>Review league <strong>standings</strong> and total points.</li>
-            <li>Update your <strong>My Team</strong> lineup before lock.</li>
+            <li>Update your <strong>roster</strong> lineup before lock.</li>
             <li>Submit <strong>waiver claims</strong> for unowned teams.</li>
             <li>Negotiate <strong>trades</strong> with other managers.</li>
           </ul>
@@ -40,9 +40,9 @@ export default function HomePage() {
               </div>
             </li>
             <li style={{ marginBottom: "0.5rem" }}>
-              <strong>My Team</strong>
+              <strong>My Roster</strong>
               <div className="card-subtitle">
-                Your roster across 5 levels with weekly fantasy totals.
+                Your roster with weekly fantasy totals.
               </div>
             </li>
             <li style={{ marginBottom: "0.5rem" }}>

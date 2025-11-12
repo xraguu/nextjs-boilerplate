@@ -1,8 +1,8 @@
-export default function StandingsPage() {
+export default function TeamPortalPage() {
   return (
     <>
-      <h1 className="page-heading">Standings</h1>
-      <p className="page-subtitle">View the league standings</p>
+      <h1 className="page-heading">MLE Teams</h1>
+      <p className="page-subtitle">See how all the teams did this week and pick them up or make claims.</p>
 
       <section className="card">
         <div className="card-header">
@@ -10,7 +10,7 @@ export default function StandingsPage() {
           <span className="card-pill">alpha</span>
         </div>
         <p className="card-subtitle">
-          This page will show standings.
+          This page will show all the teams in MLE and their performance per week.
         </p>
       </section>
     </>

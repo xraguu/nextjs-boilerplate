@@ -1,8 +1,8 @@
-export default function StandingsPage() {
+export default function ScoreboardPage() {
   return (
     <>
-      <h1 className="page-heading">Standings</h1>
-      <p className="page-subtitle">View the league standings</p>
+      <h1 className="page-heading">Scoreboard</h1>
+      <p className="page-subtitle">View results for this week or view previous weeks</p>
 
       <section className="card">
         <div className="card-header">
@@ -10,7 +10,7 @@ export default function StandingsPage() {
           <span className="card-pill">alpha</span>
         </div>
         <p className="card-subtitle">
-          This page will show standings.
+          This page will show the matchups results and how every manager did this week.
         </p>
       </section>
     </>

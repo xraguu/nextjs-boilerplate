@@ -1,8 +1,8 @@
-export default function StandingsPage() {
+export default function LeaguePage() {
   return (
     <>
-      <h1 className="page-heading">Standings</h1>
-      <p className="page-subtitle">View the league standings</p>
+      <h1 className="page-heading">League</h1>
+      <p className="page-subtitle">View the league.</p>
 
       <section className="card">
         <div className="card-header">
@@ -10,7 +10,7 @@ export default function StandingsPage() {
           <span className="card-pill">alpha</span>
         </div>
         <p className="card-subtitle">
-          This page will show standings.
+          Honestly was using ESPN Fantasy as a reference and they had this page but I don&apos;t fully know what I will do with this
         </p>
       </section>
     </>
