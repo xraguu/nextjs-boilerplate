@@ -1,26 +1,185 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --mle-blue: #2a4b82;
+  --mle-blue-dark: #1d3258;
+  --mle-blue-darker: #131f3a;
+  --mle-gold: #f2b632;
+
+  --bg-body: #05060b;
+  --bg-surface: var(--mle-blue-darker);
+  --bg-surface-alt: #050814;
+
+  --border-subtle: #1b2842;
+
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --accent: var(--mle-gold);
+  --accent-soft: rgba(242, 182, 50, 0.12);
+
+  --radius-lg: 16px;
+  --radius-md: 10px;
+
+  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.5);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* --- Base Reset --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+main {
+  padding: 1.5rem 1rem 3rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* --- Navbar --- */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(
+    to right,
+    var(--mle-blue-darker),
+    var(--mle-blue-dark)
+  );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(14px);
+}
+
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.nav-brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mle-gold);
+}
+
+.nav-subtitle {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+  gap: 2.5rem;
+  font-size: 0.95rem;
+}
+
+.nav-link {
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  transition: all 0.15s ease-out;
+}
+
+.nav-link:hover {
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(42, 75, 130, 0.55);
+}
+
+.nav-link-active {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  background-color: rgba(42, 75, 130, 0.55);
+}
+
+/* --- Layout + Cards --- */
+.page-heading {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.card {
+  background: radial-gradient(
+    circle at top left,
+    var(--mle-blue-dark),
+    #020617
+  );
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(15, 23, 42, 0.85);
+  padding: 1rem 1.2rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.card-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.card-pill {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  border: 1px solid var(--accent-soft);
+  color: var(--accent);
+  background-color: var(--accent-soft);
+}
+
+/* --- Grid layout --- */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
+  gap: 1rem;
+}
+
+@media (max-width: 800px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
