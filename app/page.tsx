@@ -1,71 +1,39 @@
-export default function HomePage() {
+// app/page.tsx
+import Link from "next/link";
+// import { getServerSession } from "next-auth";
+// import { db } from "@/lib/db";
+
+export default async function HomePage() {
+  // const session = await getServerSession(authOptions);
+  // const userId = session?.user.id;
+
+  // const leagues = await db.league.findMany({
+  //   where: { members: { some: { userId } } },
+  //   select: { id: true, name: true },
+  // });
+
+  const leagues: { id: string; name: string }[] = []; // placeholder
+
   return (
-    <>
-      <div style={{ marginBottom: "1.25rem" }}>
-        <h1 className="page-heading">MLE Rocket League Fantasy</h1>
-        <p className="page-subtitle">
-          It’s like fantasy football, but for Rocket League
-        </p>
-      </div>
+    <main className="min-h-screen flex flex-col items-center py-10">
+      <h1 className="text-4xl font-bold mb-6">RL Fantasy</h1>
 
-      <div className="grid">
-        <section className="card">
-          <div className="card-header">
-            <div>
-              <h2 className="card-title">This Week</h2>
-              <p className="card-subtitle">
-                Manage your lineup and track your team’s weekly progress.
-              </p>
-            </div>
-            <span className="card-pill">Week 1</span>
-          </div>
-
-          <ul style={{ paddingLeft: "1.1rem", margin: 0, marginTop: "0.5rem" }}>
-            <li>Review league <strong>standings</strong> and total points.</li>
-            <li>Update your <strong>roster</strong> lineup before lock.</li>
-            <li>Submit <strong>waiver claims</strong> for unowned teams.</li>
-            <li>Negotiate <strong>trades</strong> with other managers.</li>
+      <section className="w-full max-w-xl">
+        <h2 className="text-xl font-semibold mb-3">Your Leagues</h2>
+        {leagues.length === 0 ? (
+          <p>Your leagues will show up here once you’re added.</p>
+        ) : (
+          <ul className="space-y-2">
+            {leagues.map((league) => (
+              <li key={league.id}>
+                <Link href={`/leagues/${league.id}`}>
+                  {league.name}
+                </Link>
+              </li>
+            ))}
           </ul>
-        </section>
-
-        <section className="card">
-          <div className="card-header">
-            <h2 className="card-title">Sections</h2>
-          </div>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            <li style={{ marginBottom: "0.5rem" }}>
-              <strong>Standings</strong>
-              <div className="card-subtitle">
-                League table, records, and fantasy points.
-              </div>
-            </li>
-            <li style={{ marginBottom: "0.5rem" }}>
-              <strong>My Roster</strong>
-              <div className="card-subtitle">
-                Your roster with weekly fantasy totals.
-              </div>
-            </li>
-            <li style={{ marginBottom: "0.5rem" }}>
-              <strong>Waivers</strong>
-              <div className="card-subtitle">
-                Claim unowned teams; processed by waiver priority.
-              </div>
-            </li>
-            <li style={{ marginBottom: "0.5rem" }}>
-              <strong>Trades</strong>
-              <div className="card-subtitle">
-                Propose and respond to trade offers.
-              </div>
-            </li>
-            <li>
-              <strong>Admin</strong>
-              <div className="card-subtitle">
-                Tools for recomputing scores and managing weeks.
-              </div>
-            </li>
-          </ul>
-        </section>
-      </div>
-    </>
+        )}
+      </section>
+    </main>
   );
 }
