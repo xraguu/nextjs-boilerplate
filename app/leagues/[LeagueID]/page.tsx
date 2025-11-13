@@ -1,4 +1,4 @@
-export default function HomePage() {
+export default function LeagueHomePage() {
   return (
     <>
       <div style={{ marginBottom: "1.25rem" }}>

@@ -1,23 +1,10 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import Navbar from "@/components/Navbar";
+// app/layout.tsx
+import type { ReactNode } from "react";
 
-export const metadata: Metadata = {
-  title: "MLE Rocket League Fantasy",
-  description: "Community Rocket League fantasy league platform",
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <Navbar />
-        <main>{children}</main>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
