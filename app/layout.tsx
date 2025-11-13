@@ -1,10 +1,81 @@
 // app/layout.tsx
 import type { ReactNode } from "react";
+import localFont from "next/font/local";
+import "./globals.css";
+
+const industry = localFont({
+  src: [
+    {
+      path: "../fonts/Industry/Industry-Light.woff",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Industry/Industry-Book.woff",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Industry/Industry-Medium.woff",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Industry/Industry-Demi.woff",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Industry/Industry-Bold.woff",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Industry/Industry-Black.woff",
+      weight: "900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-industry",
+});
+
+const zuume = localFont({
+  src: [
+    {
+      path: "../fonts/zuume-cufonfonts/Zuume Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../fonts/zuume-cufonfonts/Zuume Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/zuume-cufonfonts/Zuume Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../fonts/zuume-cufonfonts/Zuume SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../fonts/zuume-cufonfonts/Zuume Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-zuume",
+});
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={`${industry.variable} ${zuume.variable}`}>
+        {children}
+      </body>
     </html>
   );
 }
