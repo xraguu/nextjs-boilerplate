@@ -1,10 +1,13 @@
-// app/layout.tsx
+// app/leagues/[LeagueID]/layout.tsx
 import type { ReactNode } from "react";
+import LeagueNavbar from "@/components/LeagueNavbar";
+import "@/app/globals.css";
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function LeagueLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <>
+      <LeagueNavbar />
+      <main>{children}</main>
+    </>
   );
 }
