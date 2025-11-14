@@ -1,3 +1,7 @@
+"use client";
+
+import { useParams, useRouter } from "next/navigation";
+
 // Mock standings data
 const mockStandings = [
   { rank: 1, manager: "FlipReset", team: "Ceiling Shot Squad", wins: 7, losses: 1, points: 1250.5, avgPoints: 156.3 },
@@ -13,6 +17,13 @@ const mockStandings = [
 ];
 
 export default function StandingsPage() {
+  const params = useParams();
+  const router = useRouter();
+  const leagueId = params.LeagueID as string;
+
+  const handleManagerClick = (managerName: string) => {
+    router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(managerName)}`);
+  };
   return (
     <>
       <div style={{ marginBottom: "1.5rem" }}>
@@ -52,11 +63,32 @@ export default function StandingsPage() {
                     {team.rank}
                   </td>
                   <td style={{ padding: "0.75rem 0.5rem" }}>
-                    {team.manager}
+                    <span
+                      onClick={() => handleManagerClick(team.manager)}
+                      onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                      onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                      style={{
+                        cursor: "pointer",
+                        color: "var(--text-main)",
+                        transition: "color 0.2s"
+                      }}
+                    >
+                      {team.manager}
+                    </span>
                     {team.isYou && <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem", color: "var(--accent)" }}>(You)</span>}
                   </td>
                   <td style={{ padding: "0.75rem 0.5rem", color: "var(--text-muted)" }}>
-                    {team.team}
+                    <span
+                      onClick={() => handleManagerClick(team.manager)}
+                      onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                      onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-muted)"}
+                      style={{
+                        cursor: "pointer",
+                        transition: "color 0.2s"
+                      }}
+                    >
+                      {team.team}
+                    </span>
                   </td>
                   <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontWeight: 500 }}>
                     <span style={{ color: "#22c55e" }}>{team.wins}</span>-<span style={{ color: "#ef4444" }}>{team.losses}</span>

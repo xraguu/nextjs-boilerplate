@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 
 // Mock roster data with full stats
 const mockRoster = {
@@ -39,24 +40,37 @@ const mockRoster = {
 };
 
 export default function MyRosterPage() {
+  const router = useRouter();
+  const params = useParams();
   const roster = mockRoster;
   const [currentWeek, setCurrentWeek] = useState(roster.currentWeek);
   const [activeTab, setActiveTab] = useState<"lineup" | "stats">("lineup");
+
+  const handleScheduleClick = () => {
+    router.push(`/leagues/${params.LeagueID}/my-roster/${params.managerId}/schedule`);
+  };
 
   return (
     <>
       {/* Page Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>Roster</h1>
-        <div style={{
-          backgroundColor: "var(--accent)",
-          color: "#1a1a2e",
-          padding: "0.5rem 1.5rem",
-          borderRadius: "2rem",
-          fontWeight: 700,
-          fontSize: "1rem"
-        }}>
-          Week {roster.currentWeek}
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <button
+            onClick={handleScheduleClick}
+            style={{
+              backgroundColor: "var(--accent)",
+              color: "#1a1a2e",
+              padding: "0.5rem 1.5rem",
+              borderRadius: "2rem",
+              fontWeight: 700,
+              fontSize: "1rem",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            Schedule
+          </button>
         </div>
       </div>
 

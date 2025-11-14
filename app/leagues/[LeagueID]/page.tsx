@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
+import TeamModal from "@/components/TeamModal";
 
 // Generate weekly stats for modal
 const generateWeeklyStats = (teamId: string) => {
@@ -70,6 +72,8 @@ const mockRoster = {
 };
 
 export default function MyRosterPage() {
+  const router = useRouter();
+  const params = useParams();
   const roster = mockRoster;
   const [currentWeek, setCurrentWeek] = useState(roster.currentWeek);
   const [activeTab, setActiveTab] = useState<"lineup" | "stats">("lineup");
@@ -77,6 +81,10 @@ export default function MyRosterPage() {
   const [showModal, setShowModal] = useState(false);
   const [weeklySortColumn, setWeeklySortColumn] = useState<WeeklySortColumn>("week");
   const [weeklySortDirection, setWeeklySortDirection] = useState<SortDirection>("asc");
+
+  const handleScheduleClick = () => {
+    router.push(`/leagues/${params.LeagueID}/schedule`);
+  };
 
   const handleWeeklySort = (column: WeeklySortColumn) => {
     if (weeklySortColumn === column) {
@@ -114,7 +122,8 @@ export default function MyRosterPage() {
   return (
     <>
       {/* Team Stats Modal */}
-      {showModal && selectedTeam && (
+      <TeamModal team={showModal ? selectedTeam : null} onClose={() => setShowModal(false)} />
+      {showModal && false && selectedTeam && (
         <div
           onClick={() => setShowModal(false)}
           style={{
@@ -304,8 +313,23 @@ export default function MyRosterPage() {
       )}
 
       {/* Page Header */}
-      <div style={{ marginBottom: "1.5rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>Roster</h1>
+        <button
+          onClick={handleScheduleClick}
+          style={{
+            backgroundColor: "var(--accent)",
+            color: "#1a1a2e",
+            padding: "0.5rem 1.5rem",
+            borderRadius: "2rem",
+            fontWeight: 700,
+            fontSize: "1rem",
+            border: "none",
+            cursor: "pointer"
+          }}
+        >
+          Schedule
+        </button>
       </div>
 
       {/* Team Overview Card */}

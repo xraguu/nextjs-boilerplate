@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { TEAMS } from "@/lib/teams";
+import TeamModal from "@/components/TeamModal";
 
 // Mock managers data (11 other managers besides yourself)
 const otherManagers = [
@@ -60,12 +62,38 @@ export default function OpponentsPage() {
   const [currentWeek, setCurrentWeek] = useState(3);
   const [activeTab, setActiveTab] = useState<"lineup" | "stats">("lineup");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<any>(null);
 
   const selectedManager = otherManagers.find(m => m.id === selectedManagerId) || otherManagers[0];
   const roster = generateMockRoster(selectedManager);
 
+  const handleTeamClick = (teamName: string) => {
+    // Parse team name like "Flames CL" to get "CL" and "Flames"
+    const parts = teamName.split(" ");
+    const leagueId = parts[parts.length - 1];
+    const name = parts.slice(0, -1).join(" ");
+    const teamId = `${leagueId}${name.replace(/\s+/g, "")}`;
+    const team = TEAMS.find(t => t.id === teamId);
+    if (team) {
+      setSelectedTeam({
+        ...team,
+        fpts: Math.floor(Math.random() * 100) + 400,
+        avg: Math.floor(Math.random() * 30) + 40,
+        last: Math.floor(Math.random() * 30) + 40,
+        rank: Math.floor(Math.random() * 10) + 1,
+        record: `${Math.floor(Math.random() * 8) + 2}-${Math.floor(Math.random() * 3)}`,
+        status: "free-agent"
+      });
+      setShowModal(true);
+    }
+  };
+
   return (
     <>
+      {/* Team Modal */}
+      <TeamModal team={showModal ? selectedTeam : null} onClose={() => setShowModal(false)} />
+
       {/* Page Header with Dropdown */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>Opponents</h1>
@@ -312,7 +340,19 @@ export default function OpponentsPage() {
                       {team.slot}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", fontWeight: 600, fontSize: "0.95rem" }}>
-                      {team.name || "-"}
+                      {team.name ? (
+                        <span
+                          onClick={() => handleTeamClick(team.name)}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                          style={{
+                            cursor: "pointer",
+                            transition: "color 0.2s"
+                          }}
+                        >
+                          {team.name}
+                        </span>
+                      ) : "-"}
                     </td>
                     <td style={{
                       padding: "0.75rem 1rem",
@@ -414,7 +454,17 @@ export default function OpponentsPage() {
                         {index + 1}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", fontWeight: 600, fontSize: "0.95rem" }}>
-                        {team.name}
+                        <span
+                          onClick={() => handleTeamClick(team.name)}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                          style={{
+                            cursor: "pointer",
+                            transition: "color 0.2s"
+                          }}
+                        >
+                          {team.name}
+                        </span>
                       </td>
                       <td style={{
                         padding: "0.75rem 1rem",

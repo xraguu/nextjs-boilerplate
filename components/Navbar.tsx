@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/", label: "Home" },
-  { href: "/my-roster", label: "Roster" },
+  { href: "/leagues/2025-alpha/my-roster/my-manager", label: "MY ROSTER" },
   { href: "/league", label: "League" },
   { href: "/team-portal", label: "Teams" },
   { href: "/scoreboard", label: "Scoreboard" },
