@@ -1,334 +1,556 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import Image from "next/image";
+import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
 
-// Mock data
-const mockFreeAgents = [
-  { id: 1, name: "NRG Esports", tier: "Premier", region: "NA", weekPoints: 38.0, available: true, waiverPriority: null },
-  { id: 2, name: "Team Liquid", tier: "Premier", region: "EU", weekPoints: 35.5, available: true, waiverPriority: null },
-  { id: 3, name: "Moist Esports", tier: "Premier", region: "EU", weekPoints: 42.0, available: true, waiverPriority: null },
-  { id: 4, name: "FURIA Esports", tier: "Challenger", region: "SAM", weekPoints: 28.5, available: true, waiverPriority: null },
-  { id: 5, name: "PWR", tier: "Challenger", region: "OCE", weekPoints: 31.0, available: true, waiverPriority: null },
-];
+// Mock team stats and availability
+const mockTeamData = TEAMS.map((team, index) => ({
+  ...team,
+  rank: index + 1,
+  fpts: Math.floor(Math.random() * 200 + 300), // Random points between 300-500
+  avg: Math.floor(Math.random() * 20 + 35), // Random avg between 35-55
+  last: Math.floor(Math.random() * 25 + 30), // Random last between 30-55
+  goals: Math.floor(Math.random() * 50 + 100),
+  shots: Math.floor(Math.random() * 200 + 600),
+  saves: Math.floor(Math.random() * 100 + 150),
+  assists: Math.floor(Math.random() * 40 + 60),
+  demos: Math.floor(Math.random() * 30 + 30),
+  record: `${Math.floor(Math.random() * 6 + 4)}-${Math.floor(Math.random() * 6 + 4)}`,
+  status: Math.random() > 0.7 ? "waiver" : "free-agent", // 30% on waivers, 70% free agents
+}));
 
-const mockWaivers = [
-  { id: 1, teamName: "OpTic Gaming", submittedBy: "You", priority: 1, status: "Pending", droppingTeam: "FaZe Clan" },
-  { id: 2, teamName: "Team Liquid", submittedBy: "Rover", priority: 3, status: "Pending", droppingTeam: "Complexity Gaming" },
-  { id: 3, teamName: "Moist Esports", submittedBy: "FlipReset", priority: 2, status: "Processing", droppingTeam: "PWR" },
-];
+type SortColumn = "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos";
+type SortDirection = "asc" | "desc";
 
-const mockTrades = [
-  {
-    id: 1,
-    from: "You",
-    to: "Rover",
-    offering: ["G2 Esports", "FaZe Clan"],
-    receiving: ["Spacestation Gaming"],
-    status: "Pending",
-    date: "2025-11-10"
-  },
-  {
-    id: 2,
-    from: "FlipReset",
-    to: "You",
-    offering: ["Version1"],
-    receiving: ["Complexity Gaming"],
-    status: "Pending",
-    date: "2025-11-09"
-  }
-];
-
-const mockLeagueSettings = {
-  name: "2025 RL Fantasy Alpha",
-  season: 2025,
-  maxTeams: 10,
-  rosterSize: 5,
-  startingSpots: 3,
-  waiverType: "Priority-based",
-  tradeDeadline: "Week 10",
-  playoffWeeks: "11-12"
+// Generate mock weekly stats for a team
+const generateWeeklyStats = (teamId: string) => {
+  return Array.from({ length: 10 }, (_, i) => ({
+    week: i + 1,
+    opponent: TEAMS[Math.floor(Math.random() * TEAMS.length)].name,
+    fpts: Math.floor(Math.random() * 25 + 30),
+    avg: Math.floor(Math.random() * 20 + 35),
+    last: Math.floor(Math.random() * 25 + 30),
+    goals: Math.floor(Math.random() * 8 + 5),
+    shots: Math.floor(Math.random() * 30 + 50),
+    saves: Math.floor(Math.random() * 15 + 10),
+    assists: Math.floor(Math.random() * 6 + 4),
+    demos: Math.floor(Math.random() * 4 + 2),
+    record: `${Math.floor(Math.random() * 2)}-${Math.floor(Math.random() * 2)}`,
+  }));
 };
 
+type WeeklySortColumn = "week" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos";
+
 export default function TeamPortalPage() {
-  const [activeTab, setActiveTab] = useState<"free-agents" | "waivers" | "trades" | "settings">("free-agents");
+  const [sortColumn, setSortColumn] = useState<SortColumn>("fpts");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [selectedTeam, setSelectedTeam] = useState<typeof mockTeamData[0] | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [weeklySortColumn, setWeeklySortColumn] = useState<WeeklySortColumn>("week");
+  const [weeklySortDirection, setWeeklySortDirection] = useState<SortDirection>("asc");
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // New column, default to descending
+      setSortColumn(column);
+      setSortDirection("desc");
+    }
+  };
+
+  const handleWeeklySort = (column: WeeklySortColumn) => {
+    if (weeklySortColumn === column) {
+      // Toggle direction if same column
+      setWeeklySortDirection(weeklySortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // New column, default to descending
+      setWeeklySortColumn(column);
+      setWeeklySortDirection(column === "week" ? "asc" : "desc");
+    }
+  };
+
+  const sortedData = useMemo(() => {
+    return [...mockTeamData].sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      if (sortDirection === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [sortColumn, sortDirection]);
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return null;
+    return (
+      <span style={{ marginLeft: "0.25rem" }}>
+        {sortDirection === "asc" ? "▲" : "▼"}
+      </span>
+    );
+  };
+
+  const weeklyStats = useMemo(() => {
+    if (!selectedTeam) return [];
+    const stats = generateWeeklyStats(selectedTeam.id);
+    return [...stats].sort((a, b) => {
+      const aValue = a[weeklySortColumn];
+      const bValue = b[weeklySortColumn];
+
+      if (weeklySortDirection === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [selectedTeam, weeklySortColumn, weeklySortDirection]);
+
+  const WeeklySortIcon = ({ column }: { column: WeeklySortColumn }) => {
+    if (weeklySortColumn !== column) return null;
+    return (
+      <span style={{ marginLeft: "0.25rem" }}>
+        {weeklySortDirection === "asc" ? "▲" : "▼"}
+      </span>
+    );
+  };
 
   return (
     <>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <h1 className="page-heading">Team Portal</h1>
-        <p className="page-subtitle">
-          Manage free agents, waivers, trades, and league settings
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="tabs">
-        <button
-          className={`tab ${activeTab === "free-agents" ? "active" : ""}`}
-          onClick={() => setActiveTab("free-agents")}
+      {/* Team Stats Modal */}
+      {showModal && selectedTeam && (
+        <div
+          onClick={() => setShowModal(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "1rem"
+          }}
         >
-          Free Agents
-        </button>
-        <button
-          className={`tab ${activeTab === "waivers" ? "active" : ""}`}
-          onClick={() => setActiveTab("waivers")}
-        >
-          Waivers
-        </button>
-        <button
-          className={`tab ${activeTab === "trades" ? "active" : ""}`}
-          onClick={() => setActiveTab("trades")}
-        >
-          Trade Proposals
-        </button>
-        <button
-          className={`tab ${activeTab === "settings" ? "active" : ""}`}
-          onClick={() => setActiveTab("settings")}
-        >
-          League Settings
-        </button>
-      </div>
-
-      {/* Free Agents Tab */}
-      {activeTab === "free-agents" && (
-        <section className="card">
-          <div className="card-header">
-            <h2 className="card-title">Available Free Agents</h2>
-            <span className="card-subtitle">{mockFreeAgents.length} teams available</span>
-          </div>
-
-          <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {mockFreeAgents.map((team) => (
-              <div key={team.id} className="card card-outline">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "900px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "auto",
+              position: "relative",
+              borderRadius: "12px",
+              padding: "2rem",
+              background: `linear-gradient(135deg, ${selectedTeam.teamPrimaryColor} 0%, ${selectedTeam.teamSecondaryColor} 100%)`,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+            }}
+          >
+            {/* Background Logo */}
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "400px",
+                height: "400px",
+                backgroundImage: `url(${selectedTeam.logoPath})`,
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                opacity: 0.1,
+                pointerEvents: "none",
+                zIndex: 0
+              }}
+            />
+            {/* Modal Header */}
+            <div style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "1.5rem",
+              marginBottom: "2rem",
+              paddingBottom: "1.5rem",
+              borderBottom: "2px solid rgba(255,255,255,0.2)",
+              position: "relative",
+              zIndex: 1
+            }}>
+              <Image
+                src={selectedTeam.logoPath}
+                alt={`${selectedTeam.name} logo`}
+                width={80}
+                height={80}
+                style={{ borderRadius: "8px" }}
+              />
+              <div style={{ flex: 1 }}>
+                <h2 style={{
+                  fontSize: "1.8rem",
+                  fontWeight: 700,
+                  color: LEAGUE_COLORS[selectedTeam.leagueId as keyof typeof LEAGUE_COLORS] || "#ffffff",
+                  margin: "0 0 0.5rem 0",
+                  textShadow: "0 2px 4px rgba(0,0,0,0.3)"
+                }}>
+                  {selectedTeam.leagueId} {selectedTeam.name}
+                </h2>
+                <div style={{
+                  fontSize: "1rem",
+                  color: "rgba(255,255,255,0.9)",
+                  marginBottom: "0.75rem"
+                }}>
+                  {selectedTeam.record} · {selectedTeam.rank}rd
+                </div>
+                <div style={{
+                  display: "flex",
+                  gap: "2rem",
+                  marginBottom: "0.75rem"
+                }}>
                   <div>
-                    <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.25rem" }}>
-                      {team.name}
-                    </h3>
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                      {team.tier} • {team.region}
-                    </p>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--accent)" }}>
-                        {team.weekPoints}
-                      </div>
-                      <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                        pts/week
-                      </div>
+                    <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#ffffff" }}>
+                      {selectedTeam.fpts}
                     </div>
-                    <button className="btn btn-primary" style={{ fontSize: "0.85rem" }}>
-                      Add Team
-                    </button>
+                    <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>
+                      Fantasy Points
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#ffffff" }}>
+                      {selectedTeam.avg}
+                    </div>
+                    <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>
+                      Avg Fantasy Points
+                    </div>
                   </div>
                 </div>
+                <span style={{
+                  display: "inline-block",
+                  padding: "0.35rem 0.75rem",
+                  borderRadius: "4px",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                  color: "#ffffff",
+                  backdropFilter: "blur(4px)"
+                }}>
+                  {selectedTeam.status === "free-agent" ? "Free Agent" : "On Waivers"}
+                </span>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Waivers Tab */}
-      {activeTab === "waivers" && (
-        <section className="card">
-          <div className="card-header">
-            <div>
-              <h2 className="card-title">Waiver Claims</h2>
-              <p className="card-subtitle">Claims process at the end of each week</p>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: "rgba(255, 255, 255, 0.2)",
+                  border: "none",
+                  color: "#ffffff",
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                  padding: "0.25rem 0.5rem",
+                  lineHeight: 1,
+                  borderRadius: "4px",
+                  backdropFilter: "blur(4px)"
+                }}
+              >
+                ×
+              </button>
             </div>
-            <button className="btn btn-primary">Submit Claim</button>
-          </div>
 
-          {mockWaivers.length === 0 ? (
-            <p style={{ marginTop: "1rem", color: "var(--text-muted)" }}>
-              No active waiver claims
-            </p>
-          ) : (
-            <div style={{ marginTop: "1rem", overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
-                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Priority</th>
-                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
-                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Manager</th>
-                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Dropping</th>
-                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockWaivers.map((waiver) => (
-                    <tr
-                      key={waiver.id}
-                      style={{
-                        borderBottom: "1px solid rgba(255,255,255,0.05)",
-                        backgroundColor: waiver.submittedBy === "You" ? "rgba(242, 182, 50, 0.08)" : "transparent"
-                      }}
-                    >
-                      <td style={{ padding: "0.75rem 0.5rem", fontWeight: 600 }}>
-                        #{waiver.priority}
-                      </td>
-                      <td style={{ padding: "0.75rem 0.5rem", fontWeight: 600 }}>
-                        {waiver.teamName}
-                      </td>
-                      <td style={{ padding: "0.75rem 0.5rem" }}>
-                        {waiver.submittedBy}
-                      </td>
-                      <td style={{ padding: "0.75rem 0.5rem", color: "var(--text-muted)" }}>
-                        {waiver.droppingTeam}
-                      </td>
-                      <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                        <span className={waiver.status === "Pending" ? "pill pill-muted" : "pill"}>
-                          {waiver.status}
-                        </span>
-                      </td>
+            {/* Weekly Stats Table */}
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <h3 style={{
+                fontSize: "1.1rem",
+                fontWeight: 600,
+                color: "#ffffff",
+                marginBottom: "1rem",
+                textShadow: "0 2px 4px rgba(0,0,0,0.3)"
+              }}>
+                Weekly Breakdown
+              </h3>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
+                      <th
+                        onClick={() => handleWeeklySort("week")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Week<WeeklySortIcon column="week" />
+                      </th>
+                      <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Opponent</th>
+                      <th
+                        onClick={() => handleWeeklySort("fpts")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Fpts<WeeklySortIcon column="fpts" />
+                      </th>
+                      <th
+                        onClick={() => handleWeeklySort("avg")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Avg<WeeklySortIcon column="avg" />
+                      </th>
+                      <th
+                        onClick={() => handleWeeklySort("last")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Last<WeeklySortIcon column="last" />
+                      </th>
+                      <th
+                        onClick={() => handleWeeklySort("goals")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Goals<WeeklySortIcon column="goals" />
+                      </th>
+                      <th
+                        onClick={() => handleWeeklySort("shots")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Shots<WeeklySortIcon column="shots" />
+                      </th>
+                      <th
+                        onClick={() => handleWeeklySort("saves")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Saves<WeeklySortIcon column="saves" />
+                      </th>
+                      <th
+                        onClick={() => handleWeeklySort("assists")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Assists<WeeklySortIcon column="assists" />
+                      </th>
+                      <th
+                        onClick={() => handleWeeklySort("demos")}
+                        style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                      >
+                        Demos<WeeklySortIcon column="demos" />
+                      </th>
+                      <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Record</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {weeklyStats.map((week) => (
+                      <tr
+                        key={week.week}
+                        style={{
+                          borderBottom: "1px solid rgba(255,255,255,0.1)"
+                        }}
+                      >
+                        <td style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "#ffffff" }}>
+                          {week.week}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>
+                          {week.opponent}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem", color: "#ffffff" }}>
+                          {week.fpts}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "rgba(255,255,255,0.8)", fontSize: "0.9rem" }}>
+                          {week.avg}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "rgba(255,255,255,0.8)", fontSize: "0.9rem" }}>
+                          {week.last}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>
+                          {week.goals}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>
+                          {week.shots}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>
+                          {week.saves}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>
+                          {week.assists}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>
+                          {week.demos}
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.8)" }}>
+                          {week.record}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          )}
-        </section>
+          </div>
+        </div>
       )}
 
-      {/* Trades Tab */}
-      {activeTab === "trades" && (
-        <section className="card">
-          <div className="card-header">
-            <div>
-              <h2 className="card-title">Trade Proposals</h2>
-              <p className="card-subtitle">Manage your trade offers</p>
-            </div>
-            <button className="btn btn-primary">Propose Trade</button>
-          </div>
+      {/* Page Header */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>
+          Teams
+        </h1>
+      </div>
 
-          {mockTrades.length === 0 ? (
-            <p style={{ marginTop: "1rem", color: "var(--text-muted)" }}>
-              No active trade proposals
-            </p>
-          ) : (
-            <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {mockTrades.map((trade) => (
-                <div key={trade.id} className="card card-solid">
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>
-                      {trade.from} → {trade.to} • {new Date(trade.date).toLocaleDateString()}
-                    </div>
-                    <span className={trade.status === "Pending" ? "pill" : "pill pill-muted"}>
-                      {trade.status}
-                    </span>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "1rem", alignItems: "center" }}>
-                    <div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
-                        Offering:
-                      </div>
-                      {trade.offering.map((team, idx) => (
-                        <div key={idx} style={{ fontSize: "0.9rem", fontWeight: 500, marginBottom: "0.25rem" }}>
-                          {team}
+      {/* Teams Table */}
+      <section className="card">
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
+                <th
+                  onClick={() => handleSort("rank")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Rank<SortIcon column="rank" />
+                </th>
+                <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
+                <th
+                  onClick={() => handleSort("fpts")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Fpts<SortIcon column="fpts" />
+                </th>
+                <th
+                  onClick={() => handleSort("avg")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Avg<SortIcon column="avg" />
+                </th>
+                <th
+                  onClick={() => handleSort("last")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Last<SortIcon column="last" />
+                </th>
+                <th
+                  onClick={() => handleSort("goals")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Goals<SortIcon column="goals" />
+                </th>
+                <th
+                  onClick={() => handleSort("shots")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Shots<SortIcon column="shots" />
+                </th>
+                <th
+                  onClick={() => handleSort("saves")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Saves<SortIcon column="saves" />
+                </th>
+                <th
+                  onClick={() => handleSort("assists")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Assists<SortIcon column="assists" />
+                </th>
+                <th
+                  onClick={() => handleSort("demos")}
+                  style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
+                >
+                  Demos<SortIcon column="demos" />
+                </th>
+                <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
+                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedData.map((team, index) => (
+                <tr
+                  key={team.id}
+                  style={{
+                    borderBottom: "1px solid rgba(255,255,255,0.05)"
+                  }}
+                >
+                  <td style={{ padding: "0.75rem 1rem", fontWeight: 700, fontSize: "0.9rem", color: "var(--accent)" }}>
+                    {index + 1}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      <Image
+                        src={team.logoPath}
+                        alt={`${team.name} logo`}
+                        width={32}
+                        height={32}
+                        style={{ borderRadius: "4px" }}
+                      />
+                      <div>
+                        <div
+                          onClick={() => {
+                            setSelectedTeam(team);
+                            setShowModal(true);
+                          }}
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "0.95rem",
+                            cursor: "pointer",
+                            color: "var(--text-main)",
+                            transition: "color 0.2s"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                        >
+                          {team.leagueId} {team.name}
                         </div>
-                      ))}
-                    </div>
-
-                    <div style={{ fontSize: "1.5rem", color: "var(--text-muted)" }}>⇄</div>
-
-                    <div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
-                        Receiving:
                       </div>
-                      {trade.receiving.map((team, idx) => (
-                        <div key={idx} style={{ fontSize: "0.9rem", fontWeight: 500, marginBottom: "0.25rem" }}>
-                          {team}
-                        </div>
-                      ))}
                     </div>
-                  </div>
-
-                  {trade.to === "You" && trade.status === "Pending" && (
-                    <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-                      <button className="btn btn-primary" style={{ flex: 1 }}>
-                        Accept
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.95rem" }}>
+                    {team.fpts}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                    {team.avg}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                    {team.last}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.goals}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.shots}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.saves}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.assists}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.demos}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                    {team.record}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                    {team.status === "free-agent" ? (
+                      <button
+                        className="btn btn-warning"
+                        style={{
+                          fontSize: "0.85rem",
+                          padding: "0.4rem 0.9rem"
+                        }}
+                      >
+                        + Add
                       </button>
-                      <button className="btn btn-ghost" style={{ flex: 1 }}>
-                        Decline
+                    ) : (
+                      <button
+                        className="btn btn-ghost"
+                        style={{
+                          fontSize: "0.85rem",
+                          padding: "0.4rem 0.9rem"
+                        }}
+                      >
+                        Claim
                       </button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </td>
+                </tr>
               ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Settings Tab */}
-      {activeTab === "settings" && (
-        <section className="card">
-          <div className="card-header">
-            <h2 className="card-title">League Settings</h2>
-            <span className="card-subtitle">View league rules and configuration</span>
-          </div>
-
-          <div style={{ marginTop: "1rem", display: "grid", gap: "1rem" }}>
-            <div className="card card-outline">
-              <h3 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--accent)" }}>
-                League Information
-              </h3>
-              <div style={{ display: "grid", gap: "0.5rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>League Name:</span>
-                  <span style={{ fontWeight: 600 }}>{mockLeagueSettings.name}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Season:</span>
-                  <span style={{ fontWeight: 600 }}>{mockLeagueSettings.season}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Max Teams:</span>
-                  <span style={{ fontWeight: 600 }}>{mockLeagueSettings.maxTeams}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="card card-outline">
-              <h3 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--accent)" }}>
-                Roster Settings
-              </h3>
-              <div style={{ display: "grid", gap: "0.5rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Roster Size:</span>
-                  <span style={{ fontWeight: 600 }}>{mockLeagueSettings.rosterSize}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Starting Spots:</span>
-                  <span style={{ fontWeight: 600 }}>{mockLeagueSettings.startingSpots}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="card card-outline">
-              <h3 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--accent)" }}>
-                League Rules
-              </h3>
-              <div style={{ display: "grid", gap: "0.5rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Waiver Type:</span>
-                  <span style={{ fontWeight: 600 }}>{mockLeagueSettings.waiverType}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Trade Deadline:</span>
-                  <span style={{ fontWeight: 600 }}>{mockLeagueSettings.tradeDeadline}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Playoff Weeks:</span>
-                  <span style={{ fontWeight: 600 }}>{mockLeagueSettings.playoffWeeks}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </>
   );
 }
