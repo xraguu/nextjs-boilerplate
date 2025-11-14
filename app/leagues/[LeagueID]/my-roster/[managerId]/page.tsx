@@ -167,7 +167,7 @@ export default function MyRosterPage() {
                 ◄ Week {currentWeek - 1}
               </button>
               <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
-                This Week
+                Week {currentWeek}
               </span>
               <button
                 onClick={() => setCurrentWeek(prev => prev + 1)}
@@ -279,7 +279,7 @@ export default function MyRosterPage() {
                 ◄ Week {currentWeek - 1}
               </button>
               <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
-                This Week
+                Week {currentWeek}
               </span>
               <button
                 onClick={() => setCurrentWeek(prev => prev + 1)}
