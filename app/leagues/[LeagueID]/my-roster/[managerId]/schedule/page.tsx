@@ -76,10 +76,34 @@ export default function SchedulePage() {
   return (
     <>
       {/* Page Header */}
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>
-          Schedule
-        </h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <button
+            onClick={() => router.push(`/leagues/${leagueId}/my-roster/${params.managerId}`)}
+            style={{
+              backgroundColor: "rgba(255,255,255,0.1)",
+              color: "var(--text-main)",
+              padding: "0.5rem 1rem",
+              borderRadius: "0.5rem",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              border: "1px solid rgba(255,255,255,0.2)",
+              cursor: "pointer",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)";
+            }}
+          >
+            ← Back to My Roster
+          </button>
+          <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>
+            Schedule
+          </h1>
+        </div>
       </div>
 
       {/* Manager Tabs */}

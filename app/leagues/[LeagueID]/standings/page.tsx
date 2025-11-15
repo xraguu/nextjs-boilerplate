@@ -24,11 +24,33 @@ export default function StandingsPage() {
   const handleManagerClick = (managerName: string) => {
     router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(managerName)}`);
   };
+
+  const handlePlayoffsClick = () => {
+    router.push(`/leagues/${leagueId}/standings/playoffs`);
+  };
+
   return (
     <>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <h1 className="page-heading">Standings</h1>
-        <p className="page-subtitle">League rankings and team performance</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div>
+          <h1 className="page-heading">Standings</h1>
+          <p className="page-subtitle">League rankings and team performance</p>
+        </div>
+        <button
+          onClick={handlePlayoffsClick}
+          style={{
+            backgroundColor: "var(--accent)",
+            color: "#1a1a2e",
+            padding: "0.5rem 1.5rem",
+            borderRadius: "2rem",
+            fontWeight: 700,
+            fontSize: "1rem",
+            border: "none",
+            cursor: "pointer"
+          }}
+        >
+          Playoffs
+        </button>
       </div>
 
       <section className="card">

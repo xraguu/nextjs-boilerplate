@@ -230,52 +230,38 @@ export default function DraftPage() {
                           </div>
                         )}
                         {!pick?.team && pick?.status === "current" && (
-                          <div style={{
-                            background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
-                            color: "#ffffff",
-                            padding: "0.5rem 1rem",
-                            borderRadius: "6px",
-                            fontWeight: 600,
-                            fontSize: "0.85rem",
-                            textAlign: "center"
-                          }}>
+                          <button
+                            onClick={() => router.push(`/leagues/${leagueId}/draft/make-pick`)}
+                            style={{
+                              background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
+                              color: "#ffffff",
+                              padding: "0.5rem 1rem",
+                              borderRadius: "6px",
+                              fontWeight: 600,
+                              fontSize: "0.85rem",
+                              textAlign: "center",
+                              border: "none",
+                              cursor: "pointer",
+                              width: "100%",
+                              transition: "all 0.2s ease"
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "translateY(-2px)";
+                              e.currentTarget.style.boxShadow = "0 4px 10px rgba(74, 222, 128, 0.4)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "translateY(0)";
+                              e.currentTarget.style.boxShadow = "none";
+                            }}
+                          >
                             Pick {pick.round}.{pick.pick}
-                          </div>
+                          </button>
                         )}
                       </div>
                     );
                   })}
                 </div>
               ))}
-            </div>
-
-            {/* Make a Pick Button */}
-            <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-              <button
-                onClick={() => router.push(`/leagues/${leagueId}/draft/make-pick`)}
-                style={{
-                  background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
-                  color: "#ffffff",
-                  padding: "0.75rem 2rem",
-                  borderRadius: "8px",
-                  border: "none",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 10px rgba(74, 222, 128, 0.3)",
-                  transition: "all 0.2s ease"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 15px rgba(74, 222, 128, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 10px rgba(74, 222, 128, 0.3)";
-                }}
-              >
-                Make a Pick
-              </button>
             </div>
           </div>
         </div>
