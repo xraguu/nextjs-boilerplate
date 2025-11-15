@@ -1,4 +1,12 @@
 // components/Modal.tsx
+// Generic Modal Component
+//
+// This is a basic modal component for general use. For team-specific modals with
+// detailed stats and styling, use TeamModal.tsx instead.
+//
+// Currently not in use - TeamModal.tsx is the standard for all team detail views.
+// This component is kept for potential future use cases requiring a simple modal.
+
 "use client";
 export default function Modal({
   open, onClose, title, children,

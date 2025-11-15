@@ -501,7 +501,10 @@ export default function ScoreboardPage() {
                     <div style={{ flex: 1 }}>
                       <div
                         onClick={() => openTeamModal(player1)}
-                        style={{ color: "#ffffff", fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>
+                        style={{ color: "#ffffff", fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", transition: "color 0.2s" }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                        onMouseLeave={(e) => e.currentTarget.style.color = "#ffffff"}
+                      >
                         {player1.name}
                       </div>
                       {player1.hasPlayed && (
@@ -548,7 +551,10 @@ export default function ScoreboardPage() {
                     <div style={{ flex: 1, textAlign: "right" }}>
                       <div
                         onClick={() => openTeamModal(player2)}
-                        style={{ color: "#ffffff", fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", textDecoration: "underline" }}>
+                        style={{ color: "#ffffff", fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", transition: "color 0.2s" }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                        onMouseLeave={(e) => e.currentTarget.style.color = "#ffffff"}
+                      >
                         {player2.name}
                       </div>
                       {player2.hasPlayed && (
@@ -786,10 +792,17 @@ export default function ScoreboardPage() {
                           height={20}
                           style={{ borderRadius: "4px" }}
                         />
-                        <span style={{
-                          color: "#ffffff",
-                          fontSize: "0.85rem"
-                        }}>
+                        <span
+                          onClick={() => openTeamModal(player)}
+                          style={{
+                            color: "#ffffff",
+                            fontSize: "0.85rem",
+                            cursor: "pointer",
+                            transition: "color 0.2s"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "#ffffff"}
+                        >
                           {player.team.leagueId} {player.name}
                         </span>
                         <span style={{
@@ -838,10 +851,17 @@ export default function ScoreboardPage() {
                           height={20}
                           style={{ borderRadius: "4px" }}
                         />
-                        <span style={{
-                          color: "#ffffff",
-                          fontSize: "0.85rem"
-                        }}>
+                        <span
+                          onClick={() => openTeamModal(player)}
+                          style={{
+                            color: "#ffffff",
+                            fontSize: "0.85rem",
+                            cursor: "pointer",
+                            transition: "color 0.2s"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "#ffffff"}
+                        >
                           {player.team.leagueId} {player.name}
                         </span>
                         <span style={{

@@ -13,6 +13,8 @@ export interface Player {
   assists: number;
   demos: number;
   record: string;
+  "2sU": number;
+  "3sU": number;
 }
 
 // Mock player names
@@ -57,7 +59,9 @@ function generatePlayersForTeam(teamId: TeamId): Player[] {
       saves,
       assists,
       demos,
-      record: `${wins}-${losses}`
+      record: `${wins}-${losses}`,
+      "2sU": Math.floor(Math.random() * 5) + 1, // Random 1-5
+      "3sU": Math.floor(Math.random() * 5) + 1  // Random 1-5
     });
   }
   return players;

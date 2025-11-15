@@ -23,7 +23,7 @@ interface TeamModalProps {
 }
 
 export default function TeamModal({ team, onClose }: TeamModalProps) {
-  const [playerSortColumn, setPlayerSortColumn] = useState<string>("fpts");
+  const [playerSortColumn, setPlayerSortColumn] = useState<string>("goals");
   const [playerSortDirection, setPlayerSortDirection] = useState<"asc" | "desc">("desc");
   const [weeklyStats] = useState([
     { week: 1, opponent: "AL Comets", fpts: 52, avg: 53, last: 48, goals: 8, shots: 142, saves: 89, assists: 12, demos: 18, record: "W" },
@@ -243,30 +243,28 @@ export default function TeamModal({ team, onClose }: TeamModalProps) {
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Player</th>
-                  <th onClick={() => handlePlayerSort("fpts")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Fpts<PlayerSortIcon column="fpts" /></th>
-                  <th onClick={() => handlePlayerSort("avg")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Avg<PlayerSortIcon column="avg" /></th>
-                  <th onClick={() => handlePlayerSort("last")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Last<PlayerSortIcon column="last" /></th>
                   <th onClick={() => handlePlayerSort("goals")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Goals<PlayerSortIcon column="goals" /></th>
                   <th onClick={() => handlePlayerSort("shots")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Shots<PlayerSortIcon column="shots" /></th>
                   <th onClick={() => handlePlayerSort("saves")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Saves<PlayerSortIcon column="saves" /></th>
                   <th onClick={() => handlePlayerSort("assists")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Assists<PlayerSortIcon column="assists" /></th>
                   <th onClick={() => handlePlayerSort("demos")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Demos<PlayerSortIcon column="demos" /></th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Record</th>
+                  <th onClick={() => handlePlayerSort("2sU")} style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>2sU<PlayerSortIcon column="2sU" /></th>
+                  <th onClick={() => handlePlayerSort("3sU")} style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>3sU<PlayerSortIcon column="3sU" /></th>
                 </tr>
               </thead>
               <tbody>
                 {sortedPlayers.map((player) => (
                   <tr key={player.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                     <td style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "#ffffff" }}>{player.name}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem", color: "#ffffff" }}>{player.fpts}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "rgba(255,255,255,0.8)", fontSize: "0.9rem" }}>{player.avg}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "rgba(255,255,255,0.8)", fontSize: "0.9rem" }}>{player.last}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.goals}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.shots}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.saves}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.assists}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.demos}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.8)" }}>{player.record}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player["2sU"]}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player["3sU"]}</td>
                   </tr>
                 ))}
               </tbody>
