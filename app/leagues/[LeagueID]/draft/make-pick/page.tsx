@@ -221,6 +221,7 @@ export default function MakePickPage() {
               <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Rank</th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Team</th>
+                <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Action</th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Fpts LS</th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Avg LS</th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Goals</th>
@@ -229,7 +230,6 @@ export default function MakePickPage() {
                 <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Assists</th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Demos</th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Record</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -254,31 +254,7 @@ export default function MakePickPage() {
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
-                    {team.fptsLS}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                    {team.avgLS}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                    {team.goals}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                    {team.shots}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                    {team.saves}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                    {team.assists}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                    {team.demos}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                    {team.record}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "left" }}>
                     <button
                       onClick={() => handlePickTeam(team)}
                       style={{
@@ -304,6 +280,30 @@ export default function MakePickPage() {
                     >
                       Pick
                     </button>
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
+                    {team.fptsLS}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                    {team.avgLS}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.goals}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.shots}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.saves}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.assists}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    {team.demos}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                    {team.record}
                   </td>
                 </tr>
               ))}

@@ -50,6 +50,10 @@ export default function MyRosterPage() {
     router.push(`/leagues/${params.LeagueID}/my-roster/${params.managerId}/schedule`);
   };
 
+  const handleTransactionsClick = () => {
+    router.push(`/leagues/${params.LeagueID}/my-roster/${params.managerId}/transactions`);
+  };
+
   return (
     <>
       {/* Page Header */}
@@ -70,6 +74,21 @@ export default function MyRosterPage() {
             }}
           >
             Schedule
+          </button>
+          <button
+            onClick={handleTransactionsClick}
+            style={{
+              backgroundColor: "var(--accent)",
+              color: "#1a1a2e",
+              padding: "0.5rem 1.5rem",
+              borderRadius: "2rem",
+              fontWeight: 700,
+              fontSize: "1rem",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            Transactions
           </button>
         </div>
       </div>
