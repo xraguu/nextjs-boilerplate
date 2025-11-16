@@ -20,7 +20,9 @@ const otherManagers = [
 ];
 
 // Mock roster data generator
+// Static values to prevent hydration errors (no Math.random())
 const generateMockRoster = (manager: typeof otherManagers[0]) => {
+  const managerIndex = otherManagers.findIndex(m => m.id === manager.id);
   return {
     managerName: manager.name,
     teamName: manager.teamName,
@@ -30,15 +32,15 @@ const generateMockRoster = (manager: typeof otherManagers[0]) => {
     currentWeek: 3,
     lastMatchup: {
       myTeam: manager.teamName,
-      myScore: Math.floor(Math.random() * 50 + 150),
-      opponent: otherManagers[Math.floor(Math.random() * otherManagers.length)].teamName,
-      opponentScore: Math.floor(Math.random() * 50 + 150)
+      myScore: 165 + managerIndex * 3,
+      opponent: otherManagers[(managerIndex + 3) % otherManagers.length].teamName,
+      opponentScore: 170 - managerIndex * 3
     },
     currentMatchup: {
       myTeam: manager.teamName,
-      myScore: Math.floor(Math.random() * 50 + 150),
-      opponent: otherManagers[Math.floor(Math.random() * otherManagers.length)].teamName,
-      opponentScore: Math.floor(Math.random() * 50 + 150)
+      myScore: 175 + managerIndex * 2,
+      opponent: otherManagers[(managerIndex + 5) % otherManagers.length].teamName,
+      opponentScore: 180 - managerIndex * 2
     },
     teams: [
       // 2v2 Slots
@@ -113,13 +115,14 @@ export default function OpponentsPage() {
     const teamId = `${leagueId}${name.replace(/\s+/g, "")}`;
     const team = TEAMS.find(t => t.id === teamId);
     if (team) {
+      const nameHash = (team.name?.length ?? 5);
       setSelectedTeam({
         ...team,
-        fpts: Math.floor(Math.random() * 100) + 400,
-        avg: Math.floor(Math.random() * 30) + 40,
-        last: Math.floor(Math.random() * 30) + 40,
-        rank: Math.floor(Math.random() * 10) + 1,
-        record: `${Math.floor(Math.random() * 8) + 2}-${Math.floor(Math.random() * 3)}`,
+        fpts: 450 + (nameHash % 50),
+        avg: 55 + (nameHash % 15),
+        last: 50 + (nameHash % 20),
+        rank: (nameHash % 10) + 1,
+        record: `${7 + (nameHash % 3)}-${1 + (nameHash % 3)}`,
         status: "free-agent"
       });
       setShowModal(true);
@@ -132,7 +135,7 @@ export default function OpponentsPage() {
       <TeamModal
         team={showModal && selectedTeam ? {
           ...selectedTeam,
-          rosteredBy: Math.random() > 0.5 ? { rosterName: "Pixies", managerName: "Crazy" } : undefined
+          rosteredBy: (selectedTeam.rank ?? 0) % 2 === 0 ? { rosterName: "Pixies", managerName: "Crazy" } : undefined
         } : null}
         onClose={() => setShowModal(false)}
       />

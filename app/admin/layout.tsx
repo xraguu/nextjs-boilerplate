@@ -1,0 +1,215 @@
+"use client";
+
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+
+// TODO: Replace this with actual Discord OAuth authentication
+// This is a placeholder auth check - will need to integrate with:
+// - Discord OAuth flow (app/api/auth/signin/route.ts)
+// - Session management (consider next-auth or custom solution)
+// - User role checking (add 'role' field to User interface in lib/users.ts)
+const checkIsAdmin = (): boolean => {
+  // PLACEHOLDER: For now, allow access to everyone
+  // In production, this should check:
+  // 1. User session exists
+  // 2. User has admin role/permissions
+  // 3. Maybe check against a whitelist of Discord IDs
+  return true; // TODO: Implement real auth check
+};
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const isAdmin = checkIsAdmin();
+
+  // If user is not an admin, show access denied message
+  if (!isAdmin) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "2rem",
+        }}
+      >
+        <div
+          className="card"
+          style={{
+            maxWidth: "500px",
+            textAlign: "center",
+            padding: "3rem 2rem",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "2rem",
+              fontWeight: 700,
+              color: "var(--accent)",
+              marginBottom: "1rem",
+            }}
+          >
+            Access Denied
+          </h1>
+          <p
+            style={{
+              fontSize: "1.1rem",
+              color: "var(--text-muted)",
+              marginBottom: "2rem",
+              lineHeight: 1.6,
+            }}
+          >
+            You do not have permission to access the admin control panel.
+            <br />
+            This area is restricted to authorized administrators only.
+          </p>
+          <Link
+            href="/"
+            className="btn btn-primary"
+            style={{
+              display: "inline-block",
+              padding: "0.75rem 2rem",
+              fontSize: "1rem",
+            }}
+          >
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Admin users see the admin panel
+  const pathname = usePathname();
+
+  const adminNavItems = [
+    { label: "Dashboard", path: "/admin", icon: "📊" },
+    { label: "Manage Leagues", path: "/admin/leagues", icon: "🏆" },
+    { label: "Lock Lineups", path: "/admin/lock-lineups", icon: "🔒" },
+    { label: "Process Waivers", path: "/admin/waivers", icon: "📋" },
+    { label: "Recompute Stats", path: "/admin/stats", icon: "🔢" },
+    { label: "Manage Users", path: "/admin/users", icon: "👥" },
+    { label: "Settings", path: "/admin/settings", icon: "⚙️" },
+    { label: "Database Tools", path: "/admin/database", icon: "💾" },
+  ];
+
+  return (
+    <div style={{ display: "flex", minHeight: "100vh" }}>
+      {/* Sidebar Navigation */}
+      <nav
+        style={{
+          width: "260px",
+          background: "var(--bg-surface)",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+          padding: "2rem 0",
+          position: "sticky",
+          top: 0,
+          height: "100vh",
+          overflowY: "auto",
+        }}
+      >
+        {/* Logo/Title */}
+        <div style={{ padding: "0 1.5rem", marginBottom: "2rem" }}>
+          <h2
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: 700,
+              color: "var(--accent)",
+              marginBottom: "0.25rem",
+            }}
+          >
+            Admin Panel
+          </h2>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+            MLE Fantasy
+          </p>
+        </div>
+
+        {/* Navigation Links */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+          {adminNavItems.map((item) => {
+            const isActive = pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  padding: "0.75rem 1.5rem",
+                  fontSize: "0.95rem",
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? "var(--accent)" : "var(--text-main)",
+                  background: isActive ? "rgba(242, 182, 50, 0.1)" : "transparent",
+                  borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
+                  transition: "all 0.2s ease",
+                  textDecoration: "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
+              >
+                <span style={{ fontSize: "1.25rem" }}>{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Back to Home Link */}
+        <div style={{ padding: "2rem 1.5rem 0 1.5rem", borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "2rem" }}>
+          <Link
+            href="/"
+            className="btn btn-ghost"
+            style={{
+              width: "100%",
+              padding: "0.75rem 1rem",
+              fontSize: "0.9rem",
+              display: "block",
+              textAlign: "center",
+            }}
+          >
+            ← Back to Home
+          </Link>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div style={{ flex: 1, padding: "2rem", overflowY: "auto" }}>
+        {/* Page Header */}
+        <div style={{ marginBottom: "2rem" }}>
+          <h1
+            style={{
+              fontSize: "2rem",
+              fontWeight: 700,
+              color: "var(--text-main)",
+              marginBottom: "0.25rem",
+            }}
+          >
+            {adminNavItems.find((item) => item.path === pathname)?.label || "Admin Control Panel"}
+          </h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+            Manage leagues, users, and system settings
+          </p>
+        </div>
+
+        {/* Page Content */}
+        <div style={{ maxWidth: "1400px" }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}

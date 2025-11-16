@@ -177,7 +177,7 @@ export default function DraftPage() {
       <TeamModal
         team={showModal && selectedTeam ? {
           ...selectedTeam,
-          rosteredBy: Math.random() > 0.5 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
+          rosteredBy: (selectedTeam.rank ?? 0) % 2 === 0 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
         } : null}
         onClose={() => setShowModal(false)}
       />

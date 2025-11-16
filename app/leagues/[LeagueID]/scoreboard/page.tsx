@@ -7,19 +7,20 @@ import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
 // Generate weekly stats for modal
+// Static values to prevent hydration errors (no Math.random())
 const generateWeeklyStats = (teamName: string) => {
   return Array.from({ length: 10 }, (_, i) => ({
     week: i + 1,
-    opponent: TEAMS[Math.floor(Math.random() * TEAMS.length)].name,
-    fpts: Math.floor(Math.random() * 25 + 30),
-    avg: Math.floor(Math.random() * 20 + 35),
-    last: Math.floor(Math.random() * 25 + 30),
-    goals: Math.floor(Math.random() * 8 + 5),
-    shots: Math.floor(Math.random() * 30 + 50),
-    saves: Math.floor(Math.random() * 15 + 10),
-    assists: Math.floor(Math.random() * 6 + 4),
-    demos: Math.floor(Math.random() * 4 + 2),
-    record: `${Math.floor(Math.random() * 2)}-${Math.floor(Math.random() * 2)}`,
+    opponent: TEAMS[(i * 7) % TEAMS.length].name,
+    fpts: 48 - i * 1.8,
+    avg: 50 - i * 1.5,
+    last: 48 - i * 1.8,
+    goals: 12 - i * 0.7,
+    shots: 75 - i * 2.5,
+    saves: 22 - i * 1.2,
+    assists: 9 - i * 0.5,
+    demos: 5 - i * 0.3,
+    record: `${1 + (i % 2)}-${1 - (i % 2)}`,
   }));
 };
 
@@ -27,19 +28,20 @@ type WeeklySortColumn = "week" | "fpts" | "avg" | "last" | "goals" | "shots" | "
 type SortDirection = "asc" | "desc";
 
 // Mock player data for rosters
+// Static values to prevent hydration errors (no Math.random())
 const generatePlayers = (leagueId: string, count: number) => {
   const leagueTeams = TEAMS.filter(t => t.leagueId === leagueId);
   return Array.from({ length: count }, (_, i) => {
-    const team = leagueTeams[Math.floor(Math.random() * leagueTeams.length)];
+    const team = leagueTeams[i % leagueTeams.length];
     const positions = ["2s", "2s", "3s", "3s", "FLX", "BE", "BE", "BE"];
     return {
       id: `player-${i}`,
       name: team.name,
       team: team,
       position: positions[i] || "BE",
-      points: i < 5 ? Math.floor(Math.random() * 20 + 35) : 0,
-      opponent: leagueTeams[Math.floor(Math.random() * leagueTeams.length)],
-      opponentRank: Math.floor(Math.random() * 16 + 1),
+      points: i < 5 ? (50 - i * 3) : 0,
+      opponent: leagueTeams[(i * 3) % leagueTeams.length],
+      opponentRank: (i * 5 % 16) + 1,
       hasPlayed: i < 5
     };
   });
@@ -243,7 +245,7 @@ export default function ScoreboardPage() {
       fpts: 425,
       avg: 53,
       last: 52,
-      rank: Math.floor(Math.random() * 10 + 1),
+      rank: ((player.team.name?.length ?? 5) % 10) + 1,
       record: "8-2",
       status: "free-agent"
     });
@@ -283,7 +285,7 @@ export default function ScoreboardPage() {
         <TeamModal
           team={showModal && selectedTeam ? {
             ...selectedTeam,
-            rosteredBy: Math.random() > 0.5 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
+            rosteredBy: (selectedTeam.rank ?? 0) % 2 === 0 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
           } : null}
           onClose={() => setShowModal(false)}
         />
@@ -604,7 +606,7 @@ export default function ScoreboardPage() {
       <TeamModal
         team={showModal && selectedTeam ? {
           ...selectedTeam,
-          rosteredBy: Math.random() > 0.5 ? { rosterName: "Whiffers", managerName: "Omegz" } : undefined
+          rosteredBy: (selectedTeam.rank ?? 0) % 2 === 0 ? { rosterName: "Whiffers", managerName: "Omegz" } : undefined
         } : null}
         onClose={() => setShowModal(false)}
       />

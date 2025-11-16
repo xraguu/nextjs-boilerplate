@@ -48,16 +48,17 @@ const mockSchedule = {
 };
 
 // Generate schedule for remaining managers (simplified for demo)
+// Static values to prevent hydration errors (no Math.random())
 for (let i = 3; i <= 12; i++) {
   mockSchedule[i] = Array.from({ length: 10 }, (_, weekIndex) => ({
     week: weekIndex + 1,
-    result: weekIndex < 2 ? (Math.random() > 0.5 ? "W" : "L") : null,
-    myScore: weekIndex < 2 ? Math.floor(Math.random() * 50) + 150 : null,
-    oppScore: weekIndex < 2 ? Math.floor(Math.random() * 50) + 150 : null,
-    opponent: mockManagers[Math.floor(Math.random() * 12)].teamName,
-    oppRecord: `${Math.floor(Math.random() * 3)}-${Math.floor(Math.random() * 3)}`,
-    oppPlace: `${Math.floor(Math.random() * 9) + 1}th`,
-    manager: mockManagers[Math.floor(Math.random() * 12)].name,
+    result: weekIndex < 2 ? ((i + weekIndex) % 2 === 0 ? "W" : "L") : null,
+    myScore: weekIndex < 2 ? 165 + (i * 3) + weekIndex * 5 : null,
+    oppScore: weekIndex < 2 ? 170 - (i * 2) - weekIndex * 3 : null,
+    opponent: mockManagers[(i + weekIndex * 3) % 12].teamName,
+    oppRecord: `${(i + weekIndex) % 3}-${(2 - ((i + weekIndex) % 3))}`,
+    oppPlace: `${((i + weekIndex) % 9) + 1}th`,
+    manager: mockManagers[(i + weekIndex * 5) % 12].name,
   }));
 }
 

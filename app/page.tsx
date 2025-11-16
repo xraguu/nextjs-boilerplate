@@ -181,6 +181,7 @@ const mockGlobalLeaderboard = [
 ];
 
 // Top performing teams - using actual MLE teams
+// Static values to prevent hydration errors (no Math.random())
 const mockTopTeams = TEAMS.slice(0, 10).map((team, index) => ({
   ...team,
   rank: index + 1,
@@ -195,24 +196,22 @@ const mockTopTeams = TEAMS.slice(0, 10).map((team, index) => ({
       ? "Academy"
       : "Foundation",
   division: team.leagueId,
-  weekPoints: Math.floor(Math.random() * 10 + 36) + 0.5,
-  totalPoints: Math.floor(Math.random() * 100 + 300) + 0.5,
-  wins: Math.floor(Math.random() * 5 + 3),
-  losses: Math.floor(Math.random() * 5 + 1),
+  weekPoints: 42.5 - index * 0.5,
+  totalPoints: 385.5 - index * 8.5,
+  wins: 7 - Math.floor(index / 2),
+  losses: 1 + Math.floor(index / 3),
   gameScore: 18 - index,
-  ppg: Math.floor(Math.random() * 20 + 35) + 0.1,
-  score: Math.floor(Math.random() * 25 + 30),
-  fpts: Math.floor(Math.random() * 100 + 300),
-  avg: Math.floor(Math.random() * 20 + 35),
-  last: Math.floor(Math.random() * 25 + 30),
-  goals: Math.floor(Math.random() * 50 + 100),
-  shots: Math.floor(Math.random() * 200 + 600),
-  saves: Math.floor(Math.random() * 100 + 150),
-  assists: Math.floor(Math.random() * 40 + 60),
-  demos: Math.floor(Math.random() * 30 + 30),
-  record: `${Math.floor(Math.random() * 6 + 3)}-${Math.floor(
-    Math.random() * 6 + 3
-  )}`,
+  ppg: 48.1 - index * 1.2,
+  score: 50 - index * 2,
+  fpts: 380 - index * 8,
+  avg: 50 - index * 1.5,
+  last: 48 - index * 1.8,
+  goals: 140 - index * 4,
+  shots: 750 - index * 15,
+  saves: 220 - index * 7,
+  assists: 95 - index * 3.5,
+  demos: 55 - index * 2.5,
+  record: `${7 - Math.floor(index / 2)}-${1 + Math.floor(index / 2)}`,
   status: "free-agent" as const,
 }));
 
@@ -228,7 +227,7 @@ export default function HomePage() {
       <TeamModal
         team={showModal && selectedTeam ? {
           ...selectedTeam,
-          rosteredBy: Math.random() > 0.5 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
+          rosteredBy: (selectedTeam.rank ?? 0) % 2 === 0 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
         } : null}
         onClose={() => setShowModal(false)}
       />
@@ -247,11 +246,24 @@ export default function HomePage() {
         >
           {/* Left: Logo and Title */}
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-            <img
-              src="/mle-logo.png"
-              alt="MLE Logo"
-              style={{ width: "80px", height: "80px" }}
-            />
+            <Link
+              href="/admin"
+              style={{
+                display: "block",
+                cursor: "pointer",
+                transition: "opacity 0.2s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              <Image
+                src="/mle-logo.png"
+                alt="MLE Logo"
+                width={80}
+                height={80}
+                style={{ display: "block" }}
+              />
+            </Link>
             <div>
               <h1
                 style={{

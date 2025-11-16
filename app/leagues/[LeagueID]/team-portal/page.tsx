@@ -6,25 +6,27 @@ import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
 // Mock team stats and availability
+// Static values to prevent hydration errors (no Math.random())
 const mockTeamData = TEAMS.map((team, index) => ({
   ...team,
   rank: index + 1,
-  fpts: Math.floor(Math.random() * 200 + 300), // Random points between 300-500
-  avg: Math.floor(Math.random() * 20 + 35), // Random avg between 35-55
-  last: Math.floor(Math.random() * 25 + 30), // Random last between 30-55
-  goals: Math.floor(Math.random() * 50 + 100),
-  shots: Math.floor(Math.random() * 200 + 600),
-  saves: Math.floor(Math.random() * 100 + 150),
-  assists: Math.floor(Math.random() * 40 + 60),
-  demos: Math.floor(Math.random() * 30 + 30),
-  record: `${Math.floor(Math.random() * 6 + 4)}-${Math.floor(Math.random() * 6 + 4)}`,
-  status: Math.random() > 0.7 ? "waiver" : "free-agent", // 30% on waivers, 70% free agents
+  fpts: 480 - index * 2,
+  avg: 50 - index * 0.15,
+  last: 48 - index * 0.18,
+  goals: 140 - index * 0.4,
+  shots: 750 - index * 1.5,
+  saves: 230 - index * 0.8,
+  assists: 95 - index * 0.35,
+  demos: 55 - index * 0.25,
+  record: `${9 - Math.floor(index / 10)}-${4 + Math.floor(index / 10)}`,
+  status: index % 10 < 3 ? "waiver" : "free-agent",
 }));
 
 type SortColumn = "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos";
 type SortDirection = "asc" | "desc";
 
 // Mock roster data for the waiver modal
+// Static values to prevent hydration errors (no Math.random())
 const mockRoster = {
   managerName: "xenn",
   teamName: "Fantastic Ballers",
@@ -33,15 +35,15 @@ const mockRoster = {
     ...team,
     slot: index < 2 ? "2s" : index < 4 ? "3s" : index === 4 ? "FLX" : "BE",
     fprk: index + 1,
-    fpts: Math.floor(Math.random() * 100 + 300),
-    avg: Math.floor(Math.random() * 20 + 35),
-    last: Math.floor(Math.random() * 25 + 30),
-    goals: Math.floor(Math.random() * 50 + 100),
-    shots: Math.floor(Math.random() * 200 + 600),
-    saves: Math.floor(Math.random() * 100 + 150),
-    assists: Math.floor(Math.random() * 40 + 60),
-    demos: Math.floor(Math.random() * 30 + 30),
-    teamRecord: `${Math.floor(Math.random() * 6 + 3)}-${Math.floor(Math.random() * 6 + 3)}`,
+    fpts: 380 - index * 10,
+    avg: 50 - index * 2,
+    last: 48 - index * 2.5,
+    goals: 140 - index * 5,
+    shots: 750 - index * 20,
+    saves: 220 - index * 10,
+    assists: 95 - index * 5,
+    demos: 55 - index * 3,
+    teamRecord: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
   }))
 };
 
@@ -118,7 +120,7 @@ export default function TeamPortalPage() {
       <TeamModal
         team={showModal && selectedTeam ? {
           ...selectedTeam,
-          rosteredBy: Math.random() > 0.5 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
+          rosteredBy: (selectedTeam.rank ?? 0) % 2 === 0 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
         } : null}
         onClose={() => setShowModal(false)}
       />
