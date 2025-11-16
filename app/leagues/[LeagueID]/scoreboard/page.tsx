@@ -177,6 +177,18 @@ export default function ScoreboardPage() {
   const leagueId = params.LeagueID as string;
 
   const [currentWeek, setCurrentWeek] = useState(3);
+
+  // Helper functions for week navigation (weeks 1-10)
+  const getNextWeek = (week: number) => {
+    if (week >= 10) return 10;
+    return week + 1;
+  };
+
+  const getPrevWeek = (week: number) => {
+    if (week <= 1) return 1;
+    return week - 1;
+  };
+
   const [selectedMatchup, setSelectedMatchup] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
@@ -268,8 +280,13 @@ export default function ScoreboardPage() {
     return (
       <>
         {/* Team Stats Modal */}
-        <TeamModal team={showModal ? selectedTeam : null} onClose={() => setShowModal(false)} />
-
+        <TeamModal
+          team={showModal && selectedTeam ? {
+            ...selectedTeam,
+            rosteredBy: Math.random() > 0.5 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
+          } : null}
+          onClose={() => setShowModal(false)}
+        />
 
         <div style={{ marginBottom: "2rem" }}>
           <button
@@ -584,8 +601,13 @@ export default function ScoreboardPage() {
   return (
     <>
       {/* Team Stats Modal */}
-      <TeamModal team={showModal ? selectedTeam : null} onClose={() => setShowModal(false)} />
-
+      <TeamModal
+        team={showModal && selectedTeam ? {
+          ...selectedTeam,
+          rosteredBy: Math.random() > 0.5 ? { rosterName: "Whiffers", managerName: "Omegz" } : undefined
+        } : null}
+        onClose={() => setShowModal(false)}
+      />
 
       <div style={{
         display: "flex",
@@ -602,7 +624,7 @@ export default function ScoreboardPage() {
           gap: "1rem"
         }}>
           <button
-            onClick={() => setCurrentWeek(Math.max(1, currentWeek - 1))}
+            onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
             disabled={currentWeek === 1}
             style={{
               background: "transparent",
@@ -612,7 +634,7 @@ export default function ScoreboardPage() {
               fontSize: "1rem"
             }}
           >
-            ◄ Week {currentWeek - 1}
+            ◄ Week {getPrevWeek(currentWeek)}
           </button>
 
           <span style={{
@@ -625,16 +647,17 @@ export default function ScoreboardPage() {
           </span>
 
           <button
-            onClick={() => setCurrentWeek(currentWeek + 1)}
+            onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
+            disabled={currentWeek === 10}
             style={{
               background: "transparent",
               border: "none",
-              color: "rgba(255,255,255,0.7)",
-              cursor: "pointer",
+              color: currentWeek === 10 ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.7)",
+              cursor: currentWeek === 10 ? "not-allowed" : "pointer",
               fontSize: "1rem"
             }}
           >
-            Week {currentWeek + 1} ►
+            Week {getNextWeek(currentWeek)} ►
           </button>
         </div>
       </div>

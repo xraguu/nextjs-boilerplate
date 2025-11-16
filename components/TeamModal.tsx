@@ -18,6 +18,10 @@ interface TeamModalProps {
     rank?: number;
     record?: string;
     status?: string;
+    rosteredBy?: {
+      rosterName: string;
+      managerName: string;
+    };
   } | null;
   onClose: () => void;
 }
@@ -194,19 +198,30 @@ export default function TeamModal({ team, onClose }: TeamModalProps) {
                 </div>
               </div>
             )}
-            {team.status && (
-              <span style={{
-                display: "inline-block",
-                padding: "0.35rem 0.75rem",
-                borderRadius: "4px",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                backgroundColor: "rgba(255, 255, 255, 0.2)",
-                color: "#ffffff",
-                backdropFilter: "blur(4px)"
-              }}>
-                {team.status === "free-agent" ? "Free Agent" : "On Waivers"}
-              </span>
+            {(team.status || team.rosteredBy) && (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span style={{
+                  display: "inline-block",
+                  padding: "0.35rem 0.75rem",
+                  borderRadius: "4px",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                  color: "#ffffff",
+                  backdropFilter: "blur(4px)"
+                }}>
+                  {team.rosteredBy ? "Rostered" : team.status === "free-agent" ? "Free Agent" : "On Waivers"}
+                </span>
+                {team.rosteredBy && (
+                  <span style={{
+                    fontSize: "0.9rem",
+                    color: "rgba(255, 255, 255, 0.9)",
+                    fontWeight: 600
+                  }}>
+                    | {team.rosteredBy.rosterName} ({team.rosteredBy.managerName})
+                  </span>
+                )}
+              </div>
             )}
           </div>
           <button

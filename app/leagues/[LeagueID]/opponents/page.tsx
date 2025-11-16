@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
@@ -65,8 +65,45 @@ export default function OpponentsPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
 
+  // Helper functions for week navigation (weeks 1-10)
+  const getNextWeek = (week: number) => {
+    if (week >= 10) return 10;
+    return week + 1;
+  };
+
+  const getPrevWeek = (week: number) => {
+    if (week <= 1) return 1;
+    return week - 1;
+  };
+
+  // Stats tab sorting state
+  const [statsSortColumn, setStatsSortColumn] = useState<"fprk" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos">("fprk");
+  const [statsSortDirection, setStatsSortDirection] = useState<"asc" | "desc">("asc");
+
   const selectedManager = otherManagers.find(m => m.id === selectedManagerId) || otherManagers[0];
   const roster = generateMockRoster(selectedManager);
+
+  const handleStatsSort = (column: typeof statsSortColumn) => {
+    if (statsSortColumn === column) {
+      setStatsSortDirection(statsSortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setStatsSortColumn(column);
+      setStatsSortDirection("asc");
+    }
+  };
+
+  // Sorted roster teams for stats tab
+  const sortedRosterTeams = useMemo(() => {
+    return [...roster.teams].sort((a, b) => {
+      const aValue = a[statsSortColumn];
+      const bValue = b[statsSortColumn];
+      if (statsSortDirection === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [statsSortColumn, statsSortDirection, roster.teams]);
 
   const handleTeamClick = (teamName: string) => {
     // Parse team name like "Flames CL" to get "CL" and "Flames"
@@ -92,7 +129,13 @@ export default function OpponentsPage() {
   return (
     <>
       {/* Team Modal */}
-      <TeamModal team={showModal ? selectedTeam : null} onClose={() => setShowModal(false)} />
+      <TeamModal
+        team={showModal && selectedTeam ? {
+          ...selectedTeam,
+          rosteredBy: Math.random() > 0.5 ? { rosterName: "Pixies", managerName: "Crazy" } : undefined
+        } : null}
+        onClose={() => setShowModal(false)}
+      />
 
       {/* Page Header with Dropdown */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
@@ -279,21 +322,23 @@ export default function OpponentsPage() {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
-                onClick={() => setCurrentWeek(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+                disabled={currentWeek === 1}
               >
-                ◄ Week {currentWeek - 1}
+                ◄ Week {getPrevWeek(currentWeek)}
               </button>
               <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
                 Week {currentWeek}
               </span>
               <button
-                onClick={() => setCurrentWeek(prev => prev + 1)}
+                onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+                disabled={currentWeek === 10}
               >
-                Week {currentWeek + 1} ►
+                Week {getNextWeek(currentWeek)} ►
               </button>
             </div>
             <a
@@ -402,21 +447,23 @@ export default function OpponentsPage() {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
-                onClick={() => setCurrentWeek(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+                disabled={currentWeek === 1}
               >
-                ◄ Week {currentWeek - 1}
+                ◄ Week {getPrevWeek(currentWeek)}
               </button>
               <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
                 Week {currentWeek}
               </span>
               <button
-                onClick={() => setCurrentWeek(prev => prev + 1)}
+                onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+                disabled={currentWeek === 10}
               >
-                Week {currentWeek + 1} ►
+                Week {getNextWeek(currentWeek)} ►
               </button>
             </div>
           </div>
@@ -428,22 +475,137 @@ export default function OpponentsPage() {
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Rank</th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fprk</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fpts</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Avg</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Last</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Goals</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Shots</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Saves</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Assists</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Demos</th>
+                  <th
+                    onClick={() => handleStatsSort("fprk")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Fprk {statsSortColumn === "fprk" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("fpts")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Fpts {statsSortColumn === "fpts" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("avg")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Avg {statsSortColumn === "avg" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("last")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Last {statsSortColumn === "last" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("goals")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Goals {statsSortColumn === "goals" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("shots")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Shots {statsSortColumn === "shots" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("saves")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Saves {statsSortColumn === "saves" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("assists")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Assists {statsSortColumn === "assists" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("demos")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Demos {statsSortColumn === "demos" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
                 </tr>
               </thead>
               <tbody>
-                {roster.teams
-                  .sort((a, b) => a.fprk - b.fprk)
-                  .map((team, index) => (
+                {sortedRosterTeams.map((team, index) => (
                     <tr
                       key={index}
                       style={{

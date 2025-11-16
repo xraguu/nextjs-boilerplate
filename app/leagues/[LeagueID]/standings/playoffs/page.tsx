@@ -280,9 +280,9 @@ export default function PlayoffsPage() {
     router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(manager)}`);
   };
 
-  const handleMatchupClick = () => {
-    // Navigate to matchup details page when implemented
-    console.log("Matchup clicked");
+  const handleMatchupClick = (matchupId: string, week: number = 14) => {
+    // Navigate to scoreboard matchup page
+    router.push(`/leagues/${leagueId}/scoreboard?week=${week}&matchup=${matchupId}`);
   };
 
   return (
@@ -358,30 +358,6 @@ export default function PlayoffsPage() {
                 leagueId={leagueId}
                 onManagerClick={handleManagerClick}
               />
-              <div style={{ display: "flex", justifyContent: "center", margin: "0.5rem 0" }}>
-                <button
-                  onClick={handleMatchupClick}
-                  style={{
-                    background: "rgba(255,255,255,0.15)",
-                    color: "rgba(255,255,255,0.7)",
-                    padding: "0.5rem 1.5rem",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-                  }}
-                >
-                  Matchup
-                </button>
-              </div>
               <TeamCard
                 seed={mockPlayoffData.semiFinals[1].seed}
                 teamName={mockPlayoffData.semiFinals[1].teamName}
@@ -406,30 +382,6 @@ export default function PlayoffsPage() {
                 leagueId={leagueId}
                 onManagerClick={handleManagerClick}
               />
-              <div style={{ display: "flex", justifyContent: "center", margin: "0.5rem 0" }}>
-                <button
-                  onClick={handleMatchupClick}
-                  style={{
-                    background: "rgba(255,255,255,0.15)",
-                    color: "rgba(255,255,255,0.7)",
-                    padding: "0.5rem 1.5rem",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-                  }}
-                >
-                  Matchup
-                </button>
-              </div>
               <TeamCard
                 seed={mockPlayoffData.semiFinals2[1].seed}
                 teamName={mockPlayoffData.semiFinals2[1].teamName}
@@ -467,30 +419,6 @@ export default function PlayoffsPage() {
                 leagueId={leagueId}
                 onManagerClick={handleManagerClick}
               />
-              <div style={{ display: "flex", justifyContent: "center", margin: "0.5rem 0" }}>
-                <button
-                  onClick={handleMatchupClick}
-                  style={{
-                    background: "rgba(255,255,255,0.15)",
-                    color: "rgba(255,255,255,0.7)",
-                    padding: "0.5rem 1.5rem",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-                  }}
-                >
-                  Matchup
-                </button>
-              </div>
               <TeamCard
                 seed={mockPlayoffData.grandFinals[1].seed}
                 teamName={mockPlayoffData.grandFinals[1].teamName}

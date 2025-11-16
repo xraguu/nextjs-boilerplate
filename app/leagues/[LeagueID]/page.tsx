@@ -129,6 +129,17 @@ export default function MyRosterPage() {
   const params = useParams();
   const roster = mockRoster;
   const [currentWeek, setCurrentWeek] = useState(roster.currentWeek);
+
+  // Helper functions for week navigation (weeks 1-10)
+  const getNextWeek = (week: number) => {
+    if (week >= 10) return 10;
+    return week + 1;
+  };
+
+  const getPrevWeek = (week: number) => {
+    if (week <= 1) return 1;
+    return week - 1;
+  };
   const [activeTab, setActiveTab] = useState<"lineup" | "stats" | "waivers" | "trades">("lineup");
   const [selectedTeam, setSelectedTeam] = useState<typeof selectedTeams[0] | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -137,6 +148,34 @@ export default function MyRosterPage() {
   const [showWaiverModal, setShowWaiverModal] = useState(false);
   const [selectedWaiverTeam, setSelectedWaiverTeam] = useState<typeof selectedTeams[0] | null>(null);
   const [selectedDropTeam, setSelectedDropTeam] = useState<string | null>(null);
+  const [showDropModal, setShowDropModal] = useState(false);
+  const [teamToDrop, setTeamToDrop] = useState<typeof selectedTeams[0] | null>(null);
+
+  // Stats tab sorting state
+  const [statsSortColumn, setStatsSortColumn] = useState<"fprk" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos">("fprk");
+  const [statsSortDirection, setStatsSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleStatsSort = (column: typeof statsSortColumn) => {
+    if (statsSortColumn === column) {
+      setStatsSortDirection(statsSortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setStatsSortColumn(column);
+      setStatsSortDirection("asc");
+    }
+  };
+
+  // Sorted roster teams for stats tab
+  const sortedRosterTeams = useMemo(() => {
+    return [...roster.teams].sort((a, b) => {
+      const aValue = a[statsSortColumn];
+      const bValue = b[statsSortColumn];
+      if (statsSortDirection === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [statsSortColumn, statsSortDirection]);
 
   const handleScheduleClick = () => {
     router.push(`/leagues/${params.LeagueID}/schedule`);
@@ -149,7 +188,13 @@ export default function MyRosterPage() {
   return (
     <>
       {/* Team Stats Modal */}
-      <TeamModal team={showModal ? selectedTeam : null} onClose={() => setShowModal(false)} />
+      <TeamModal
+        team={showModal && selectedTeam ? {
+          ...selectedTeam,
+          rosteredBy: Math.random() > 0.5 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
+        } : null}
+        onClose={() => setShowModal(false)}
+      />
 
       {/* Trade Modal */}
       {showTradeModal && selectedTrade && (
@@ -481,7 +526,7 @@ export default function MyRosterPage() {
             </button>
 
             {/* Header - Team Info */}
-            <div style={{ padding: "1.5rem 2rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+            <div style={{ padding: "3.5rem 2rem 1.5rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
               <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)" }}>
                 {roster.teamName}
               </div>
@@ -620,6 +665,210 @@ export default function MyRosterPage() {
         </div>
       )}
 
+      {/* Drop Modal */}
+      {showDropModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 80,
+          }}
+          onClick={() => setShowDropModal(false)}
+        >
+          <div
+            style={{
+              width: "min(900px, 92vw)",
+              background: "linear-gradient(135deg, #1a2332 0%, #0f1419 100%)",
+              border: "2px solid rgba(242, 182, 50, 0.3)",
+              borderRadius: "16px",
+              padding: "0",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.8)",
+              position: "relative",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowDropModal(false);
+                setTeamToDrop(null);
+              }}
+              style={{
+                position: "absolute",
+                top: "1rem",
+                left: "1rem",
+                background: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "8px",
+                width: "32px",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "var(--text-muted)",
+                fontSize: "1.2rem",
+                fontWeight: 700,
+                zIndex: 10,
+              }}
+            >
+              ×
+            </button>
+
+            {/* Confirm button */}
+            <button
+              onClick={() => {
+                if (teamToDrop) {
+                  alert(`Dropped ${teamToDrop.name}`);
+                  setShowDropModal(false);
+                  setTeamToDrop(null);
+                } else {
+                  alert("Please select a team to drop");
+                }
+              }}
+              style={{
+                position: "absolute",
+                top: "1rem",
+                right: "1rem",
+                background: "linear-gradient(135deg, var(--accent) 0%, #d4a832 100%)",
+                color: "#1a1a2e",
+                fontWeight: 700,
+                padding: "0.65rem 2rem",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem",
+                boxShadow: "0 4px 12px rgba(242, 182, 50, 0.4)",
+                zIndex: 10,
+              }}
+            >
+              Confirm
+            </button>
+
+            {/* Header - Team Info */}
+            <div style={{ padding: "3.5rem 2rem 1.5rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)" }}>
+                {roster.teamName}
+              </div>
+              <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                {roster.managerName}
+              </div>
+              <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                {roster.record.wins} - {roster.record.losses}  {roster.record.place}
+              </div>
+            </div>
+
+            {/* Roster Table with Checkboxes */}
+            <div style={{ padding: "1.5rem 2rem" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid rgba(255, 255, 255, 0.2)" }}>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Rank</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fpts</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Avg</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Last</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Goals</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Shots</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Saves</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Assists</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Demos</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roster.teams.map((team, index) => (
+                      <tr
+                        key={index}
+                        style={{
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                          backgroundColor: teamToDrop?.name === team.name ? "rgba(242, 182, 50, 0.1)" : "transparent",
+                        }}
+                      >
+                        <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--accent)" }}>
+                          {team.slot}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <Image
+                              src={team.logoPath}
+                              alt={`${team.name} logo`}
+                              width={24}
+                              height={24}
+                              style={{ borderRadius: "4px" }}
+                            />
+                            <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>
+                              {team.leagueId} {team.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
+                          {team.fpts.toFixed(1)}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                          {team.avg.toFixed(1)}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                          {team.last.toFixed(1)}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {team.goals}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {team.shots}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {team.saves}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {team.assists}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
+                          {team.demos}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                          {team.teamRecord}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                          <button
+                            onClick={() => setTeamToDrop(teamToDrop?.name === team.name ? null : team)}
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              borderRadius: "6px",
+                              background: teamToDrop?.name === team.name ? "var(--accent)" : "transparent",
+                              border: `2px solid ${teamToDrop?.name === team.name ? "var(--accent)" : "rgba(255, 255, 255, 0.3)"}`,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              transition: "all 0.2s ease",
+                              padding: 0,
+                            }}
+                          >
+                            <span style={{ fontSize: "1.2rem", fontWeight: 700, color: teamToDrop?.name === team.name ? "#1a1a2e" : "transparent" }}>
+                              ✓
+                            </span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Page Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>Roster</h1>
@@ -678,6 +927,9 @@ export default function MyRosterPage() {
             <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
               <span style={{ fontWeight: 600, color: "var(--text-main)" }}>{roster.totalPoints} Fantasy Points</span>
               <span style={{ color: "var(--text-muted)", marginLeft: "1.5rem" }}>{roster.avgPoints} Avg Fantasy Points</span>
+            </div>
+            <div style={{ marginTop: "0.75rem", fontSize: "0.95rem", color: "var(--text-muted)" }}>
+              Waiver Priority: <span style={{ fontWeight: 600, color: "var(--text-main)" }}>#3</span>
             </div>
           </div>
 
@@ -771,28 +1023,38 @@ export default function MyRosterPage() {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
-                onClick={() => setCurrentWeek(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+                disabled={currentWeek === 1}
               >
-                ◄ Week {currentWeek - 1}
+                ◄ Week {getPrevWeek(currentWeek)}
               </button>
               <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
                 Week {currentWeek}
               </span>
               <button
-                onClick={() => setCurrentWeek(prev => prev + 1)}
+                onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+                disabled={currentWeek === 10}
               >
-                Week {currentWeek + 1} ►
+                Week {getNextWeek(currentWeek)} ►
               </button>
             </div>
             <div style={{ display: "flex", gap: "0.75rem" }}>
-              <button className="btn btn-primary" style={{ fontSize: "0.9rem" }}>
+              <button
+                onClick={() => router.push(`/leagues/${params.LeagueID}/team-portal`)}
+                className="btn btn-primary"
+                style={{ fontSize: "0.9rem" }}
+              >
                 + Add
               </button>
-              <button className="btn btn-ghost" style={{ fontSize: "0.9rem" }}>
+              <button
+                onClick={() => setShowDropModal(true)}
+                className="btn btn-ghost"
+                style={{ fontSize: "0.9rem" }}
+              >
                 - Drop
               </button>
             </div>
@@ -908,21 +1170,23 @@ export default function MyRosterPage() {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
-                onClick={() => setCurrentWeek(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+                disabled={currentWeek === 1}
               >
-                ◄ Week {currentWeek - 1}
+                ◄ Week {getPrevWeek(currentWeek)}
               </button>
               <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
                 Week {currentWeek}
               </span>
               <button
-                onClick={() => setCurrentWeek(prev => prev + 1)}
+                onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+                disabled={currentWeek === 10}
               >
-                Week {currentWeek + 1} ►
+                Week {getNextWeek(currentWeek)} ►
               </button>
             </div>
           </div>
@@ -934,23 +1198,137 @@ export default function MyRosterPage() {
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Rank</th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fprk</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fpts</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Avg</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Last</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Goals</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Shots</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Saves</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Assists</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Demos</th>
+                  <th
+                    onClick={() => handleStatsSort("fprk")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Fprk {statsSortColumn === "fprk" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("fpts")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Fpts {statsSortColumn === "fpts" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("avg")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Avg {statsSortColumn === "avg" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("last")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Last {statsSortColumn === "last" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("goals")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Goals {statsSortColumn === "goals" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("shots")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Shots {statsSortColumn === "shots" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("saves")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Saves {statsSortColumn === "saves" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("assists")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Assists {statsSortColumn === "assists" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th
+                    onClick={() => handleStatsSort("demos")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    Demos {statsSortColumn === "demos" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                  </th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}></th>
                 </tr>
               </thead>
               <tbody>
-                {roster.teams
-                  .sort((a, b) => a.fprk - b.fprk)
-                  .map((team, index) => (
+                {sortedRosterTeams.map((team, index) => (
                     <tr
                       key={index}
                       style={{
@@ -1027,29 +1405,6 @@ export default function MyRosterPage() {
                       <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
                         {team.teamRecord}
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
-                        <button
-                          onClick={() => {
-                            console.log("Claim button clicked", team);
-                            console.log("Setting selectedWaiverTeam and showWaiverModal");
-                            setSelectedWaiverTeam(team);
-                            setShowWaiverModal(true);
-                            console.log("Modal state updated");
-                          }}
-                          style={{
-                            background: "var(--accent)",
-                            color: "#1a1a2e",
-                            fontWeight: 600,
-                            padding: "0.5rem 1rem",
-                            borderRadius: "6px",
-                            border: "none",
-                            cursor: "pointer",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          Claim
-                        </button>
-                      </td>
                     </tr>
                   ))}
               </tbody>
@@ -1068,42 +1423,91 @@ export default function MyRosterPage() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {mockMyWaivers.pending.map((waiver) => (
-                  <div
-                    key={waiver.id}
-                    style={{
-                      background: "rgba(47, 52, 56, 0.6)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      borderRadius: "8px",
-                      padding: "1rem",
-                    }}
-                  >
+                {mockMyWaivers.pending.map((waiver) => {
+                  // Find the team being claimed - using mock data
+                  const claimingTeam = selectedTeams.find(t => t.name === "Storm Surge") || selectedTeams[1];
+                  // Find the team being dropped - using mock data
+                  const droppingTeam = selectedTeams.find(t => t.name === "Comets") || selectedTeams[2];
+
+                  return (
                     <div
+                      key={waiver.id}
                       style={{
+                        background: "rgba(29, 50, 88, 0.6)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        borderRadius: "8px",
+                        padding: "1rem 1.5rem",
                         display: "flex",
-                        justifyContent: "space-between",
                         alignItems: "center",
-                        marginBottom: "0.5rem",
+                        justifyContent: "space-between",
+                        gap: "1.5rem",
                       }}
                     >
-                      <div style={{ fontSize: "1.1rem", fontWeight: "600", color: "var(--text-main)" }}>
-                        {waiver.team}
+                      {/* Team Being Added */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1 }}>
+                        <Image
+                          src={claimingTeam.logoPath}
+                          alt={claimingTeam.name}
+                          width={48}
+                          height={48}
+                          style={{ borderRadius: "6px" }}
+                        />
+                        <div>
+                          <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main)" }}>
+                            {claimingTeam.leagueId} {claimingTeam.name}
+                          </div>
+                          <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                            4th
+                          </div>
+                        </div>
                       </div>
-                      <div
+
+                      {/* Arrow */}
+                      <div style={{ fontSize: "1.5rem", color: "var(--accent)", fontWeight: 700 }}>
+                        →
+                      </div>
+
+                      {/* Team Being Dropped */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1 }}>
+                        <Image
+                          src={droppingTeam.logoPath}
+                          alt={droppingTeam.name}
+                          width={48}
+                          height={48}
+                          style={{ borderRadius: "6px" }}
+                        />
+                        <div>
+                          <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main)" }}>
+                            {droppingTeam.leagueId} {droppingTeam.name}
+                          </div>
+                          <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                            (9th)
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cancel Button */}
+                      <button
+                        onClick={() => {
+                          alert("Waiver claim cancelled");
+                        }}
                         style={{
-                          fontSize: "0.8rem",
-                          color: "var(--accent)",
-                          background: "rgba(242, 182, 50, 0.15)",
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: "12px",
+                          background: "var(--accent)",
+                          color: "#1a1a2e",
+                          fontWeight: 600,
+                          padding: "0.5rem 1.5rem",
+                          borderRadius: "6px",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "0.9rem",
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        {waiver.status}
-                      </div>
+                        Cancel
+                      </button>
                     </div>
-                    <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{waiver.timestamp}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

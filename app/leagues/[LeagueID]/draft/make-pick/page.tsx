@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { TEAMS } from "@/lib/teams";
@@ -39,6 +39,14 @@ export default function MakePickPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<typeof availableTeams[0] | null>(null);
 
+  // Filter and sort state
+  const [leagueFilter, setLeagueFilter] = useState<"All" | "Foundation" | "Academy" | "Champion" | "Master" | "Premier">("All");
+  const [modeFilter, setModeFilter] = useState<"Both" | "2s" | "3s">("Both");
+  const [leagueFilterOpen, setLeagueFilterOpen] = useState(false);
+  const [modeFilterOpen, setModeFilterOpen] = useState(false);
+  const [sortColumn, setSortColumn] = useState<"rank" | "fptsLS" | "avgLS" | "goals" | "shots" | "saves" | "assists" | "demos">("rank");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const handlePickTeam = (team: typeof availableTeams[0]) => {
     setSelectedTeam(team);
     setShowConfirmation(true);
@@ -54,6 +62,46 @@ export default function MakePickPage() {
     setShowConfirmation(false);
     setSelectedTeam(null);
   };
+
+  const handleSort = (column: typeof sortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
+  // Filter and sort teams
+  const filteredAndSortedTeams = useMemo(() => {
+    let filtered = [...availableTeams];
+
+    // Apply league filter
+    if (leagueFilter !== "All") {
+      const leagueMap = {
+        "Foundation": "FL",
+        "Academy": "AL",
+        "Champion": "CL",
+        "Master": "ML",
+        "Premier": "PL"
+      };
+      filtered = filtered.filter(team => team.leagueId === leagueMap[leagueFilter]);
+    }
+
+    // Apply mode filter (Note: Mode filter would require mode data on teams)
+    // For now, we'll keep this placeholder for future implementation when team mode data is available
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+      if (sortDirection === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [leagueFilter, modeFilter, sortColumn, sortDirection]);
 
   return (
     <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
@@ -210,30 +258,285 @@ export default function MakePickPage() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: "1.5rem" }}>
         {/* Left Side - Available Teams Table */}
         <div style={{
-          background: "rgba(255,255,255,0.05)",
+          background: "linear-gradient(135deg, rgba(50, 50, 60, 0.6) 0%, rgba(40, 40, 50, 0.6) 100%)",
           borderRadius: "12px",
           padding: "1.5rem",
           border: "1px solid rgba(255,255,255,0.1)",
           overflowX: "auto"
         }}>
+          {/* Filters */}
+          <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
+            {/* League Filter */}
+            <div style={{ position: "relative", width: "150px" }}>
+              <button
+                onClick={() => setLeagueFilterOpen(!leagueFilterOpen)}
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "var(--text-main)",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
+                <span>{leagueFilter === "All" ? "League" : leagueFilter}</span>
+                <span style={{ marginLeft: "0.5rem" }}>{leagueFilterOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {leagueFilterOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    marginTop: "0.5rem",
+                    background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+                    borderRadius: "6px",
+                    padding: "0.5rem 0",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                    zIndex: 1000,
+                    minWidth: "150px",
+                  }}
+                >
+                  {["All", "Foundation", "Academy", "Champion", "Master", "Premier"].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => {
+                        setLeagueFilter(filter as typeof leagueFilter);
+                        setLeagueFilterOpen(false);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "0.5rem 1rem",
+                        background: filter === leagueFilter ? "rgba(255,255,255,0.1)" : "transparent",
+                        border: "none",
+                        color: "var(--text-main)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "background 0.2s ease",
+                        fontWeight: 600,
+                        fontSize: "0.9rem",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                      }}
+                      onMouseLeave={(e) => {
+                        if (filter !== leagueFilter) {
+                          e.currentTarget.style.background = "transparent";
+                        }
+                      }}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mode Filter */}
+            <div style={{ position: "relative", width: "120px" }}>
+              <button
+                onClick={() => setModeFilterOpen(!modeFilterOpen)}
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "var(--text-main)",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
+                <span>{modeFilter === "Both" ? "Mode" : modeFilter}</span>
+                <span style={{ marginLeft: "0.5rem" }}>{modeFilterOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {modeFilterOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    marginTop: "0.5rem",
+                    background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+                    borderRadius: "6px",
+                    padding: "0.5rem 0",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                    zIndex: 1000,
+                    minWidth: "120px",
+                  }}
+                >
+                  {["Both", "2s", "3s"].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => {
+                        setModeFilter(filter as typeof modeFilter);
+                        setModeFilterOpen(false);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "0.5rem 1rem",
+                        background: filter === modeFilter ? "rgba(255,255,255,0.1)" : "transparent",
+                        border: "none",
+                        color: "var(--text-main)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "background 0.2s ease",
+                        fontWeight: 600,
+                        fontSize: "0.9rem",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                      }}
+                      onMouseLeave={(e) => {
+                        if (filter !== modeFilter) {
+                          e.currentTarget.style.background = "transparent";
+                        }
+                      }}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Rank</th>
+                <th
+                  onClick={() => handleSort("rank")}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    textAlign: "left",
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.9)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Rank {sortColumn === "rank" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Team</th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Action</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Fpts LS</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Avg LS</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Goals</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Shots</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Saves</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Assists</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Demos</th>
+                <th
+                  onClick={() => handleSort("fptsLS")}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    textAlign: "right",
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.9)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Fpts LS {sortColumn === "fptsLS" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th
+                  onClick={() => handleSort("avgLS")}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    textAlign: "right",
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.9)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Avg LS {sortColumn === "avgLS" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th
+                  onClick={() => handleSort("goals")}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    textAlign: "right",
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.9)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Goals {sortColumn === "goals" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th
+                  onClick={() => handleSort("shots")}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    textAlign: "right",
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.9)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Shots {sortColumn === "shots" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th
+                  onClick={() => handleSort("saves")}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    textAlign: "right",
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.9)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Saves {sortColumn === "saves" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th
+                  onClick={() => handleSort("assists")}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    textAlign: "right",
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.9)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Assists {sortColumn === "assists" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
+                <th
+                  onClick={() => handleSort("demos")}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    textAlign: "right",
+                    fontSize: "0.85rem",
+                    color: "rgba(255,255,255,0.9)",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                >
+                  Demos {sortColumn === "demos" && (sortDirection === "asc" ? "▲" : "▼")}
+                </th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Record</th>
               </tr>
             </thead>
             <tbody>
-              {availableTeams.map((team) => (
+              {filteredAndSortedTeams.map((team) => (
                 <tr key={team.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                   <td style={{ padding: "0.75rem 1rem", fontWeight: 700, fontSize: "0.9rem", color: "var(--accent)" }}>
                     {team.rank}
@@ -313,7 +616,7 @@ export default function MakePickPage() {
 
         {/* Right Side - Roster Panel (same as draft page) */}
         <div style={{
-          background: "rgba(0,0,0,0.4)",
+          background: "radial-gradient(circle at top left, #1d3258, #020617)",
           borderRadius: "12px",
           padding: "1.5rem",
           border: "1px solid rgba(255,255,255,0.1)",

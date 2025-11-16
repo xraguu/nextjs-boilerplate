@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { TEAMS } from "@/lib/teams";
+import TeamModal from "@/components/TeamModal";
 
 // Mock draft data
 const mockDraftPicks = [
@@ -20,9 +21,24 @@ const mockDraftPicks = [
 ];
 
 // Mock manager rosters
+const managers = [
+  "Fantastic Ballers",
+  "Pixies",
+  "Thunder Strikers",
+  "Ice Warriors",
+  "Fire Dragons",
+  "Sky Hunters",
+  "Storm Chasers",
+  "Lightning Bolts",
+  "Phoenix Rising",
+  "Thunder Wolves",
+  "Ice Breakers",
+  "Fire Hawks"
+];
+
 const mockRosters = {
   "Fantastic Ballers": [
-    { slot: "2s", team: TEAMS[0], pick: "1.4 (4)" },
+    { slot: "2s", team: TEAMS[0], pick: "1.1 (1)" },
     { slot: "2s", team: null, pick: "" },
     { slot: "3s", team: null, pick: "" },
     { slot: "3s", team: null, pick: "" },
@@ -41,9 +57,107 @@ const mockRosters = {
     { slot: "BE", team: null, pick: "" },
     { slot: "BE", team: null, pick: "" },
   ],
+  "Thunder Strikers": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Ice Warriors": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Fire Dragons": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Sky Hunters": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Storm Chasers": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Lightning Bolts": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Phoenix Rising": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Thunder Wolves": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Ice Breakers": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Fire Hawks": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
 };
-
-const managers = ["Fantastic Ballers", "Pixies", "Thunder", "Blazers"];
 
 export default function DraftPage() {
   const router = useRouter();
@@ -52,11 +166,23 @@ export default function DraftPage() {
 
   const [selectedManager, setSelectedManager] = useState("Fantastic Ballers");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<typeof TEAMS[0] | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   const currentRoster = mockRosters[selectedManager as keyof typeof mockRosters] || mockRosters["Fantastic Ballers"];
 
   return (
-    <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
+    <div>
+      {/* Team Stats Modal */}
+      <TeamModal
+        team={showModal && selectedTeam ? {
+          ...selectedTeam,
+          rosteredBy: Math.random() > 0.5 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
+        } : null}
+        onClose={() => setShowModal(false)}
+      />
+
+      <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
       {/* Header with Timer and Roster Selector */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--accent)", margin: 0 }}>
@@ -85,7 +211,7 @@ export default function DraftPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           {/* Recent Picks - Horizontal Scroll */}
           <div style={{
-            background: "rgba(255,255,255,0.05)",
+            background: "linear-gradient(135deg, rgba(50, 50, 60, 0.6) 0%, rgba(40, 40, 50, 0.6) 100%)",
             borderRadius: "12px",
             padding: "1.5rem",
             border: "1px solid rgba(255,255,255,0.1)"
@@ -107,11 +233,7 @@ export default function DraftPage() {
                     background: "rgba(255,255,255,0.03)",
                     borderRadius: "8px",
                     padding: "1rem",
-                    border: `2px solid ${
-                      pick.status === "current" ? "#4ade80" :
-                      pick.status === "picked" ? "var(--accent)" :
-                      "rgba(255,255,255,0.1)"
-                    }`,
+                    border: `2px solid ${pick.status === "current" ? "#4ade80" : pick.status === "picked" ? "var(--accent)" : "rgba(255,255,255,0.1)"}`,
                     position: "relative",
                     overflow: "hidden"
                   }}
@@ -141,7 +263,22 @@ export default function DraftPage() {
                     </div>
                     {pick.team ? (
                       <>
-                        <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "0.25rem" }}>
+                        <div
+                          onClick={() => {
+                            setSelectedTeam(pick.team);
+                            setShowModal(true);
+                          }}
+                          style={{
+                            fontSize: "1rem",
+                            fontWeight: 600,
+                            color: "var(--text-main)",
+                            marginBottom: "0.25rem",
+                            cursor: "pointer",
+                            transition: "color 0.2s"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                        >
                           {pick.team.leagueId} {pick.team.name}
                         </div>
                         <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
@@ -161,35 +298,36 @@ export default function DraftPage() {
 
           {/* Draft Grid */}
           <div style={{
-            background: "rgba(255,255,255,0.05)",
+            background: "linear-gradient(135deg, rgba(50, 50, 60, 0.6) 0%, rgba(40, 40, 50, 0.6) 100%)",
             borderRadius: "12px",
             padding: "1.5rem",
             border: "1px solid rgba(255,255,255,0.1)",
             overflowX: "auto"
           }}>
-            <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
-              {managers.map((manager) => (
-                <div key={manager} style={{ flex: 1, minWidth: "200px" }}>
-                  <div style={{
-                    padding: "0.75rem",
-                    background: "rgba(255,255,255,0.08)",
-                    borderRadius: "8px",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    textAlign: "center",
-                    color: "var(--text-main)"
-                  }}>
-                    {manager}
+            <div style={{ minWidth: "fit-content" }}>
+              <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+                {managers.map((manager) => (
+                  <div key={manager} style={{ width: "200px", flexShrink: 0 }}>
+                    <div style={{
+                      padding: "0.75rem",
+                      background: "rgba(255,255,255,0.08)",
+                      borderRadius: "8px",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      textAlign: "center",
+                      color: "var(--text-main)"
+                    }}>
+                      {manager}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Pick Rows */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((rowIdx) => (
-                <div key={rowIdx} style={{ display: "flex", gap: "1rem" }}>
-                  {managers.map((manager, colIdx) => {
+              {/* Pick Rows */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((rowIdx) => (
+                  <div key={rowIdx} style={{ display: "flex", gap: "1rem" }}>
+                    {managers.map((manager, colIdx) => {
                     const pickIndex = rowIdx * managers.length + colIdx;
                     const pick = mockDraftPicks[pickIndex];
 
@@ -197,16 +335,12 @@ export default function DraftPage() {
                       <div
                         key={colIdx}
                         style={{
-                          flex: 1,
-                          minWidth: "200px",
+                          width: "200px",
+                          flexShrink: 0,
                           padding: "1rem",
                           background: "rgba(255,255,255,0.03)",
                           borderRadius: "6px",
-                          border: `2px solid ${
-                            pick?.status === "current" ? "#4ade80" :
-                            pick?.status === "picked" ? "var(--accent)" :
-                            "rgba(255,255,255,0.1)"
-                          }`,
+                          border: `2px solid ${pick?.status === "current" ? "#4ade80" : pick?.status === "picked" ? "var(--accent)" : "rgba(255,255,255,0.1)"}`,
                           minHeight: "60px"
                         }}
                       >
@@ -220,7 +354,21 @@ export default function DraftPage() {
                               style={{ borderRadius: "4px" }}
                             />
                             <div>
-                              <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-main)" }}>
+                              <div
+                                onClick={() => {
+                                  setSelectedTeam(pick.team);
+                                  setShowModal(true);
+                                }}
+                                style={{
+                                  fontSize: "0.85rem",
+                                  fontWeight: 600,
+                                  color: "var(--text-main)",
+                                  cursor: "pointer",
+                                  transition: "color 0.2s"
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                                onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                              >
                                 {pick.team.leagueId} {pick.team.name}
                               </div>
                               <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
@@ -265,10 +413,11 @@ export default function DraftPage() {
             </div>
           </div>
         </div>
+        </div>
 
         {/* Right Side - Roster Panel */}
         <div style={{
-          background: "rgba(0,0,0,0.4)",
+          background: "radial-gradient(circle at top left, #1d3258, #020617)",
           borderRadius: "12px",
           padding: "1.5rem",
           border: "1px solid rgba(255,255,255,0.1)",
@@ -375,7 +524,21 @@ export default function DraftPage() {
                             height={20}
                             style={{ borderRadius: "4px" }}
                           />
-                          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-main)" }}>
+                          <span
+                            onClick={() => {
+                              setSelectedTeam(slot.team);
+                              setShowModal(true);
+                            }}
+                            style={{
+                              fontSize: "0.85rem",
+                              fontWeight: 600,
+                              color: "var(--text-main)",
+                              cursor: "pointer",
+                              transition: "color 0.2s"
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                            onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                          >
                             {slot.team.leagueId} {slot.team.name}
                           </span>
                         </div>
@@ -392,6 +555,7 @@ export default function DraftPage() {
             </table>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

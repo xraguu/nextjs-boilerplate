@@ -67,7 +67,19 @@ export default function SchedulePage() {
   const leagueId = params.LeagueID as string;
 
   const [activeManager, setActiveManager] = useState(1);
+  const [currentWeek, setCurrentWeek] = useState(1);
   const schedule = mockSchedule[activeManager] || [];
+
+  // Helper functions for week navigation (weeks 1-10)
+  const getNextWeek = (week: number) => {
+    if (week >= 10) return 10;
+    return week + 1;
+  };
+
+  const getPrevWeek = (week: number) => {
+    if (week <= 1) return 1;
+    return week - 1;
+  };
 
   const handleManagerClick = (managerName: string) => {
     router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(managerName)}`);
@@ -138,6 +150,37 @@ export default function SchedulePage() {
 
       {/* Schedule Table */}
       <section className="card">
+        {/* Week Navigation */}
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "1rem 1.5rem",
+          borderBottom: "1px solid rgba(255,255,255,0.1)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <button
+              onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
+              disabled={currentWeek === 1}
+              className="btn btn-ghost"
+              style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+            >
+              ◄ Week {getPrevWeek(currentWeek)}
+            </button>
+            <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
+              Week {currentWeek}
+            </span>
+            <button
+              onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
+              disabled={currentWeek === 10}
+              className="btn btn-ghost"
+              style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+            >
+              Week {getNextWeek(currentWeek)} ►
+            </button>
+          </div>
+        </div>
+
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
@@ -185,7 +228,7 @@ export default function SchedulePage() {
               </tr>
             </thead>
             <tbody>
-              {schedule.map((game, index) => (
+              {schedule.filter(game => game.week === currentWeek).map((game, index) => (
                 <tr
                   key={index}
                   style={{
