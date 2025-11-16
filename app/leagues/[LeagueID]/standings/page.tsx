@@ -32,10 +32,7 @@ export default function StandingsPage() {
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-        <div>
-          <h1 className="page-heading">Standings</h1>
-          <p className="page-subtitle">League rankings and team performance</p>
-        </div>
+        <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>Standings</h1>
         <button
           onClick={handlePlayoffsClick}
           style={{

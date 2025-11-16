@@ -6,30 +6,159 @@ import Image from "next/image";
 import { TEAMS } from "@/lib/teams";
 
 // Mock available teams (teams not yet drafted)
+// Using deterministic values based on index to avoid hydration errors
 const availableTeams = TEAMS.slice(1, 15).map((team, index) => ({
   ...team,
   rank: index + 1,
-  fptsLS: Math.floor(Math.random() * 50) + 200,
-  avgLS: Math.floor(Math.random() * 20) + 40,
-  goals: Math.floor(Math.random() * 30) + 50,
-  shots: Math.floor(Math.random() * 100) + 500,
-  saves: Math.floor(Math.random() * 50) + 100,
-  assists: Math.floor(Math.random() * 20) + 40,
-  demos: Math.floor(Math.random() * 15) + 20,
-  record: `${Math.floor(Math.random() * 6) + 3}-${Math.floor(Math.random() * 6) + 3}`
+  fptsLS: 240 - (index * 3),
+  avgLS: 55 - index,
+  goals: 75 - (index * 2),
+  shots: 650 - (index * 10),
+  saves: 140 - (index * 3),
+  assists: 55 - index,
+  demos: 32 - index,
+  record: `${8 - Math.floor(index / 2)}-${3 + Math.floor(index / 2)}`
 }));
 
-// Mock manager roster (same as draft page)
-const mockRoster = [
-  { slot: "2s", team: TEAMS[0], pick: "1.4 (4)" },
-  { slot: "2s", team: null, pick: "" },
-  { slot: "3s", team: null, pick: "" },
-  { slot: "3s", team: null, pick: "" },
-  { slot: "FLX", team: null, pick: "" },
-  { slot: "BE", team: null, pick: "" },
-  { slot: "BE", team: null, pick: "" },
-  { slot: "BE", team: null, pick: "" },
+// Mock manager list
+const managers = [
+  "Fantastic Ballers",
+  "Pixies",
+  "Thunder Strikers",
+  "Ice Warriors",
+  "Fire Dragons",
+  "Sky Hunters",
+  "Storm Chasers",
+  "Lightning Bolts",
+  "Phoenix Rising",
+  "Thunder Wolves",
+  "Ice Breakers",
+  "Fire Hawks"
 ];
+
+// Mock manager rosters
+const mockRosters = {
+  "Fantastic Ballers": [
+    { slot: "2s", team: TEAMS[0], pick: "1.1 (1)" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Pixies": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Thunder Strikers": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Ice Warriors": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Fire Dragons": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Sky Hunters": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Storm Chasers": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Lightning Bolts": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Phoenix Rising": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Thunder Wolves": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Ice Breakers": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+  "Fire Hawks": [
+    { slot: "2s", team: null, pick: "" },
+    { slot: "2s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "3s", team: null, pick: "" },
+    { slot: "FLX", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+    { slot: "BE", team: null, pick: "" },
+  ],
+};
 
 export default function MakePickPage() {
   const router = useRouter();
@@ -38,6 +167,8 @@ export default function MakePickPage() {
 
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<typeof availableTeams[0] | null>(null);
+  const [selectedManager, setSelectedManager] = useState("Fantastic Ballers");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Filter and sort state
   const [leagueFilter, setLeagueFilter] = useState<"All" | "Foundation" | "Academy" | "Champion" | "Master" | "Premier">("All");
@@ -46,6 +177,8 @@ export default function MakePickPage() {
   const [modeFilterOpen, setModeFilterOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState<"rank" | "fptsLS" | "avgLS" | "goals" | "shots" | "saves" | "assists" | "demos">("rank");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const currentRoster = mockRosters[selectedManager as keyof typeof mockRosters] || mockRosters["Fantastic Ballers"];
 
   const handlePickTeam = (team: typeof availableTeams[0]) => {
     setSelectedTeam(team);
@@ -624,17 +757,77 @@ export default function MakePickPage() {
           top: "1rem",
           maxHeight: "calc(100vh - 2rem)"
         }}>
-          <div style={{
-            padding: "0.75rem 1rem",
-            background: "rgba(255,255,255,0.08)",
-            borderRadius: "8px",
-            marginBottom: "1.5rem",
-            fontSize: "1rem",
-            fontWeight: 600,
-            textAlign: "center",
-            color: "var(--text-main)"
-          }}>
-            Fantastic Ballers ▼
+          {/* Manager Dropdown */}
+          <div style={{ position: "relative", marginBottom: "1.5rem" }}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              style={{
+                width: "100%",
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "#ffffff",
+                padding: "0.75rem 1rem",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "1rem",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between"
+              }}
+            >
+              <span>{selectedManager}</span>
+              <span>{dropdownOpen ? "▲" : "▼"}</span>
+            </button>
+
+            {dropdownOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  right: 0,
+                  marginTop: "0.5rem",
+                  background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+                  borderRadius: "8px",
+                  padding: "0.5rem 0",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                  zIndex: 1000
+                }}
+              >
+                {managers.map((manager) => (
+                  <button
+                    key={manager}
+                    onClick={() => {
+                      setSelectedManager(manager);
+                      setDropdownOpen(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem",
+                      background: manager === selectedManager ? "rgba(255,255,255,0.1)" : "transparent",
+                      border: "none",
+                      color: "#ffffff",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      transition: "background 0.2s ease",
+                      fontWeight: 600
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (manager !== selectedManager) {
+                        e.currentTarget.style.background = "transparent";
+                      }
+                    }}
+                  >
+                    {manager}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Roster Table */}
@@ -648,7 +841,7 @@ export default function MakePickPage() {
                 </tr>
               </thead>
               <tbody>
-                {mockRoster.map((slot, idx) => (
+                {currentRoster.map((slot, idx) => (
                   <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                     <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--text-muted)" }}>
                       {slot.slot}

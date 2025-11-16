@@ -301,82 +301,126 @@ export default function DraftPage() {
             background: "linear-gradient(135deg, rgba(50, 50, 60, 0.6) 0%, rgba(40, 40, 50, 0.6) 100%)",
             borderRadius: "12px",
             padding: "1.5rem",
-            border: "1px solid rgba(255,255,255,0.1)",
-            overflowX: "auto"
+            border: "1px solid rgba(255,255,255,0.1)"
           }}>
-            <div style={{ minWidth: "fit-content" }}>
-              <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
-                {managers.map((manager) => (
-                  <div key={manager} style={{ width: "200px", flexShrink: 0 }}>
-                    <div style={{
-                      padding: "0.75rem",
-                      background: "rgba(255,255,255,0.08)",
-                      borderRadius: "8px",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                      textAlign: "center",
-                      color: "var(--text-main)"
-                    }}>
-                      {manager}
-                    </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {/* Round Headers */}
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                {/* Empty corner cell for team names column */}
+                <div style={{ width: "180px", flexShrink: 0 }}></div>
+                {/* Round numbers 1-8 */}
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((round) => (
+                  <div key={round} style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: "0.75rem",
+                    background: "rgba(255,255,255,0.08)",
+                    borderRadius: "8px",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    textAlign: "center",
+                    color: "var(--accent)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}>
+                    <div>Round</div>
+                    <div>{round}</div>
                   </div>
                 ))}
               </div>
 
-              {/* Pick Rows */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {[0, 1, 2, 3, 4, 5, 6, 7].map((rowIdx) => (
-                  <div key={rowIdx} style={{ display: "flex", gap: "1rem" }}>
-                    {managers.map((manager, colIdx) => {
-                    const pickIndex = rowIdx * managers.length + colIdx;
+              {/* Team Rows */}
+              {managers.map((manager, teamIdx) => (
+                <div key={manager} style={{ display: "flex", gap: "0.5rem" }}>
+                  {/* Team Name Cell */}
+                  <div style={{
+                    width: "180px",
+                    flexShrink: 0,
+                    padding: "0.75rem",
+                    background: "rgba(255,255,255,0.08)",
+                    borderRadius: "8px",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    color: manager === selectedManager ? "var(--accent)" : "var(--text-main)"
+                  }}>
+                    <span>{manager}</span>
+                    {manager === selectedManager && (
+                      <span style={{ fontSize: "0.75rem", fontWeight: 500, opacity: 0.8 }}>(You)</span>
+                    )}
+                  </div>
+
+                  {/* Pick Cells for each round */}
+                  {[0, 1, 2, 3, 4, 5, 6, 7].map((roundIdx) => {
+                    const pickIndex = roundIdx * managers.length + teamIdx;
                     const pick = mockDraftPicks[pickIndex];
 
                     return (
                       <div
-                        key={colIdx}
+                        key={roundIdx}
                         style={{
-                          width: "200px",
-                          flexShrink: 0,
+                          flex: 1,
+                          minWidth: 0,
                           padding: "1rem",
                           background: "rgba(255,255,255,0.03)",
                           borderRadius: "6px",
                           border: `2px solid ${pick?.status === "current" ? "#4ade80" : pick?.status === "picked" ? "var(--accent)" : "rgba(255,255,255,0.1)"}`,
-                          minHeight: "60px"
+                          minHeight: "60px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          position: "relative",
+                          overflow: "hidden"
                         }}
                       >
+                        {/* Picked team */}
                         {pick?.team && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <Image
-                              src={pick.team.logoPath}
-                              alt={pick.team.name}
-                              width={24}
-                              height={24}
-                              style={{ borderRadius: "4px" }}
+                          <>
+                            {/* Background Logo */}
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "50%",
+                                transform: "translate(-50%, -50%)",
+                                width: "80px",
+                                height: "80px",
+                                backgroundImage: `url(${pick.team.logoPath})`,
+                                backgroundSize: "contain",
+                                backgroundRepeat: "no-repeat",
+                                backgroundPosition: "center",
+                                opacity: 0.15,
+                                pointerEvents: "none"
+                              }}
                             />
-                            <div>
-                              <div
-                                onClick={() => {
-                                  setSelectedTeam(pick.team);
-                                  setShowModal(true);
-                                }}
-                                style={{
-                                  fontSize: "0.85rem",
-                                  fontWeight: 600,
-                                  color: "var(--text-main)",
-                                  cursor: "pointer",
-                                  transition: "color 0.2s"
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
-                                onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
-                              >
-                                {pick.team.leagueId} {pick.team.name}
-                              </div>
-                              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                                {pick.round}.{pick.pick}
-                              </div>
+                            {/* Team Name */}
+                            <div
+                              onClick={() => {
+                                setSelectedTeam(pick.team);
+                                setShowModal(true);
+                              }}
+                              style={{
+                                position: "relative",
+                                zIndex: 1,
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                color: "var(--text-main)",
+                                cursor: "pointer",
+                                transition: "color 0.2s",
+                                textAlign: "center"
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                              onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                            >
+                              {pick.team.leagueId} {pick.team.name}
                             </div>
-                          </div>
+                          </>
                         )}
+                        {/* Current pick button */}
                         {!pick?.team && pick?.status === "current" && (
                           <button
                             onClick={() => router.push(`/leagues/${leagueId}/draft/make-pick`)}
@@ -386,11 +430,10 @@ export default function DraftPage() {
                               padding: "0.5rem 1rem",
                               borderRadius: "6px",
                               fontWeight: 600,
-                              fontSize: "0.85rem",
+                              fontSize: "0.7rem",
                               textAlign: "center",
                               border: "none",
                               cursor: "pointer",
-                              width: "100%",
                               transition: "all 0.2s ease"
                             }}
                             onMouseEnter={(e) => {
@@ -412,7 +455,6 @@ export default function DraftPage() {
               ))}
             </div>
           </div>
-        </div>
         </div>
 
         {/* Right Side - Roster Panel */}
