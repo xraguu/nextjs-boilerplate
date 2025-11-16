@@ -6,25 +6,26 @@ import Image from "next/image";
 import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
-// Select 8 random teams from TEAMS with stats
+// Select 8 teams from TEAMS with stats
+// Static values to prevent hydration errors (no Math.random())
 const selectedTeams = TEAMS.slice(0, 8).map((team, index) => ({
   ...team,
   slot: index < 2 ? "2s" : index < 4 ? "3s" : index === 4 ? "FLX" : "BE",
-  score: index < 5 ? Math.floor(Math.random() * 10 + 40) : 0,
-  opponentTeam: TEAMS[Math.floor(Math.random() * TEAMS.length)],
-  oprk: Math.floor(Math.random() * 10 + 1),
+  score: index < 5 ? (45 - index * 1.5) : 0,
+  opponentTeam: TEAMS[(index * 7) % TEAMS.length],
+  oprk: (index * 3) % 10 + 1,
   fprk: index + 1,
-  fpts: Math.floor(Math.random() * 100 + 300),
-  avg: Math.floor(Math.random() * 20 + 35),
-  last: Math.floor(Math.random() * 25 + 30),
-  goals: Math.floor(Math.random() * 50 + 100),
-  shots: Math.floor(Math.random() * 200 + 600),
-  saves: Math.floor(Math.random() * 100 + 150),
-  assists: Math.floor(Math.random() * 40 + 60),
-  demos: Math.floor(Math.random() * 30 + 30),
-  teamRecord: `${Math.floor(Math.random() * 6 + 3)}-${Math.floor(Math.random() * 6 + 3)}`,
+  fpts: 380 - index * 10,
+  avg: 50 - index * 2,
+  last: 48 - index * 2.5,
+  goals: 140 - index * 5,
+  shots: 750 - index * 20,
+  saves: 220 - index * 10,
+  assists: 95 - index * 5,
+  demos: 55 - index * 3,
+  teamRecord: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
   rank: index + 1,
-  record: `${Math.floor(Math.random() * 6 + 3)}-${Math.floor(Math.random() * 6 + 3)}`,
+  record: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
   status: "free-agent" as const
 }));
 
@@ -191,7 +192,7 @@ export default function MyRosterPage() {
       <TeamModal
         team={showModal && selectedTeam ? {
           ...selectedTeam,
-          rosteredBy: Math.random() > 0.5 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
+          rosteredBy: selectedTeam.rank % 2 === 0 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
         } : null}
         onClose={() => setShowModal(false)}
       />
