@@ -615,7 +615,7 @@ export default function ScoreboardPage() {
         alignItems: "center",
         marginBottom: "2rem"
       }}>
-        <h1 className="page-heading" style={{ color: "#d4af37", margin: 0 }}>Scoreboard</h1>
+        <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>Scoreboard</h1>
 
         {/* Week Navigation */}
         <div style={{
