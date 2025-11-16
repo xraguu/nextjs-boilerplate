@@ -45,6 +45,9 @@ export default function MyRosterPage() {
   const roster = mockRoster;
   const [currentWeek, setCurrentWeek] = useState(roster.currentWeek);
   const [activeTab, setActiveTab] = useState<"lineup" | "stats">("lineup");
+  const [moveMode, setMoveMode] = useState(false);
+  const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
+  const [teams, setTeams] = useState(roster.teams);
 
   const handleScheduleClick = () => {
     router.push(`/leagues/${params.LeagueID}/my-roster/${params.managerId}/schedule`);
@@ -54,12 +57,54 @@ export default function MyRosterPage() {
     router.push(`/leagues/${params.LeagueID}/my-roster/${params.managerId}/transactions`);
   };
 
+  const handleCurrentMatchupClick = () => {
+    router.push(`/leagues/${params.LeagueID}/scoreboard`);
+  };
+
+  const handleMoveToggle = () => {
+    setMoveMode(!moveMode);
+    setSelectedTeamIndex(null);
+  };
+
+  const handleTeamClick = (index: number) => {
+    if (!moveMode) return;
+
+    if (selectedTeamIndex === null) {
+      // First click - select the team
+      setSelectedTeamIndex(index);
+    } else if (selectedTeamIndex === index) {
+      // Clicking the same team - deselect
+      setSelectedTeamIndex(null);
+    } else {
+      // Second click - swap the teams
+      const newTeams = [...teams];
+      [newTeams[selectedTeamIndex], newTeams[index]] = [newTeams[index], newTeams[selectedTeamIndex]];
+      setTeams(newTeams);
+      setSelectedTeamIndex(null);
+    }
+  };
+
   return (
     <>
       {/* Page Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>Roster</h1>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <button
+            onClick={handleCurrentMatchupClick}
+            style={{
+              backgroundColor: "var(--accent)",
+              color: "#1a1a2e",
+              padding: "0.5rem 1.5rem",
+              borderRadius: "2rem",
+              fontWeight: 700,
+              fontSize: "1rem",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            Current Matchup
+          </button>
           <button
             onClick={handleScheduleClick}
             style={{
@@ -217,8 +262,32 @@ export default function MyRosterPage() {
               <button className="btn btn-ghost" style={{ fontSize: "0.9rem" }}>
                 - Drop
               </button>
+              <button
+                onClick={handleMoveToggle}
+                className={moveMode ? "btn btn-primary" : "btn btn-ghost"}
+                style={{ fontSize: "0.9rem" }}
+              >
+                {moveMode ? "✓ Done Moving" : "↕ Move"}
+              </button>
             </div>
           </div>
+
+          {/* Move Mode Instructions */}
+          {moveMode && (
+            <div style={{
+              padding: "0.75rem 1.5rem",
+              backgroundColor: "rgba(242, 182, 50, 0.1)",
+              borderBottom: "1px solid rgba(242, 182, 50, 0.3)",
+              color: "var(--accent)",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              textAlign: "center"
+            }}>
+              {selectedTeamIndex === null
+                ? "Click on a team to select it, then click on another team to swap positions"
+                : "Click on another team to swap positions, or click the selected team to deselect"}
+            </div>
+          )}
 
           {/* Roster Table */}
           <div style={{ overflowX: "auto" }}>
@@ -237,13 +306,31 @@ export default function MyRosterPage() {
                 </tr>
               </thead>
               <tbody>
-                {roster.teams.map((team, index) => (
+                {teams.map((team, index) => (
                   <tr
                     key={index}
+                    onClick={() => handleTeamClick(index)}
                     style={{
                       borderBottom: "1px solid rgba(255,255,255,0.05)",
-                      backgroundColor: team.slot === "BE" ? "rgba(255,255,255,0.02)" : "transparent",
-                      borderTop: team.slot === "BE" && index === 5 ? "2px solid rgba(255,255,255,0.15)" : "none"
+                      backgroundColor: selectedTeamIndex === index
+                        ? "rgba(242, 182, 50, 0.2)"
+                        : team.slot === "BE"
+                        ? "rgba(255,255,255,0.02)"
+                        : "transparent",
+                      borderTop: team.slot === "BE" && index === 5 ? "2px solid rgba(255,255,255,0.15)" : "none",
+                      cursor: moveMode ? "pointer" : "default",
+                      transition: "background-color 0.2s",
+                      borderLeft: selectedTeamIndex === index ? "3px solid var(--accent)" : "3px solid transparent"
+                    }}
+                    onMouseEnter={(e) => {
+                      if (moveMode && selectedTeamIndex !== index) {
+                        e.currentTarget.style.backgroundColor = "rgba(242, 182, 50, 0.1)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (moveMode && selectedTeamIndex !== index) {
+                        e.currentTarget.style.backgroundColor = team.slot === "BE" ? "rgba(255,255,255,0.02)" : "transparent";
+                      }
                     }}
                   >
                     <td style={{

@@ -54,7 +54,7 @@ main {
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 9999;
   background: linear-gradient(
     to right,
     var(--mle-blue-darker),
@@ -63,6 +63,8 @@ main {
   border-bottom: 1px solid rgba(0, 0, 0, 0.6);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(14px);
+  pointer-events: auto;
+  isolation: isolate;
 }
 
 .nav-inner {

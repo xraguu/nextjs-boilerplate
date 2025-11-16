@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
@@ -176,6 +176,7 @@ const generateMatchups = (week: number) => {
 export default function ScoreboardPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const leagueId = params.LeagueID as string;
 
   const [currentWeek, setCurrentWeek] = useState(3);
@@ -196,9 +197,40 @@ export default function ScoreboardPage() {
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [weeklySortColumn, setWeeklySortColumn] = useState<WeeklySortColumn>("week");
   const [weeklySortDirection, setWeeklySortDirection] = useState<SortDirection>("asc");
+  const [moveMode, setMoveMode] = useState(false);
+  const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
 
   const matchups = generateMatchups(currentWeek);
   const selectedMatch = matchups.find(m => m.id === selectedMatchup);
+
+  // Use useMemo to derive userRoster from selectedMatch
+  const [userRoster, setUserRoster] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (selectedMatch) {
+      setUserRoster([...selectedMatch.team1.roster]);
+    }
+  }, [selectedMatch?.id, currentWeek]);
+
+  // Auto-select matchup and week from query parameters
+  useEffect(() => {
+    const matchupParam = searchParams.get('matchup');
+    const weekParam = searchParams.get('week');
+
+    if (matchupParam) {
+      const matchupId = parseInt(matchupParam);
+      if (!isNaN(matchupId)) {
+        setSelectedMatchup(matchupId);
+      }
+    }
+
+    if (weekParam) {
+      const weekNum = parseInt(weekParam);
+      if (!isNaN(weekNum) && weekNum >= 1 && weekNum <= 10) {
+        setCurrentWeek(weekNum);
+      }
+    }
+  }, [searchParams]);
 
   const handleManagerClick = (managerName: string) => {
     // Navigate to opponents page - you'll need to map manager name to manager ID
@@ -212,6 +244,40 @@ export default function ScoreboardPage() {
     } else {
       setWeeklySortColumn(column);
       setWeeklySortDirection(column === "week" ? "asc" : "desc");
+    }
+  };
+
+  const handleMoveToggle = () => {
+    setMoveMode(!moveMode);
+    setSelectedTeamIndex(null);
+  };
+
+  const handleTeamClick = (index: number) => {
+    if (!moveMode) return;
+
+    if (selectedTeamIndex === null) {
+      // First click - select the team
+      setSelectedTeamIndex(index);
+    } else if (selectedTeamIndex === index) {
+      // Clicking the same team - deselect
+      setSelectedTeamIndex(null);
+    } else {
+      // Second click - swap the teams but keep slots static
+      const newRoster = [...userRoster];
+      const team1Slot = newRoster[selectedTeamIndex].position;
+      const team2Slot = newRoster[index].position;
+
+      // Swap the entire team objects
+      const temp = newRoster[selectedTeamIndex];
+      newRoster[selectedTeamIndex] = newRoster[index];
+      newRoster[index] = temp;
+
+      // Restore the original slots
+      newRoster[selectedTeamIndex] = { ...newRoster[selectedTeamIndex], position: team1Slot };
+      newRoster[index] = { ...newRoster[index], position: team2Slot };
+
+      setUserRoster(newRoster);
+      setSelectedTeamIndex(null);
     }
   };
 
@@ -280,7 +346,7 @@ export default function ScoreboardPage() {
     const total2 = selectedMatch.team2.roster.length;
 
     return (
-      <>
+      <div style={{ position: "relative", zIndex: 1 }}>
         {/* Team Stats Modal */}
         <TeamModal
           team={showModal && selectedTeam ? {
@@ -491,10 +557,47 @@ export default function ScoreboardPage() {
             </div>
           </div>
 
+          {/* Edit Lineup Button */}
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "1.5rem", marginBottom: "1rem" }}>
+            <button
+              onClick={handleMoveToggle}
+              className={moveMode ? "btn btn-primary" : "btn btn-ghost"}
+              style={{
+                fontSize: "0.9rem",
+                border: "2px solid var(--accent)",
+                boxShadow: moveMode ? "0 0 12px rgba(242, 182, 50, 0.4)" : "0 0 8px rgba(242, 182, 50, 0.3)"
+              }}
+            >
+              {moveMode ? "✓ Done Editing" : "Edit Lineup"}
+            </button>
+          </div>
+
+          {/* Move Mode Instructions */}
+          {moveMode && (
+            <div style={{
+              padding: "0.75rem 1.5rem",
+              backgroundColor: "rgba(242, 182, 50, 0.1)",
+              border: "1px solid rgba(242, 182, 50, 0.3)",
+              borderRadius: "8px",
+              color: "var(--accent)",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              textAlign: "center",
+              marginBottom: "1rem"
+            }}>
+              {selectedTeamIndex === null
+                ? "Click on a team in your roster to select it, then click on another team to swap positions"
+                : "Click on another team to swap positions, or click the selected team to deselect"}
+            </div>
+          )}
+
           {/* Roster Breakdown */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {selectedMatch.team1.roster.map((player1, idx) => {
+            {userRoster.map((player1, idx) => {
               const player2 = selectedMatch.team2.roster[idx];
+              const isSelected = selectedTeamIndex === idx;
+              const baseBackground = idx % 2 === 0 ? "rgba(255,255,255,0.05)" : "transparent";
+
               return (
                 <div
                   key={idx}
@@ -504,12 +607,35 @@ export default function ScoreboardPage() {
                     gap: "1rem",
                     alignItems: "center",
                     padding: "0.75rem 1rem",
-                    background: idx % 2 === 0 ? "rgba(255,255,255,0.05)" : "transparent",
+                    background: baseBackground,
                     borderRadius: "6px"
                   }}
                 >
-                  {/* Team 1 Player */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  {/* Team 1 Player - Clickable for editing */}
+                  <div
+                    onClick={() => handleTeamClick(idx)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                      cursor: moveMode ? "pointer" : "default",
+                      padding: "0.5rem",
+                      borderRadius: "6px",
+                      background: isSelected ? "rgba(242, 182, 50, 0.2)" : "transparent",
+                      borderLeft: isSelected ? "3px solid var(--accent)" : "3px solid transparent",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseEnter={(e) => {
+                      if (moveMode && !isSelected) {
+                        e.currentTarget.style.background = "rgba(242, 182, 50, 0.1)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (moveMode && !isSelected) {
+                        e.currentTarget.style.background = "transparent";
+                      }
+                    }}
+                  >
                     <Image
                       src={player1.team.logoPath}
                       alt={player1.name}
@@ -519,9 +645,24 @@ export default function ScoreboardPage() {
                     />
                     <div style={{ flex: 1 }}>
                       <div
-                        onClick={() => openTeamModal(player1)}
-                        style={{ color: "#ffffff", fontSize: "0.95rem", fontWeight: 500, cursor: "pointer", transition: "color 0.2s" }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                        onClick={(e) => {
+                          if (!moveMode) {
+                            e.stopPropagation();
+                            openTeamModal(player1);
+                          }
+                        }}
+                        style={{
+                          color: "#ffffff",
+                          fontSize: "0.95rem",
+                          fontWeight: 500,
+                          cursor: moveMode ? "default" : "pointer",
+                          transition: "color 0.2s"
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!moveMode) {
+                            e.currentTarget.style.color = "var(--accent)";
+                          }
+                        }}
                         onMouseLeave={(e) => e.currentTarget.style.color = "#ffffff"}
                       >
                         {player1.name}
@@ -595,7 +736,7 @@ export default function ScoreboardPage() {
             })}
           </div>
         </section>
-      </>
+      </div>
     );
   }
 

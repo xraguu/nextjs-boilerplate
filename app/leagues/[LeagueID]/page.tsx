@@ -151,6 +151,9 @@ export default function MyRosterPage() {
   const [selectedDropTeam, setSelectedDropTeam] = useState<string | null>(null);
   const [showDropModal, setShowDropModal] = useState(false);
   const [teamToDrop, setTeamToDrop] = useState<typeof selectedTeams[0] | null>(null);
+  const [moveMode, setMoveMode] = useState(false);
+  const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
+  const [teams, setTeams] = useState(selectedTeams);
 
   // Stats tab sorting state
   const [statsSortColumn, setStatsSortColumn] = useState<"fprk" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos">("fprk");
@@ -184,6 +187,40 @@ export default function MyRosterPage() {
 
   const handleTransactionsClick = () => {
     router.push(`/leagues/${params.LeagueID}/my-roster/${params.LeagueID}/transactions`);
+  };
+
+  const handleMoveToggle = () => {
+    setMoveMode(!moveMode);
+    setSelectedTeamIndex(null);
+  };
+
+  const handleTeamClick = (index: number) => {
+    if (!moveMode) return;
+
+    if (selectedTeamIndex === null) {
+      // First click - select the team
+      setSelectedTeamIndex(index);
+    } else if (selectedTeamIndex === index) {
+      // Clicking the same team - deselect
+      setSelectedTeamIndex(null);
+    } else {
+      // Second click - swap the teams but keep slots static
+      const newTeams = [...teams];
+      const team1Slot = newTeams[selectedTeamIndex].slot;
+      const team2Slot = newTeams[index].slot;
+
+      // Swap the entire team objects
+      const temp = newTeams[selectedTeamIndex];
+      newTeams[selectedTeamIndex] = newTeams[index];
+      newTeams[index] = temp;
+
+      // Restore the original slots
+      newTeams[selectedTeamIndex] = { ...newTeams[selectedTeamIndex], slot: team1Slot };
+      newTeams[index] = { ...newTeams[index], slot: team2Slot };
+
+      setTeams(newTeams);
+      setSelectedTeamIndex(null);
+    }
   };
 
   return (
@@ -937,7 +974,25 @@ export default function MyRosterPage() {
           {/* Matchup Info */}
           <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
             {/* Last Matchup */}
-            <div style={{ textAlign: "center" }}>
+            <div
+              onClick={() => router.push(`/leagues/${params.LeagueID}/scoreboard?matchup=1&week=${roster.currentWeek - 1}`)}
+              style={{
+                textAlign: "center",
+                cursor: "pointer",
+                padding: "0.75rem 1rem",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                backgroundColor: "transparent"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(242, 182, 50, 0.1)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
               <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", fontStyle: "italic", marginBottom: "0.5rem" }}>
                 Last Matchup
               </div>
@@ -958,7 +1013,25 @@ export default function MyRosterPage() {
             <div style={{ width: "1px", height: "60px", backgroundColor: "rgba(255,255,255,0.1)" }}></div>
 
             {/* Current Matchup */}
-            <div style={{ textAlign: "center" }}>
+            <div
+              onClick={() => router.push(`/leagues/${params.LeagueID}/scoreboard?matchup=1`)}
+              style={{
+                textAlign: "center",
+                cursor: "pointer",
+                padding: "0.75rem 1rem",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                backgroundColor: "transparent"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(242, 182, 50, 0.1)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
               <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", fontStyle: "italic", marginBottom: "0.5rem" }}>
                 Current Matchup
               </div>
@@ -1058,8 +1131,36 @@ export default function MyRosterPage() {
               >
                 - Drop
               </button>
+              <button
+                onClick={handleMoveToggle}
+                className={moveMode ? "btn btn-primary" : "btn btn-ghost"}
+                style={{
+                  fontSize: "0.9rem",
+                  border: "2px solid var(--accent)",
+                  boxShadow: moveMode ? "0 0 12px rgba(242, 182, 50, 0.4)" : "0 0 8px rgba(242, 182, 50, 0.3)"
+                }}
+              >
+                {moveMode ? "✓ Done Editing" : "Edit Lineup"}
+              </button>
             </div>
           </div>
+
+          {/* Move Mode Instructions */}
+          {moveMode && (
+            <div style={{
+              padding: "0.75rem 1.5rem",
+              backgroundColor: "rgba(242, 182, 50, 0.1)",
+              borderBottom: "1px solid rgba(242, 182, 50, 0.3)",
+              color: "var(--accent)",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              textAlign: "center"
+            }}>
+              {selectedTeamIndex === null
+                ? "Click on a team to select it, then click on another team to swap positions"
+                : "Click on another team to swap positions, or click the selected team to deselect"}
+            </div>
+          )}
 
           {/* Roster Table */}
           <div style={{ overflowX: "auto" }}>
@@ -1078,13 +1179,31 @@ export default function MyRosterPage() {
                 </tr>
               </thead>
               <tbody>
-                {roster.teams.map((team, index) => (
+                {teams.map((team, index) => (
                   <tr
                     key={index}
+                    onClick={() => handleTeamClick(index)}
                     style={{
                       borderBottom: "1px solid rgba(255,255,255,0.05)",
-                      backgroundColor: team.slot === "BE" ? "rgba(255,255,255,0.02)" : "transparent",
-                      borderTop: team.slot === "BE" && index === 5 ? "2px solid rgba(255,255,255,0.15)" : "none"
+                      backgroundColor: selectedTeamIndex === index
+                        ? "rgba(242, 182, 50, 0.2)"
+                        : team.slot === "BE"
+                        ? "rgba(255,255,255,0.02)"
+                        : "transparent",
+                      borderTop: team.slot === "BE" && index === 5 ? "2px solid rgba(255,255,255,0.15)" : "none",
+                      cursor: moveMode ? "pointer" : "default",
+                      transition: "background-color 0.2s",
+                      borderLeft: selectedTeamIndex === index ? "3px solid var(--accent)" : "3px solid transparent"
+                    }}
+                    onMouseEnter={(e) => {
+                      if (moveMode && selectedTeamIndex !== index) {
+                        e.currentTarget.style.backgroundColor = "rgba(242, 182, 50, 0.1)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (moveMode && selectedTeamIndex !== index) {
+                        e.currentTarget.style.backgroundColor = team.slot === "BE" ? "rgba(255,255,255,0.02)" : "transparent";
+                      }
                     }}
                   >
                     <td style={{
@@ -1105,18 +1224,25 @@ export default function MyRosterPage() {
                           style={{ borderRadius: "4px" }}
                         />
                         <span
-                          onClick={() => {
-                            setSelectedTeam(team);
-                            setShowModal(true);
+                          onClick={(e) => {
+                            if (!moveMode) {
+                              e.stopPropagation();
+                              setSelectedTeam(team);
+                              setShowModal(true);
+                            }
                           }}
                           style={{
                             fontWeight: 600,
                             fontSize: "0.95rem",
-                            cursor: "pointer",
+                            cursor: moveMode ? "default" : "pointer",
                             color: "var(--text-main)",
                             transition: "color 0.2s"
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseEnter={(e) => {
+                            if (!moveMode) {
+                              e.currentTarget.style.color = "var(--accent)";
+                            }
+                          }}
                           onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
                         >
                           {team.leagueId} {team.name}
