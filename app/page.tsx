@@ -215,11 +215,114 @@ const mockTopTeams = TEAMS.slice(0, 10).map((team, index) => ({
   status: "free-agent" as const,
 }));
 
+type SortKey = 'rank' | 'name' | 'score' | 'fpts' | 'last' | 'avg' | 'shots' | 'goals' | 'assists' | 'saves' | 'demos';
+type SortDirection = 'asc' | 'desc';
+
 export default function HomePage() {
   const [selectedTeam, setSelectedTeam] = useState<
     (typeof mockTopTeams)[0] | null
   >(null);
   const [showModal, setShowModal] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>('rank');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedTeams = [...mockTopTeams].sort((a, b) => {
+    let aValue: number | string = 0;
+    let bValue: number | string = 0;
+
+    switch (sortKey) {
+      case 'rank':
+        aValue = a.rank ?? 0;
+        bValue = b.rank ?? 0;
+        break;
+      case 'name':
+        aValue = a.name;
+        bValue = b.name;
+        break;
+      case 'score':
+        aValue = a.score ?? 0;
+        bValue = b.score ?? 0;
+        break;
+      case 'fpts':
+        aValue = a.fpts ?? 0;
+        bValue = b.fpts ?? 0;
+        break;
+      case 'last':
+        aValue = a.last ?? 0;
+        bValue = b.last ?? 0;
+        break;
+      case 'avg':
+        aValue = a.avg ?? 0;
+        bValue = b.avg ?? 0;
+        break;
+      case 'shots':
+        aValue = a.shots ?? 0;
+        bValue = b.shots ?? 0;
+        break;
+      case 'goals':
+        aValue = a.goals ?? 0;
+        bValue = b.goals ?? 0;
+        break;
+      case 'assists':
+        aValue = a.assists ?? 0;
+        bValue = b.assists ?? 0;
+        break;
+      case 'saves':
+        aValue = a.saves ?? 0;
+        bValue = b.saves ?? 0;
+        break;
+      case 'demos':
+        aValue = a.demos ?? 0;
+        bValue = b.demos ?? 0;
+        break;
+    }
+
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc'
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+
+    return sortDirection === 'asc'
+      ? (aValue as number) - (bValue as number)
+      : (bValue as number) - (aValue as number);
+  });
+
+  const SortableHeader = ({ column, label, align = 'left' }: { column: SortKey; label: string; align?: 'left' | 'right' | 'center' }) => (
+    <th
+      onClick={() => handleSort(column)}
+      style={{
+        padding: "0.75rem 0.5rem",
+        textAlign: align,
+        fontSize: "0.85rem",
+        color: sortKey === column ? "var(--accent)" : "var(--text-muted)",
+        fontWeight: 600,
+        cursor: "pointer",
+        userSelect: "none",
+        transition: "color 0.2s",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = sortKey === column ? "var(--accent)" : "var(--text-muted)")}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start', gap: "0.25rem" }}>
+        {label}
+        {sortKey === column && (
+          <span style={{ fontSize: "0.75rem" }}>
+            {sortDirection === 'asc' ? '▲' : '▼'}
+          </span>
+        )}
+      </div>
+    </th>
+  );
 
   return (
     <>
@@ -269,7 +372,7 @@ export default function HomePage() {
                 style={{
                   fontSize: "2.5rem",
                   fontWeight: 900,
-                  marginBottom: "0.5rem",
+                  marginBottom: "0.25rem",
                   background:
                     "linear-gradient(90deg, var(--mle-gold), #ffd700)",
                   WebkitBackgroundClip: "text",
@@ -277,11 +380,11 @@ export default function HomePage() {
                   letterSpacing: "0.02em",
                 }}
               >
-                MLE FANTASY
+                MINOR LEAGUE ESPORTS
               </h1>
               <p
                 style={{
-                  fontSize: "1.3rem",
+                  fontSize: "2.0rem",
                   fontFamily: "var(--font-zuume)",
                   color: "var(--text-muted)",
                   letterSpacing: "0.15em",
@@ -289,7 +392,7 @@ export default function HomePage() {
                   fontWeight: 600,
                 }}
               >
-                Minor League Esports
+                RL Fantasy
               </p>
             </div>
           </div>
@@ -325,22 +428,61 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 80/20 Split Layout */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "3.5fr 1fr",
-            gap: "1rem",
-          }}
-        >
-          {/* Global Leaderboard Section (80%) */}
-          <section className="card">
-            <div className="card-header">
-              <h2 className="card-title">Manager Stats</h2>
-              <span className="card-subtitle">
-                Top 10 performers across all leagues
-              </span>
+        {/* Your Leagues Section - Horizontal Bar */}
+        <section className="card" style={{ marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+            <div className="card-header" style={{ marginBottom: 0 }}>
+              <h2 className="card-title">Your Leagues</h2>
             </div>
+
+            {mockLeagues.length === 0 ? (
+              <p
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: "0.85rem",
+                  margin: 0,
+                }}
+              >
+                No leagues yet
+              </p>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.75rem",
+                  flexWrap: "wrap",
+                  flex: 1,
+                  justifyContent: "flex-end",
+                }}
+              >
+                {mockLeagues.map((league) => (
+                  <Link
+                    key={league.id}
+                    href={`/leagues/${league.id}`}
+                    className="btn btn-ghost"
+                    style={{
+                      textDecoration: "none",
+                      padding: "0.75rem 1.25rem",
+                      fontSize: "0.95rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {league.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Global Leaderboard Section */}
+        <section className="card">
+          <div className="card-header">
+            <h2 className="card-title">Manager Stats</h2>
+            <span className="card-subtitle">
+              Top 10 performers across all leagues
+            </span>
+          </div>
 
             <div style={{ marginTop: "1rem", overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -543,52 +685,6 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Your Leagues Section (20%) */}
-          <section className="card">
-            <div className="card-header">
-              <h2 className="card-title">Your League</h2>
-            </div>
-
-            {mockLeagues.length === 0 ? (
-              <p
-                style={{
-                  marginTop: "1rem",
-                  color: "var(--text-muted)",
-                  fontSize: "0.85rem",
-                }}
-              >
-                No leagues yet
-              </p>
-            ) : (
-              <div
-                style={{
-                  marginTop: "1rem",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.5rem",
-                }}
-              >
-                {mockLeagues.map((league) => (
-                  <Link
-                    key={league.id}
-                    href={`/leagues/${league.id}`}
-                    className="btn btn-ghost"
-                    style={{
-                      textDecoration: "none",
-                      justifyContent: "flex-start",
-                      padding: "0.75rem 1rem",
-                      fontSize: "0.95rem",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {league.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-
         {/* Team Stats Section */}
         <section className="card" style={{ marginTop: "1.5rem" }}>
           <div className="card-header">
@@ -600,131 +696,21 @@ export default function HomePage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "left",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Rank
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "left",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Team
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Score
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Fpts
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Last
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Avg
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Shots
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Goals
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Assists
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Saves
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "right",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Demos
-                  </th>
+                  <SortableHeader column="rank" label="Rank" />
+                  <SortableHeader column="name" label="Team" />
+                  <SortableHeader column="score" label="Score" align="right" />
+                  <SortableHeader column="fpts" label="Fpts" align="right" />
+                  <SortableHeader column="last" label="Last" align="right" />
+                  <SortableHeader column="avg" label="Avg" align="right" />
+                  <SortableHeader column="shots" label="Shots" align="right" />
+                  <SortableHeader column="goals" label="Goals" align="right" />
+                  <SortableHeader column="assists" label="Assists" align="right" />
+                  <SortableHeader column="saves" label="Saves" align="right" />
+                  <SortableHeader column="demos" label="Demos" align="right" />
                 </tr>
               </thead>
               <tbody>
-                {mockTopTeams.map((team) => (
+                {sortedTeams.map((team) => (
                   <tr
                     key={team.rank}
                     style={{

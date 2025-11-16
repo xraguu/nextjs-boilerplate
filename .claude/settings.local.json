@@ -8,7 +8,8 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
