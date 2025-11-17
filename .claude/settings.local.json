@@ -11,7 +11,11 @@
       "Bash(findstr:*)",
       "Bash(npx tsc:*)",
       "Bash(nul)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(taskkill /F /PID 35220)",
+      "Bash(npm install:*)",
+      "Bash(openssl rand:*)",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []
