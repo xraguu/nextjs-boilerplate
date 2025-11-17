@@ -1,6 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import { TEAMS } from "@/lib/teams";
+
+// Mock roster data for modal
+const generateMockRoster = (managerName: string) => {
+  return [
+    { slot: "2s", team: TEAMS[0], locked: false },
+    { slot: "2s", team: TEAMS[1], locked: true },
+    { slot: "3s", team: TEAMS[2], locked: false },
+    { slot: "3s", team: TEAMS[3], locked: true },
+    { slot: "FLX", team: TEAMS[4], locked: false },
+    { slot: "BE", team: TEAMS[5], locked: false },
+    { slot: "BE", team: TEAMS[6], locked: true },
+    { slot: "BE", team: TEAMS[7], locked: false },
+  ];
+};
 
 // Mock lineup status data
 const mockLineupStatus = [
@@ -23,6 +39,9 @@ export default function LockLineupsPage() {
   const [lineups, setLineups] = useState(mockLineupStatus);
   const [filterLeague, setFilterLeague] = useState("all");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showRosterModal, setShowRosterModal] = useState(false);
+  const [selectedManager, setSelectedManager] = useState<typeof mockLineupStatus[0] | null>(null);
+  const [managerRoster, setManagerRoster] = useState<ReturnType<typeof generateMockRoster>>([]);
 
   const toggleLock = (id: string) => {
     setLineups((prev) =>
@@ -62,6 +81,33 @@ export default function LockLineupsPage() {
     alert("All lineups have been locked!");
   };
 
+  const openRosterModal = (manager: typeof mockLineupStatus[0]) => {
+    setSelectedManager(manager);
+    setManagerRoster(generateMockRoster(manager.manager));
+    setShowRosterModal(true);
+  };
+
+  const toggleTeamLock = (index: number) => {
+    setManagerRoster(prev => prev.map((team, i) =>
+      i === index ? { ...team, locked: !team.locked } : team
+    ));
+  };
+
+  const lockWholeRoster = () => {
+    setManagerRoster(prev => prev.map(team => ({ ...team, locked: true })));
+  };
+
+  const saveRosterLocks = () => {
+    const allLocked = managerRoster.every(team => team.locked);
+    setLineups(prev => prev.map(lineup =>
+      lineup.id === selectedManager?.id
+        ? { ...lineup, locked: allLocked, lastUpdated: new Date().toLocaleString("en-US") }
+        : lineup
+    ));
+    setShowRosterModal(false);
+    alert("Roster locks updated!");
+  };
+
   const filteredLineups =
     filterLeague === "all"
       ? lineups
@@ -72,6 +118,135 @@ export default function LockLineupsPage() {
 
   return (
     <div>
+      {/* Roster Lock Modal */}
+      {showRosterModal && selectedManager && (
+        <>
+          <div
+            className="modal-backdrop"
+            onClick={() => setShowRosterModal(false)}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: 1000,
+              maxWidth: "900px",
+              width: "95%",
+              maxHeight: "90vh",
+              overflowY: "auto"
+            }}
+          >
+            <div className="card" style={{ padding: "2rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+                <div>
+                  <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--accent)", marginBottom: "0.25rem" }}>
+                    {selectedManager.teamName}
+                  </h2>
+                  <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                    Manager: {selectedManager.manager} | League: {selectedManager.league}
+                  </p>
+                </div>
+                <button
+                  className="btn btn-warning"
+                  onClick={lockWholeRoster}
+                >
+                  Lock Whole Roster
+                </button>
+              </div>
+
+              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "1.5rem" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
+                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                      Slot
+                    </th>
+                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                      Team
+                    </th>
+                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                      Status
+                    </th>
+                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {managerRoster.map((item, index) => (
+                    <tr key={index} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--accent)", fontWeight: 600 }}>
+                        {item.slot}
+                      </td>
+                      <td style={{ padding: "0.75rem 0.5rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <Image
+                            src={item.team.logoPath}
+                            alt={item.team.name}
+                            width={32}
+                            height={32}
+                            style={{ borderRadius: "4px" }}
+                          />
+                          <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                            {item.team.leagueId} {item.team.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                        <div style={{ width: "100%", maxWidth: "120px", margin: "0 auto" }}>
+                          <div style={{
+                            width: "100%",
+                            height: "6px",
+                            background: "rgba(255,255,255,0.1)",
+                            borderRadius: "3px",
+                            overflow: "hidden"
+                          }}>
+                            <div style={{
+                              width: item.locked ? "100%" : "0%",
+                              height: "100%",
+                              background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+                              transition: "width 0.3s ease"
+                            }} />
+                          </div>
+                          <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                            {item.locked ? "Locked" : "Unlocked"}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: "0.75rem 0.5rem", textAlign: "right" }}>
+                        <button
+                          className={item.locked ? "btn btn-ghost" : "btn btn-warning"}
+                          style={{ padding: "0.4rem 1rem", fontSize: "0.85rem" }}
+                          onClick={() => toggleTeamLock(index)}
+                        >
+                          {item.locked ? "Unlock" : "Lock"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setShowRosterModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={saveRosterLocks}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Confirmation Modal */}
       {showConfirmModal && (
         <>
@@ -214,7 +389,7 @@ export default function LockLineupsPage() {
           style={{ padding: "0.75rem 2rem", fontSize: "1.05rem" }}
           onClick={() => setShowConfirmModal(true)}
         >
-          🔒 Lock All Lineups
+          Lock All Lineups
         </button>
       </div>
 
@@ -406,20 +581,31 @@ export default function LockLineupsPage() {
                   {lineup.league}
                 </td>
                 <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                  <span
-                    style={{
-                      padding: "0.4rem 1rem",
-                      borderRadius: "20px",
-                      fontWeight: 600,
-                      fontSize: "0.8rem",
-                      background: lineup.locked
-                        ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
-                        : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                      color: "white",
-                    }}
-                  >
-                    {lineup.locked ? "🔒 Locked" : "🔓 Unlocked"}
-                  </span>
+                  <div style={{ width: "100%", maxWidth: "150px", margin: "0 auto" }}>
+                    <div style={{
+                      width: "100%",
+                      height: "8px",
+                      background: "rgba(255,255,255,0.1)",
+                      borderRadius: "4px",
+                      overflow: "hidden",
+                      position: "relative"
+                    }}>
+                      <div style={{
+                        width: lineup.locked ? "100%" : "0%",
+                        height: "100%",
+                        background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+                        transition: "width 0.3s ease"
+                      }} />
+                    </div>
+                    <div style={{
+                      fontSize: "0.75rem",
+                      color: "var(--text-muted)",
+                      marginTop: "0.25rem",
+                      textAlign: "center"
+                    }}>
+                      {lineup.locked ? "Locked" : "Unlocked"}
+                    </div>
+                  </div>
                 </td>
                 <td
                   style={{
@@ -437,11 +623,11 @@ export default function LockLineupsPage() {
                   }}
                 >
                   <button
-                    className={lineup.locked ? "btn btn-ghost" : "btn btn-warning"}
+                    className="btn btn-primary"
                     style={{ padding: "0.4rem 1rem", fontSize: "0.85rem" }}
-                    onClick={() => toggleLock(lineup.id)}
+                    onClick={() => openRosterModal(lineup)}
                   >
-                    {lineup.locked ? "Unlock" : "Lock"}
+                    Manage Locks
                   </button>
                 </td>
               </tr>

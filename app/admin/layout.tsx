@@ -87,14 +87,14 @@ export default function AdminLayout({
   const pathname = usePathname();
 
   const adminNavItems = [
-    { label: "Dashboard", path: "/admin", icon: "📊" },
-    { label: "Manage Leagues", path: "/admin/leagues", icon: "🏆" },
-    { label: "Lock Lineups", path: "/admin/lock-lineups", icon: "🔒" },
-    { label: "Process Waivers", path: "/admin/waivers", icon: "📋" },
-    { label: "Recompute Stats", path: "/admin/stats", icon: "🔢" },
-    { label: "Manage Users", path: "/admin/users", icon: "👥" },
-    { label: "Settings", path: "/admin/settings", icon: "⚙️" },
-    { label: "Database Tools", path: "/admin/database", icon: "💾" },
+    { label: "Dashboard", path: "/admin" },
+    { label: "Manage Leagues", path: "/admin/leagues" },
+    { label: "Lock Lineups", path: "/admin/lock-lineups" },
+    { label: "Transactions", path: "/admin/waivers" },
+    { label: "Recompute Stats", path: "/admin/stats" },
+    { label: "Manage Users", path: "/admin/users" },
+    { label: "Settings", path: "/admin/settings" },
+    { label: "Database Tools", path: "/admin/database" },
   ];
 
   return (
@@ -161,7 +161,6 @@ export default function AdminLayout({
                   }
                 }}
               >
-                <span style={{ fontSize: "1.25rem" }}>{item.icon}</span>
                 <span>{item.label}</span>
               </Link>
             );

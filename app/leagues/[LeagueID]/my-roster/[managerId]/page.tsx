@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
+// Helper function to get fantasy rank color
+const getFantasyRankColor = (rank: number): string => {
+  if (rank >= 1 && rank <= 12) return "#ef4444"; // red
+  if (rank >= 13 && rank <= 24) return "#9ca3af"; // gray
+  if (rank >= 25 && rank <= 32) return "#22c55e"; // green
+  return "#9ca3af"; // default gray
+};
+
 // Mock roster data with full stats
 const mockRoster = {
   managerName: "xenn",
@@ -25,17 +33,17 @@ const mockRoster = {
   },
   teams: [
     // 2v2 Slots
-    { slot: "2s", name: "Flames CL", score: 48.5, opponent: "Puffins CL", oprk: 2, fprk: 1, fpts: 425.0, avg: 53.1, last: 52.0, goals: 145, shots: 892, saves: 234, assists: 98, demos: 67, teamRecord: "8-2" },
-    { slot: "2s", name: "Torch ML", score: 46.0, opponent: "Eclipse ML", oprk: 5, fprk: 2, fpts: 398.5, avg: 49.8, last: 48.5, goals: 138, shots: 856, saves: 221, assists: 94, demos: 62, teamRecord: "7-3" },
+    { slot: "2s", name: "Flames CL", score: 48.5, opponent: "Puffins CL", oprk: 2, fprk: 1, fpts: 425.0, avg: 53.1, last: 52.0, goals: 145, shots: 892, saves: 234, assists: 98, demos: 67, teamRecord: "8-2", opponentGameRecord: "10-15", opponentFantasyRank: 1 },
+    { slot: "2s", name: "Torch ML", score: 46.0, opponent: "Eclipse ML", oprk: 5, fprk: 2, fpts: 398.5, avg: 49.8, last: 48.5, goals: 138, shots: 856, saves: 221, assists: 94, demos: 62, teamRecord: "7-3", opponentGameRecord: "8-17", opponentFantasyRank: 18 },
     // 3v3 Slots
-    { slot: "3s", name: "Puffins CL", score: 45.5, opponent: "Flames CL", oprk: 1, fprk: 3, fpts: 385.0, avg: 48.1, last: 46.0, goals: 132, shots: 824, saves: 215, assists: 89, demos: 58, teamRecord: "6-4" },
-    { slot: "3s", name: "Eclipse ML", score: 44.0, opponent: "Torch ML", oprk: 3, fprk: 4, fpts: 372.5, avg: 46.6, last: 45.0, goals: 128, shots: 798, saves: 208, assists: 86, demos: 55, teamRecord: "6-4" },
+    { slot: "3s", name: "Puffins CL", score: 45.5, opponent: "Flames CL", oprk: 1, fprk: 3, fpts: 385.0, avg: 48.1, last: 46.0, goals: 132, shots: 824, saves: 215, assists: 89, demos: 58, teamRecord: "6-4", opponentGameRecord: "12-10", opponentFantasyRank: 5 },
+    { slot: "3s", name: "Eclipse ML", score: 44.0, opponent: "Torch ML", oprk: 3, fprk: 4, fpts: 372.5, avg: 46.6, last: 45.0, goals: 128, shots: 798, saves: 208, assists: 86, demos: 55, teamRecord: "6-4", opponentGameRecord: "5-18", opponentFantasyRank: 28 },
     // Flex Slot
-    { slot: "FLX", name: "Vortex CL", score: 43.5, opponent: "Lightning DL", oprk: 6, fprk: 5, fpts: 368.0, avg: 46.0, last: 44.5, goals: 125, shots: 782, saves: 202, assists: 83, demos: 53, teamRecord: "5-5" },
+    { slot: "FLX", name: "Vortex CL", score: 43.5, opponent: "Lightning DL", oprk: 6, fprk: 5, fpts: 368.0, avg: 46.0, last: 44.5, goals: 125, shots: 782, saves: 202, assists: 83, demos: 53, teamRecord: "5-5", opponentGameRecord: "7-15", opponentFantasyRank: 14 },
     // Bench
-    { slot: "BE", name: "Lightning DL", score: 0, opponent: "Vortex CL", oprk: 4, fprk: 6, fpts: 356.0, avg: 44.5, last: 43.0, goals: 121, shots: 765, saves: 198, assists: 81, demos: 51, teamRecord: "5-5" },
-    { slot: "BE", name: "Phoenix ML", score: 0, opponent: "Storm CL", oprk: 8, fprk: 7, fpts: 342.5, avg: 42.8, last: 41.5, goals: 116, shots: 743, saves: 189, assists: 77, demos: 48, teamRecord: "4-6" },
-    { slot: "BE", name: "Storm CL", score: 0, opponent: "Phoenix ML", oprk: 7, fprk: 8, fpts: 335.0, avg: 41.9, last: 40.0, goals: 113, shots: 728, saves: 184, assists: 75, demos: 46, teamRecord: "4-6" },
+    { slot: "BE", name: "Lightning DL", score: 0, opponent: "Vortex CL", oprk: 4, fprk: 6, fpts: 356.0, avg: 44.5, last: 43.0, goals: 121, shots: 765, saves: 198, assists: 81, demos: 51, teamRecord: "5-5", opponentGameRecord: "9-13", opponentFantasyRank: 8 },
+    { slot: "BE", name: "Phoenix ML", score: 0, opponent: "Storm CL", oprk: 8, fprk: 7, fpts: 342.5, avg: 42.8, last: 41.5, goals: 116, shots: 743, saves: 189, assists: 77, demos: 48, teamRecord: "4-6", opponentGameRecord: "11-11", opponentFantasyRank: 10 },
+    { slot: "BE", name: "Storm CL", score: 0, opponent: "Phoenix ML", oprk: 7, fprk: 8, fpts: 335.0, avg: 41.9, last: 40.0, goals: 113, shots: 728, saves: 184, assists: 75, demos: 46, teamRecord: "4-6", opponentGameRecord: "6-16", opponentFantasyRank: 26 },
   ]
 };
 
@@ -341,8 +349,23 @@ export default function MyRosterPage() {
                     }}>
                       {team.slot}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", fontWeight: 600, fontSize: "0.95rem" }}>
-                      {team.name || "-"}
+                    <td style={{ padding: "0.75rem 1rem" }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text-main)" }}>
+                          {team.name || "-"}
+                        </div>
+                        {team.opponent && team.opponentGameRecord && team.opponentFantasyRank && (
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                            vs. {team.opponent} {team.opponentGameRecord}{" "}
+                            <span style={{ color: getFantasyRankColor(team.opponentFantasyRank) }}>
+                              ({team.opponentFantasyRank}
+                              {team.opponentFantasyRank === 1 ? "st" :
+                               team.opponentFantasyRank === 2 ? "nd" :
+                               team.opponentFantasyRank === 3 ? "rd" : "th"})
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td style={{
                       padding: "0.75rem 1rem",
@@ -443,8 +466,23 @@ export default function MyRosterPage() {
                       <td style={{ padding: "0.75rem 1rem", fontWeight: 700, fontSize: "0.9rem", color: "var(--accent)" }}>
                         {index + 1}
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", fontWeight: 600, fontSize: "0.95rem" }}>
-                        {team.name}
+                      <td style={{ padding: "0.75rem 1rem" }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text-main)" }}>
+                            {team.name}
+                          </div>
+                          {team.opponent && team.opponentGameRecord && team.opponentFantasyRank && (
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                              vs. {team.opponent} {team.opponentGameRecord}{" "}
+                              <span style={{ color: getFantasyRankColor(team.opponentFantasyRank) }}>
+                                ({team.opponentFantasyRank}
+                                {team.opponentFantasyRank === 1 ? "st" :
+                                 team.opponentFantasyRank === 2 ? "nd" :
+                                 team.opponentFantasyRank === 3 ? "rd" : "th"})
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td style={{
                         padding: "0.75rem 1rem",

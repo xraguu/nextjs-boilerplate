@@ -6,10 +6,10 @@ import { TEAMS } from "@/lib/teams";
 
 // Mock fantasy leagues data
 const mockFantasyLeagues = [
-  { id: "2025-alpha", name: "2025 RL Fantasy Alpha", leagueType: "PL", activeTeams: 12, season: 2025, commissioner: "Nick", status: "Active" },
-  { id: "2025-beta", name: "2025 RL Fantasy Beta", leagueType: "ML", activeTeams: 10, season: 2025, commissioner: "Rover", status: "Active" },
-  { id: "2025-gamma", name: "2025 RL Fantasy Gamma", leagueType: "CL", activeTeams: 12, season: 2025, commissioner: "FlipReset", status: "Active" },
-  { id: "2024-championship", name: "2024 Championship League", leagueType: "PL", activeTeams: 12, season: 2024, commissioner: "AirDribbler", status: "Archived" },
+  { id: "2025-alpha", name: "2025 RL Fantasy Alpha", activeTeams: 12, season: 2025, commissioner: "Nick", status: "Active" },
+  { id: "2025-beta", name: "2025 RL Fantasy Beta", activeTeams: 10, season: 2025, commissioner: "Rover", status: "Active" },
+  { id: "2025-gamma", name: "2025 RL Fantasy Gamma", activeTeams: 12, season: 2025, commissioner: "FlipReset", status: "Active" },
+  { id: "2024-championship", name: "2024 Championship League", activeTeams: 12, season: 2024, commissioner: "AirDribbler", status: "Archived" },
 ];
 
 export default function ManageLeaguesPage() {
@@ -103,37 +103,6 @@ export default function ManageLeaguesPage() {
                       color: "var(--text-muted)",
                     }}
                   >
-                    MLE League Type
-                  </label>
-                  <select
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      background: "rgba(255,255,255,0.1)",
-                      border: "1px solid rgba(255,255,255,0.2)",
-                      borderRadius: "6px",
-                      color: "var(--text-main)",
-                      fontSize: "0.95rem",
-                    }}
-                    required
-                  >
-                    <option value="">Select league type...</option>
-                    {LEAGUES.map((league) => (
-                      <option key={league.id} value={league.id}>
-                        {league.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div style={{ marginBottom: "1rem" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontSize: "0.9rem",
-                      color: "var(--text-muted)",
-                    }}
-                  >
                     Max Teams
                   </label>
                   <input
@@ -208,140 +177,6 @@ export default function ManageLeaguesPage() {
         </button>
       </div>
 
-      {/* MLE Leagues Table */}
-      <div className="card" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
-        <h2
-          style={{
-            fontSize: "1.25rem",
-            fontWeight: 700,
-            marginBottom: "1.5rem",
-            color: "var(--text-main)",
-          }}
-        >
-          MLE Leagues
-        </h2>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
-              <th
-                style={{
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "left",
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                }}
-              >
-                League
-              </th>
-              <th
-                style={{
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "left",
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                }}
-              >
-                Full Name
-              </th>
-              <th
-                style={{
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                }}
-              >
-                Teams
-              </th>
-              <th
-                style={{
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                }}
-              >
-                Fantasy Leagues
-              </th>
-              <th
-                style={{
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                }}
-              >
-                Color
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredLeagues.map((league) => (
-              <tr
-                key={league.id}
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-              >
-                <td style={{ padding: "0.75rem 0.5rem" }}>
-                  <span
-                    style={{
-                      fontWeight: 700,
-                      fontSize: "1.1rem",
-                      color: league.colorHex,
-                    }}
-                  >
-                    {league.id}
-                  </span>
-                </td>
-                <td style={{ padding: "0.75rem 0.5rem" }}>
-                  <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
-                    {league.name}
-                  </span>
-                </td>
-                <td
-                  style={{
-                    padding: "0.75rem 0.5rem",
-                    textAlign: "center",
-                    fontWeight: 600,
-                  }}
-                >
-                  {league.teamCount}
-                </td>
-                <td
-                  style={{
-                    padding: "0.75rem 0.5rem",
-                    textAlign: "center",
-                    fontWeight: 600,
-                  }}
-                >
-                  {league.fantasyLeaguesCount}
-                </td>
-                <td
-                  style={{
-                    padding: "0.75rem 0.5rem",
-                    textAlign: "center",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "inline-block",
-                      width: "60px",
-                      height: "30px",
-                      borderRadius: "6px",
-                      background: `linear-gradient(135deg, ${league.colorHex} 0%, ${league.colorHextwo} 100%)`,
-                    }}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
       {/* Fantasy Leagues Table */}
       <div className="card" style={{ padding: "1.5rem" }}>
         <h2
@@ -367,17 +202,6 @@ export default function ManageLeaguesPage() {
                 }}
               >
                 League Name
-              </th>
-              <th
-                style={{
-                  padding: "0.75rem 0.5rem",
-                  textAlign: "center",
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                }}
-              >
-                Type
               </th>
               <th
                 style={{
@@ -434,17 +258,6 @@ export default function ManageLeaguesPage() {
                 <td style={{ padding: "0.75rem 0.5rem" }}>
                   <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
                     {league.name}
-                  </span>
-                </td>
-                <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                  <span
-                    style={{
-                      fontWeight: 700,
-                      color: LEAGUES.find((l) => l.id === league.leagueType)
-                        ?.colorHex,
-                    }}
-                  >
-                    {league.leagueType}
                   </span>
                 </td>
                 <td

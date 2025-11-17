@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { TEAMS } from "@/lib/teams";
+import TeamModal from "@/components/TeamModal";
 
 // Mock available teams (teams not yet drafted)
 // Using deterministic values based on index to avoid hydration errors
@@ -169,6 +170,43 @@ export default function MakePickPage() {
   const [selectedTeam, setSelectedTeam] = useState<typeof availableTeams[0] | null>(null);
   const [selectedManager, setSelectedManager] = useState("Fantastic Ballers");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalTeam, setModalTeam] = useState<typeof availableTeams[0] | null>(null);
+
+  // Mock: Currently it's NOT the user's pick (Pixies is on the clock, user is Fantastic Ballers)
+  const isMyPick = false; // In real implementation, this would check if current pick manager === user's manager
+  const [draftQueue, setDraftQueue] = useState<typeof availableTeams>([]);
+  const [rightPanelTab, setRightPanelTab] = useState<"roster" | "queue">("roster");
+  const [autodraftEnabled, setAutodraftEnabled] = useState(false); // Track autodraft state
+
+  // Sync autodraft state with localStorage
+  useEffect(() => {
+    const savedAutodraft = localStorage.getItem("autodraftEnabled");
+    if (savedAutodraft) {
+      setAutodraftEnabled(savedAutodraft === "true");
+    }
+
+    // Sync draft queue with localStorage
+    const savedQueue = localStorage.getItem("draftQueue");
+    if (savedQueue) {
+      try {
+        setDraftQueue(JSON.parse(savedQueue));
+      } catch (e) {
+        console.error("Failed to parse draft queue from localStorage", e);
+      }
+    }
+  }, []);
+
+  const toggleAutodraft = () => {
+    const newValue = !autodraftEnabled;
+    setAutodraftEnabled(newValue);
+    localStorage.setItem("autodraftEnabled", String(newValue));
+  };
+
+  // Sync queue changes to localStorage
+  useEffect(() => {
+    localStorage.setItem("draftQueue", JSON.stringify(draftQueue));
+  }, [draftQueue]);
 
   // Filter and sort state
   const [leagueFilter, setLeagueFilter] = useState<"All" | "Foundation" | "Academy" | "Champion" | "Master" | "Premier">("All");
@@ -238,6 +276,16 @@ export default function MakePickPage() {
 
   return (
     <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
+      {/* Team Stats Modal */}
+      <TeamModal
+        team={showModal && modalTeam ? {
+          ...modalTeam,
+          rosteredBy: undefined
+        } : null}
+        onClose={() => setShowModal(false)}
+        isDraftContext={true}
+      />
+
       {/* Confirmation Modal */}
       {showConfirmation && selectedTeam && (
         <div
@@ -368,22 +416,90 @@ export default function MakePickPage() {
         </div>
       )}
 
+      {/* Back Button */}
+      <div style={{ marginBottom: "1rem" }}>
+        <button
+          onClick={() => router.push(`/leagues/${leagueId}/draft`)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            padding: "0.75rem 1.5rem",
+            borderRadius: "8px",
+            color: "var(--text-main)",
+            fontWeight: 600,
+            fontSize: "0.95rem",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+            e.currentTarget.style.borderColor = "var(--accent)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+          }}
+        >
+          <span style={{ fontSize: "1.2rem" }}>←</span>
+          <span>Back To Draft</span>
+        </button>
+      </div>
+
       {/* Header with Timer */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-          Make A Pick
+          Available Teams
         </h1>
 
-        <div style={{
-          background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
-          padding: "0.75rem 2rem",
-          borderRadius: "25px",
-          fontWeight: 700,
-          fontSize: "1.1rem",
-          color: "#ffffff",
-          boxShadow: "0 4px 10px rgba(74, 222, 128, 0.3)"
-        }}>
-          00:17
+        <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
+          {/* Timer */}
+          <div style={{
+            background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
+            padding: "0.75rem 2rem",
+            borderRadius: "25px",
+            fontWeight: 700,
+            fontSize: "1.1rem",
+            color: "#ffffff",
+            boxShadow: "0 4px 10px rgba(74, 222, 128, 0.3)"
+          }}>
+            00:17
+          </div>
+
+          {/* Autodraft Button */}
+          <button
+            onClick={toggleAutodraft}
+            style={{
+              background: autodraftEnabled
+                ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
+                : "rgba(255,255,255,0.1)",
+              border: `2px solid ${autodraftEnabled ? "#f2b632" : "var(--accent)"}`,
+              padding: "0.75rem 1.5rem",
+              borderRadius: "25px",
+              fontWeight: 600,
+              fontSize: "0.95rem",
+              color: autodraftEnabled ? "#ffffff" : "var(--accent)",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              boxShadow: autodraftEnabled
+                ? "0 4px 12px rgba(242, 182, 50, 0.4)"
+                : "0 2px 8px rgba(242, 182, 50, 0.2)"
+            }}
+            onMouseEnter={(e) => {
+              if (!autodraftEnabled) {
+                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!autodraftEnabled) {
+                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+              }
+            }}
+          >
+            Autodraft {autodraftEnabled ? "ON" : "OFF"}
+          </button>
         </div>
       </div>
 
@@ -684,38 +800,93 @@ export default function MakePickPage() {
                         style={{ borderRadius: "4px" }}
                       />
                       <div>
-                        <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text-main)" }}>
+                        <div
+                          onClick={() => {
+                            setModalTeam(team);
+                            setShowModal(true);
+                          }}
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "0.95rem",
+                            color: "var(--text-main)",
+                            cursor: "pointer",
+                            transition: "color 0.2s"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                        >
                           {team.leagueId} {team.name}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: "0.75rem 1rem", textAlign: "left" }}>
-                    <button
-                      onClick={() => handlePickTeam(team)}
-                      style={{
-                        background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
-                        color: "#ffffff",
-                        padding: "0.5rem 1.5rem",
-                        borderRadius: "6px",
-                        border: "none",
-                        fontWeight: 600,
-                        fontSize: "0.85rem",
-                        cursor: "pointer",
-                        boxShadow: "0 2px 8px rgba(74, 222, 128, 0.3)",
-                        transition: "all 0.2s ease"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(74, 222, 128, 0.4)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(74, 222, 128, 0.3)";
-                      }}
-                    >
-                      Pick
-                    </button>
+                    {isMyPick && !autodraftEnabled ? (
+                      <button
+                        onClick={() => handlePickTeam(team)}
+                        style={{
+                          background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
+                          color: "#ffffff",
+                          padding: "0.5rem 1.5rem",
+                          borderRadius: "6px",
+                          border: "none",
+                          fontWeight: 600,
+                          fontSize: "0.85rem",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 8px rgba(74, 222, 128, 0.3)",
+                          transition: "all 0.2s ease"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(74, 222, 128, 0.4)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(74, 222, 128, 0.3)";
+                        }}
+                      >
+                        Pick
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (!draftQueue.find(t => t.id === team.id)) {
+                            setDraftQueue([...draftQueue, team]);
+                          }
+                        }}
+                        disabled={draftQueue.find(t => t.id === team.id) !== undefined}
+                        style={{
+                          background: draftQueue.find(t => t.id === team.id)
+                            ? "rgba(255,255,255,0.1)"
+                            : "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
+                          color: draftQueue.find(t => t.id === team.id) ? "var(--text-muted)" : "#ffffff",
+                          padding: "0.5rem 1.5rem",
+                          borderRadius: "6px",
+                          border: "none",
+                          fontWeight: 600,
+                          fontSize: "0.85rem",
+                          cursor: draftQueue.find(t => t.id === team.id) ? "not-allowed" : "pointer",
+                          boxShadow: draftQueue.find(t => t.id === team.id)
+                            ? "none"
+                            : "0 2px 8px rgba(242, 182, 50, 0.3)",
+                          transition: "all 0.2s ease"
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!draftQueue.find(t => t.id === team.id)) {
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                            e.currentTarget.style.boxShadow = "0 4px 12px rgba(242, 182, 50, 0.4)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!draftQueue.find(t => t.id === team.id)) {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "0 2px 8px rgba(242, 182, 50, 0.3)";
+                          }
+                        }}
+                      >
+                        {draftQueue.find(t => t.id === team.id) ? "Queued" : "Queue"}
+                      </button>
+                    )}
                   </td>
                   <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
                     {team.fptsLS}
@@ -757,28 +928,67 @@ export default function MakePickPage() {
           top: "1rem",
           maxHeight: "calc(100vh - 2rem)"
         }}>
-          {/* Manager Dropdown */}
-          <div style={{ position: "relative", marginBottom: "1.5rem" }}>
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
             <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
+              onClick={() => setRightPanelTab("roster")}
               style={{
-                width: "100%",
-                background: "rgba(255,255,255,0.08)",
+                flex: 1,
+                padding: "0.5rem 1rem",
+                background: rightPanelTab === "roster" ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)" : "rgba(255,255,255,0.08)",
                 border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: "6px",
                 color: "#ffffff",
-                padding: "0.75rem 1rem",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "1rem",
                 fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
+                fontSize: "0.85rem",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
               }}
             >
-              <span>{selectedManager}</span>
-              <span>{dropdownOpen ? "▲" : "▼"}</span>
+              Your Roster
             </button>
+            <button
+              onClick={() => setRightPanelTab("queue")}
+              style={{
+                flex: 1,
+                padding: "0.5rem 1rem",
+                background: rightPanelTab === "queue" ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)" : "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: "6px",
+                color: "#ffffff",
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              Queue ({draftQueue.length})
+            </button>
+          </div>
+
+          {/* Manager Dropdown (only show for roster tab) */}
+          {rightPanelTab === "roster" && (
+            <div style={{ position: "relative", marginBottom: "1.5rem" }}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                style={{
+                  width: "100%",
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "#ffffff",
+                  padding: "0.75rem 1rem",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between"
+                }}
+              >
+                <span>{selectedManager}</span>
+                <span>{dropdownOpen ? "▲" : "▼"}</span>
+              </button>
 
             {dropdownOpen && (
               <div
@@ -828,50 +1038,201 @@ export default function MakePickPage() {
                 ))}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
-          {/* Roster Table */}
-          <div>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
-                  <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Slot</th>
-                  <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Team</th>
-                  <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Pick</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentRoster.map((slot, idx) => (
-                  <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                    <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                      {slot.slot}
-                    </td>
-                    <td style={{ padding: "0.75rem 0.5rem" }}>
-                      {slot.team ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <Image
-                            src={slot.team.logoPath}
-                            alt={slot.team.name}
-                            width={20}
-                            height={20}
-                            style={{ borderRadius: "4px" }}
-                          />
-                          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-main)" }}>
-                            {slot.team.leagueId} {slot.team.name}
-                          </span>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>-</span>
-                      )}
-                    </td>
-                    <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                      {slot.pick || "-"}
-                    </td>
+          {/* Content based on active tab */}
+          {rightPanelTab === "roster" && (
+            <div>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
+                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Slot</th>
+                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Team</th>
+                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Pick</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {currentRoster.map((slot, idx) => (
+                    <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                      <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                        {slot.slot}
+                      </td>
+                      <td style={{ padding: "0.75rem 0.5rem" }}>
+                        {slot.team ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <Image
+                              src={slot.team.logoPath}
+                              alt={slot.team.name}
+                              width={20}
+                              height={20}
+                              style={{ borderRadius: "4px" }}
+                            />
+                            <span
+                              onClick={() => {
+                                setModalTeam(slot.team);
+                                setShowModal(true);
+                              }}
+                              style={{
+                                fontSize: "0.85rem",
+                                fontWeight: 600,
+                                color: "var(--text-main)",
+                                cursor: "pointer",
+                                transition: "color 0.2s"
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                              onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                            >
+                              {slot.team.leagueId} {slot.team.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>-</span>
+                        )}
+                      </td>
+                      <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                        {slot.pick || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Draft Queue Tab */}
+          {rightPanelTab === "queue" && (
+            <div>
+              {draftQueue.length === 0 ? (
+                <div style={{
+                  padding: "2rem 1rem",
+                  textAlign: "center",
+                  color: "var(--text-muted)"
+                }}>
+                  <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>No teams in queue</p>
+                  <p style={{ fontSize: "0.85rem" }}>Click "Queue" on teams to add them to your draft queue</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {draftQueue.map((team, idx) => (
+                    <div
+                      key={team.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        padding: "0.75rem",
+                        background: "rgba(255,255,255,0.05)",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(255,255,255,0.1)"
+                      }}
+                    >
+                      <div style={{
+                        width: "24px",
+                        height: "24px",
+                        borderRadius: "50%",
+                        background: "var(--accent)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        color: "#000"
+                      }}>
+                        {idx + 1}
+                      </div>
+                      <Image
+                        src={team.logoPath}
+                        alt={team.name}
+                        width={24}
+                        height={24}
+                        style={{ borderRadius: "4px" }}
+                      />
+                      <span style={{ flex: 1, fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
+                        {team.leagueId} {team.name}
+                      </span>
+
+                      {/* Reorder buttons */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                        <button
+                          onClick={() => {
+                            if (idx > 0) {
+                              const newQueue = [...draftQueue];
+                              [newQueue[idx - 1], newQueue[idx]] = [newQueue[idx], newQueue[idx - 1]];
+                              setDraftQueue(newQueue);
+                            }
+                          }}
+                          disabled={idx === 0}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: idx === 0 ? "rgba(255,255,255,0.2)" : "var(--text-muted)",
+                            cursor: idx === 0 ? "not-allowed" : "pointer",
+                            fontSize: "0.8rem",
+                            padding: "0",
+                            lineHeight: 1
+                          }}
+                          onMouseEnter={(e) => {
+                            if (idx !== 0) e.currentTarget.style.color = "var(--accent)";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (idx !== 0) e.currentTarget.style.color = "var(--text-muted)";
+                          }}
+                        >
+                          ▲
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (idx < draftQueue.length - 1) {
+                              const newQueue = [...draftQueue];
+                              [newQueue[idx], newQueue[idx + 1]] = [newQueue[idx + 1], newQueue[idx]];
+                              setDraftQueue(newQueue);
+                            }
+                          }}
+                          disabled={idx === draftQueue.length - 1}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: idx === draftQueue.length - 1 ? "rgba(255,255,255,0.2)" : "var(--text-muted)",
+                            cursor: idx === draftQueue.length - 1 ? "not-allowed" : "pointer",
+                            fontSize: "0.8rem",
+                            padding: "0",
+                            lineHeight: 1
+                          }}
+                          onMouseEnter={(e) => {
+                            if (idx !== draftQueue.length - 1) e.currentTarget.style.color = "var(--accent)";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (idx !== draftQueue.length - 1) e.currentTarget.style.color = "var(--text-muted)";
+                          }}
+                        >
+                          ▼
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setDraftQueue(prev => prev.filter((_, i) => i !== idx));
+                        }}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "var(--text-muted)",
+                          cursor: "pointer",
+                          fontSize: "1.2rem",
+                          padding: "0.25rem"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = "#ef4444"}
+                        onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-muted)"}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -6,6 +6,14 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
+// Helper function to get fantasy rank color
+const getFantasyRankColor = (rank: number): string => {
+  if (rank >= 1 && rank <= 12) return "#ef4444"; // red
+  if (rank >= 13 && rank <= 24) return "#9ca3af"; // gray
+  if (rank >= 25 && rank <= 32) return "#22c55e"; // green
+  return "#9ca3af"; // default gray
+};
+
 // Generate weekly stats for modal
 // Static values to prevent hydration errors (no Math.random())
 const generateWeeklyStats = (teamName: string) => {
@@ -31,6 +39,9 @@ type SortDirection = "asc" | "desc";
 // Static values to prevent hydration errors (no Math.random())
 const generatePlayers = (leagueId: string, count: number) => {
   const leagueTeams = TEAMS.filter(t => t.leagueId === leagueId);
+  const opponentGameRecords = ["10-15", "8-17", "12-10", "5-18", "7-15", "9-13", "11-11", "6-16"];
+  const opponentFantasyRanks = [1, 18, 5, 28, 14, 8, 10, 26];
+
   return Array.from({ length: count }, (_, i) => {
     const team = leagueTeams[i % leagueTeams.length];
     const positions = ["2s", "2s", "3s", "3s", "FLX", "BE", "BE", "BE"];
@@ -41,7 +52,8 @@ const generatePlayers = (leagueId: string, count: number) => {
       position: positions[i] || "BE",
       points: i < 5 ? (50 - i * 3) : 0,
       opponent: leagueTeams[(i * 3) % leagueTeams.length],
-      opponentRank: (i * 5 % 16) + 1,
+      opponentRank: opponentFantasyRanks[i % opponentFantasyRanks.length],
+      opponentGameRecord: opponentGameRecords[i % opponentGameRecords.length],
       hasPlayed: i < 5
     };
   });
@@ -669,7 +681,10 @@ export default function ScoreboardPage() {
                       </div>
                       {player1.hasPlayed && (
                         <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>
-                          vs. {player1.opponent.name} ({player1.opponentRank}{player1.opponentRank === 1 ? 'st' : player1.opponentRank === 2 ? 'nd' : player1.opponentRank === 3 ? 'rd' : 'th'})
+                          vs. {player1.opponent.name} {player1.opponentGameRecord}{" "}
+                          <span style={{ color: getFantasyRankColor(player1.opponentRank) }}>
+                            ({player1.opponentRank}{player1.opponentRank === 1 ? 'st' : player1.opponentRank === 2 ? 'nd' : player1.opponentRank === 3 ? 'rd' : 'th'})
+                          </span>
                         </div>
                       )}
                     </div>
@@ -719,7 +734,10 @@ export default function ScoreboardPage() {
                       </div>
                       {player2.hasPlayed && (
                         <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>
-                          vs. {player2.opponent.name} ({player2.opponentRank}{player2.opponentRank === 1 ? 'st' : player2.opponentRank === 2 ? 'nd' : player2.opponentRank === 3 ? 'rd' : 'th'})
+                          vs. {player2.opponent.name} {player2.opponentGameRecord}{" "}
+                          <span style={{ color: getFantasyRankColor(player2.opponentRank) }}>
+                            ({player2.opponentRank}{player2.opponentRank === 1 ? 'st' : player2.opponentRank === 2 ? 'nd' : player2.opponentRank === 3 ? 'rd' : 'th'})
+                          </span>
                         </div>
                       )}
                     </div>

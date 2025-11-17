@@ -24,9 +24,14 @@ interface TeamModalProps {
     };
   } | null;
   onClose: () => void;
+  isDraftContext?: boolean;
 }
 
-export default function TeamModal({ team, onClose }: TeamModalProps) {
+export default function TeamModal({ team, onClose, isDraftContext = false }: TeamModalProps) {
+  // Mock data for draft context
+  const mockFranchiseManager = "Hermanos";
+  const mockGeneralManager = "thecyco";
+  const mockTeamCaptain = "xraguu";
   const [playerSortColumn, setPlayerSortColumn] = useState<string>("goals");
   const [playerSortDirection, setPlayerSortDirection] = useState<"asc" | "desc">("desc");
   const [weeklyStats] = useState([
@@ -165,7 +170,7 @@ export default function TeamModal({ team, onClose }: TeamModalProps) {
             }}>
               {team.leagueId} {team.name}
             </h2>
-            {team.record && (
+            {!isDraftContext && team.record && (
               <div style={{
                 fontSize: "1rem",
                 color: "rgba(255,255,255,0.9)",
@@ -198,30 +203,59 @@ export default function TeamModal({ team, onClose }: TeamModalProps) {
                 </div>
               </div>
             )}
-            {(team.status || team.rosteredBy) && (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{
-                  display: "inline-block",
-                  padding: "0.35rem 0.75rem",
-                  borderRadius: "4px",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  backgroundColor: "rgba(255, 255, 255, 0.2)",
-                  color: "#ffffff",
-                  backdropFilter: "blur(4px)"
-                }}>
-                  {team.rosteredBy ? "Rostered" : team.status === "free-agent" ? "Free Agent" : "On Waivers"}
-                </span>
-                {team.rosteredBy && (
-                  <span style={{
-                    fontSize: "0.9rem",
-                    color: "rgba(255, 255, 255, 0.9)",
-                    fontWeight: 600
-                  }}>
-                    | {team.rosteredBy.rosterName} ({team.rosteredBy.managerName})
-                  </span>
-                )}
+            {isDraftContext ? (
+              <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", marginBottom: "0.25rem" }}>
+                    Franchise Manager
+                  </div>
+                  <div style={{ fontSize: "0.95rem", color: "#ffffff", fontWeight: 600 }}>
+                    {mockFranchiseManager}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", marginBottom: "0.25rem" }}>
+                    General Manager
+                  </div>
+                  <div style={{ fontSize: "0.95rem", color: "#ffffff", fontWeight: 600 }}>
+                    {mockGeneralManager}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", marginBottom: "0.25rem" }}>
+                    Team Captain
+                  </div>
+                  <div style={{ fontSize: "0.95rem", color: "#ffffff", fontWeight: 600 }}>
+                    {mockTeamCaptain}
+                  </div>
+                </div>
               </div>
+            ) : (
+              (team.status || team.rosteredBy) && (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span style={{
+                    display: "inline-block",
+                    padding: "0.35rem 0.75rem",
+                    borderRadius: "4px",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    color: "#ffffff",
+                    backdropFilter: "blur(4px)"
+                  }}>
+                    {team.rosteredBy ? "Rostered" : team.status === "free-agent" ? "Free Agent" : "On Waivers"}
+                  </span>
+                  {team.rosteredBy && (
+                    <span style={{
+                      fontSize: "0.9rem",
+                      color: "rgba(255, 255, 255, 0.9)",
+                      fontWeight: 600
+                    }}>
+                      | {team.rosteredBy.rosterName} ({team.rosteredBy.managerName})
+                    </span>
+                  )}
+                </div>
+              )
             )}
           </div>
           <button
@@ -287,7 +321,8 @@ export default function TeamModal({ team, onClose }: TeamModalProps) {
           </div>
         </div>
 
-        {/* Weekly Stats Table */}
+        {/* Weekly Stats Table - Only show in non-draft context */}
+        {!isDraftContext && (
         <div style={{ position: "relative", zIndex: 1 }}>
           <h3 style={{
             fontSize: "1.1rem",
@@ -335,6 +370,7 @@ export default function TeamModal({ team, onClose }: TeamModalProps) {
             </table>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

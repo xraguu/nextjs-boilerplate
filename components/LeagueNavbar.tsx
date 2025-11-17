@@ -64,6 +64,12 @@ export default function LeagueNavbar() {
           >
             Draft
           </Link>
+
+          {/* Current Week Pill */}
+          <span className="card-pill" style={{ fontWeight: 700, fontSize: "0.85rem" }}>
+            Week 3
+          </span>
+
           {links.map((link) => {
             return (
               <Link

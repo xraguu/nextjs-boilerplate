@@ -83,7 +83,7 @@ export default function DatabaseToolsPage() {
   const resetTestData = () => {
     if (
       confirm(
-        "⚠️ WARNING: This will delete all data and reset to test data. Are you absolutely sure?"
+        "WARNING: This will delete all data and reset to test data. Are you absolutely sure?"
       )
     ) {
       if (
@@ -111,7 +111,7 @@ export default function DatabaseToolsPage() {
             color: "var(--accent)",
           }}
         >
-          💾 Database Status
+          Database Status
         </h2>
         <div
           style={{
@@ -282,7 +282,7 @@ export default function DatabaseToolsPage() {
             color: "var(--accent)",
           }}
         >
-          💿 Backup Operations
+          Backup Operations
         </h2>
         <div style={{ marginBottom: "1.5rem" }}>
           <button
@@ -291,7 +291,7 @@ export default function DatabaseToolsPage() {
             onClick={createBackup}
             disabled={isCreatingBackup}
           >
-            {isCreatingBackup ? "🔄 Creating Backup..." : "📦 Create Backup Now"}
+            {isCreatingBackup ? "Creating Backup..." : "Create Backup Now"}
           </button>
         </div>
 
@@ -461,7 +461,7 @@ export default function DatabaseToolsPage() {
             color: "var(--accent)",
           }}
         >
-          🔧 Maintenance Operations
+          Maintenance Operations
         </h2>
         <div
           style={{
@@ -475,14 +475,14 @@ export default function DatabaseToolsPage() {
             style={{ padding: "1rem", fontSize: "1rem" }}
             onClick={optimizeDatabase}
           >
-            🚀 Optimize Database
+            Optimize Database
           </button>
           <button
             className="btn btn-ghost"
             style={{ padding: "1rem", fontSize: "1rem" }}
             onClick={clearCache}
           >
-            🗑️ Clear Cache
+            Clear Cache
           </button>
         </div>
       </div>
@@ -497,7 +497,7 @@ export default function DatabaseToolsPage() {
             color: "var(--accent)",
           }}
         >
-          📥 Import / Export
+          Import / Export
         </h2>
         <div
           style={{
@@ -511,7 +511,7 @@ export default function DatabaseToolsPage() {
             style={{ padding: "1rem", fontSize: "1rem" }}
             onClick={() => alert("Exporting all data as JSON...")}
           >
-            📤 Export All Data (JSON)
+            Export All Data (JSON)
           </button>
           <div>
             <label
@@ -525,7 +525,7 @@ export default function DatabaseToolsPage() {
                 cursor: "pointer",
               }}
             >
-              📥 Import Data
+              Import Data
               <input
                 type="file"
                 accept=".json,.sql"
@@ -558,7 +558,7 @@ export default function DatabaseToolsPage() {
             color: "#ef4444",
           }}
         >
-          ⚠️ Danger Zone
+          Danger Zone
         </h2>
         <p
           style={{
@@ -581,7 +581,7 @@ export default function DatabaseToolsPage() {
           }}
           onClick={resetTestData}
         >
-          🔄 Reset to Test Data
+          Reset to Test Data
         </button>
       </div>
     </div>

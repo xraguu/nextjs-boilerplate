@@ -19,7 +19,7 @@ const mockTeamData = TEAMS.map((team, index) => ({
   assists: 95 - index * 0.35,
   demos: 55 - index * 0.25,
   record: `${9 - Math.floor(index / 10)}-${4 + Math.floor(index / 10)}`,
-  status: index % 10 < 3 ? "waiver" : "free-agent",
+  status: index % 2 === 0 ? "rostered" : (index % 10 < 3 ? "waiver" : "free-agent"),
 }));
 
 type SortColumn = "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos";
@@ -58,9 +58,15 @@ export default function TeamPortalPage() {
   const [showFAConfirmModal, setShowFAConfirmModal] = useState(false);
   const [selectedFATeam, setSelectedFATeam] = useState<typeof mockTeamData[0] | null>(null);
   const [leagueFilter, setLeagueFilter] = useState<"All" | "Foundation" | "Academy" | "Champion" | "Master" | "Premier">("All");
-  const [modeFilter, setModeFilter] = useState<"Both" | "2s" | "3s">("Both");
+  const [modeFilter, setModeFilter] = useState<"2s" | "3s">("3s");
   const [leagueFilterOpen, setLeagueFilterOpen] = useState(false);
   const [modeFilterOpen, setModeFilterOpen] = useState(false);
+  const [availabilityFilter, setAvailabilityFilter] = useState<{rostered: boolean; freeAgent: boolean; waivers: boolean}>({
+    rostered: false,
+    freeAgent: true,
+    waivers: true
+  });
+  const [availabilityFilterOpen, setAvailabilityFilterOpen] = useState(false);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -89,6 +95,18 @@ export default function TeamPortalPage() {
       filteredData = filteredData.filter(team => team.leagueId === leagueMap[leagueFilter]);
     }
 
+    // Filter by availability
+    filteredData = filteredData.filter(team => {
+      const isRostered = team.status === "rostered";
+      const isFreeAgent = team.status === "free-agent";
+      const isWaiver = team.status === "waiver";
+
+      if (isRostered && availabilityFilter.rostered) return true;
+      if (isFreeAgent && availabilityFilter.freeAgent) return true;
+      if (isWaiver && availabilityFilter.waivers) return true;
+      return false;
+    });
+
     // Filter by mode (this won't work with mock data, but ready for database)
     // When database is connected, you would filter by team.mode === "2s" or "3s"
 
@@ -103,7 +121,7 @@ export default function TeamPortalPage() {
         return aValue < bValue ? 1 : -1;
       }
     });
-  }, [sortColumn, sortDirection, leagueFilter, modeFilter]);
+  }, [sortColumn, sortDirection, leagueFilter, modeFilter, availabilityFilter]);
 
   const SortIcon = ({ column }: { column: SortColumn }) => {
     if (sortColumn !== column) return null;
@@ -287,11 +305,15 @@ export default function TeamPortalPage() {
               ×
             </button>
 
-            {/* Submit button */}
+            {/* Confirm button */}
             <button
               onClick={() => {
                 if (selectedDropTeam) {
-                  alert(`Waiver claim submitted! Adding ${selectedWaiverTeam.name} and dropping ${selectedDropTeam}`);
+                  const isFreeAgent = selectedWaiverTeam.status === "free-agent";
+                  const message = isFreeAgent
+                    ? `Free agent successfully added to your roster!`
+                    : `Waiver claim submitted! Adding ${selectedWaiverTeam.name} and dropping ${selectedDropTeam}`;
+                  alert(message);
                   setShowWaiverModal(false);
                   setSelectedWaiverTeam(null);
                   setSelectedDropTeam(null);
@@ -315,7 +337,7 @@ export default function TeamPortalPage() {
                 zIndex: 10,
               }}
             >
-              Submit
+              Confirm
             </button>
 
             {/* Header - Team Info */}
@@ -467,6 +489,112 @@ export default function TeamPortalPage() {
 
       {/* Filters */}
       <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
+        {/* Availability Filter */}
+        <div style={{ position: "relative", width: "200px" }}>
+          <button
+            onClick={() => setAvailabilityFilterOpen(!availabilityFilterOpen)}
+            style={{
+              width: "100%",
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              color: "var(--text-main)",
+              padding: "0.5rem 1rem",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <span>Availability</span>
+            <span>{availabilityFilterOpen ? "▲" : "▼"}</span>
+          </button>
+
+          {availabilityFilterOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                marginTop: "0.5rem",
+                background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+                borderRadius: "6px",
+                padding: "0.75rem",
+                border: "1px solid rgba(255,255,255,0.1)",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                zIndex: 1000,
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.5rem",
+                  cursor: "pointer",
+                  transition: "background 0.2s ease",
+                  borderRadius: "4px",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <input
+                  type="checkbox"
+                  checked={availabilityFilter.rostered}
+                  onChange={(e) => setAvailabilityFilter({...availabilityFilter, rostered: e.target.checked})}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>Rostered</span>
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.5rem",
+                  cursor: "pointer",
+                  transition: "background 0.2s ease",
+                  borderRadius: "4px",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <input
+                  type="checkbox"
+                  checked={availabilityFilter.freeAgent}
+                  onChange={(e) => setAvailabilityFilter({...availabilityFilter, freeAgent: e.target.checked})}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>Free Agent</span>
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.5rem",
+                  cursor: "pointer",
+                  transition: "background 0.2s ease",
+                  borderRadius: "4px",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <input
+                  type="checkbox"
+                  checked={availabilityFilter.waivers}
+                  onChange={(e) => setAvailabilityFilter({...availabilityFilter, waivers: e.target.checked})}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>Waivers</span>
+              </label>
+            </div>
+          )}
+        </div>
+
         {/* League Filter */}
         <div style={{ position: "relative", width: "200px" }}>
           <button
@@ -580,7 +708,7 @@ export default function TeamPortalPage() {
                 zIndex: 1000,
               }}
             >
-              {["Both", "2s", "3s"].map((mode) => (
+              {["2s", "3s"].map((mode) => (
                 <button
                   key={mode}
                   onClick={() => {
@@ -629,6 +757,7 @@ export default function TeamPortalPage() {
                   Rank<SortIcon column="rank" />
                 </th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
+                <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Action</th>
                 <th
                   onClick={() => handleSort("fpts")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
@@ -678,7 +807,6 @@ export default function TeamPortalPage() {
                   Demos<SortIcon column="demos" />
                 </th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
-                <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -722,6 +850,51 @@ export default function TeamPortalPage() {
                       </div>
                     </div>
                   </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "left" }}>
+                    {team.status === "free-agent" ? (
+                      <button
+                        className="btn btn-warning"
+                        style={{
+                          fontSize: "0.85rem",
+                          padding: "0.4rem 0.9rem"
+                        }}
+                        onClick={() => {
+                          setSelectedFATeam(team);
+                          setShowFAConfirmModal(true);
+                        }}
+                      >
+                        + Add
+                      </button>
+                    ) : team.status === "waiver" ? (
+                      <button
+                        className="btn btn-ghost"
+                        style={{
+                          fontSize: "0.85rem",
+                          padding: "0.4rem 0.9rem"
+                        }}
+                        onClick={() => {
+                          setSelectedWaiverTeam(team);
+                          setShowWaiverModal(true);
+                        }}
+                      >
+                        Claim
+                      </button>
+                    ) : (
+                      <div
+                        style={{
+                          border: "1px solid var(--text-muted)",
+                          borderRadius: "6px",
+                          padding: "0.4rem 0.9rem",
+                          fontSize: "0.85rem",
+                          color: "var(--text-muted)",
+                          fontWeight: 600,
+                          display: "inline-block"
+                        }}
+                      >
+                        Rostered
+                      </div>
+                    )}
+                  </td>
                   <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.95rem" }}>
                     {team.fpts}
                   </td>
@@ -748,37 +921,6 @@ export default function TeamPortalPage() {
                   </td>
                   <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
                     {team.record}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                    {team.status === "free-agent" ? (
-                      <button
-                        className="btn btn-warning"
-                        style={{
-                          fontSize: "0.85rem",
-                          padding: "0.4rem 0.9rem"
-                        }}
-                        onClick={() => {
-                          setSelectedFATeam(team);
-                          setShowFAConfirmModal(true);
-                        }}
-                      >
-                        + Add
-                      </button>
-                    ) : (
-                      <button
-                        className="btn btn-ghost"
-                        style={{
-                          fontSize: "0.85rem",
-                          padding: "0.4rem 0.9rem"
-                        }}
-                        onClick={() => {
-                          setSelectedWaiverTeam(team);
-                          setShowWaiverModal(true);
-                        }}
-                      >
-                        Claim
-                      </button>
-                    )}
                   </td>
                 </tr>
               ))}

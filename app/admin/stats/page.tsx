@@ -203,7 +203,7 @@ export default function RecomputeStatsPage() {
           onClick={startComputation}
           disabled={isComputing}
         >
-          {isComputing ? "🔄 Computing..." : "🔢 Recompute Stats"}
+          {isComputing ? "Computing..." : "Recompute Stats"}
         </button>
 
         {/* Progress Bar */}

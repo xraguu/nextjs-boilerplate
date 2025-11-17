@@ -6,28 +6,43 @@ import Image from "next/image";
 import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
+// Helper function to get fantasy rank color
+const getFantasyRankColor = (rank: number): string => {
+  if (rank >= 1 && rank <= 12) return "#ef4444"; // red
+  if (rank >= 13 && rank <= 24) return "#9ca3af"; // gray
+  if (rank >= 25 && rank <= 32) return "#22c55e"; // green
+  return "#9ca3af"; // default gray
+};
+
 // Select 8 teams from TEAMS with stats
 // Static values to prevent hydration errors (no Math.random())
-const selectedTeams = TEAMS.slice(0, 8).map((team, index) => ({
-  ...team,
-  slot: index < 2 ? "2s" : index < 4 ? "3s" : index === 4 ? "FLX" : "BE",
-  score: index < 5 ? (45 - index * 1.5) : 0,
-  opponentTeam: TEAMS[(index * 7) % TEAMS.length],
-  oprk: (index * 3) % 10 + 1,
-  fprk: index + 1,
-  fpts: 380 - index * 10,
-  avg: 50 - index * 2,
-  last: 48 - index * 2.5,
-  goals: 140 - index * 5,
-  shots: 750 - index * 20,
-  saves: 220 - index * 10,
-  assists: 95 - index * 5,
-  demos: 55 - index * 3,
-  teamRecord: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
-  rank: index + 1,
-  record: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
-  status: "free-agent" as const
-}));
+const selectedTeams = TEAMS.slice(0, 8).map((team, index) => {
+  const opponentGameRecords = ["10-15", "8-17", "12-10", "5-18", "7-15", "9-13", "11-11", "6-16"];
+  const opponentFantasyRanks = [1, 18, 5, 28, 14, 8, 10, 26];
+
+  return {
+    ...team,
+    slot: index < 2 ? "2s" : index < 4 ? "3s" : index === 4 ? "FLX" : "BE",
+    score: index < 5 ? (45 - index * 1.5) : 0,
+    opponentTeam: TEAMS[(index * 7) % TEAMS.length],
+    oprk: (index * 3) % 10 + 1,
+    fprk: index + 1,
+    fpts: 380 - index * 10,
+    avg: 50 - index * 2,
+    last: 48 - index * 2.5,
+    goals: 140 - index * 5,
+    shots: 750 - index * 20,
+    saves: 220 - index * 10,
+    assists: 95 - index * 5,
+    demos: 55 - index * 3,
+    teamRecord: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
+    rank: index + 1,
+    record: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
+    status: "free-agent" as const,
+    opponentGameRecord: opponentGameRecords[index],
+    opponentFantasyRank: opponentFantasyRanks[index]
+  };
+});
 
 // Mock roster data with full stats
 const mockRoster = {
@@ -151,9 +166,13 @@ export default function MyRosterPage() {
   const [selectedDropTeam, setSelectedDropTeam] = useState<string | null>(null);
   const [showDropModal, setShowDropModal] = useState(false);
   const [teamToDrop, setTeamToDrop] = useState<typeof selectedTeams[0] | null>(null);
+  const [showTradeDropModal, setShowTradeDropModal] = useState(false);
+  const [selectedTradeDropTeam, setSelectedTradeDropTeam] = useState<string | null>(null);
   const [moveMode, setMoveMode] = useState(false);
   const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
   const [teams, setTeams] = useState(selectedTeams);
+  const [showAcceptConfirmModal, setShowAcceptConfirmModal] = useState(false);
+  const [showDeclineConfirmModal, setShowDeclineConfirmModal] = useState(false);
 
   // Stats tab sorting state
   const [statsSortColumn, setStatsSortColumn] = useState<"fprk" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos">("fprk");
@@ -436,7 +455,150 @@ export default function MyRosterPage() {
                   background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
                   color: "white",
                   fontWeight: 700,
-                  padding: "0.75rem 3rem",
+                  padding: "0.75rem 2.5rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
+                }}
+                onClick={() => setShowAcceptConfirmModal(true)}
+              >
+                Accept
+              </button>
+              <button
+                style={{
+                  background: "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
+                  color: "#1a1a2e",
+                  fontWeight: 700,
+                  padding: "0.75rem 2.5rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  boxShadow: "0 4px 12px rgba(242, 182, 50, 0.3)",
+                }}
+                onClick={() => {
+                  // Cancel/decline the trade and navigate to trade page
+                  const leagueId = params?.LeagueID as string;
+                  // Get the opponent's manager ID - need to determine from trade data
+                  // For now, navigate to opponents page to select manager
+                  setShowTradeModal(false);
+                  router.push(`/leagues/${leagueId}/opponents`);
+                }}
+              >
+                Counter-Offer
+              </button>
+              <button
+                style={{
+                  background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                  color: "white",
+                  fontWeight: 700,
+                  padding: "0.75rem 2.5rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
+                }}
+                onClick={() => setShowDeclineConfirmModal(true)}
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Accept Trade Confirmation Modal */}
+      {showAcceptConfirmModal && selectedTrade && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 90,
+          }}
+          onClick={() => setShowAcceptConfirmModal(false)}
+        >
+          <div
+            style={{
+              width: "min(500px, 92vw)",
+              background: "linear-gradient(135deg, #1a2332 0%, #0f1419 100%)",
+              border: "2px solid rgba(242, 182, 50, 0.3)",
+              borderRadius: "16px",
+              padding: "2rem",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.8)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Title */}
+            <h2
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: 700,
+                color: "var(--text-main)",
+                marginBottom: "1rem",
+                textAlign: "center",
+              }}
+            >
+              Accept Trade?
+            </h2>
+
+            {/* Trade Summary */}
+            <div
+              style={{
+                padding: "1rem",
+                background: "rgba(255, 255, 255, 0.05)",
+                borderRadius: "8px",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", textAlign: "center" }}>
+                <span style={{ color: "var(--text-main)", fontWeight: 600 }}>{selectedTrade.teamFrom}</span>
+                {" ↔ "}
+                <span style={{ color: "var(--text-main)", fontWeight: 600 }}>{selectedTrade.teamTo}</span>
+              </div>
+            </div>
+
+            {/* Confirmation Text */}
+            <p
+              style={{
+                fontSize: "1rem",
+                color: "var(--text-muted)",
+                textAlign: "center",
+                marginBottom: "1.5rem",
+              }}
+            >
+              Are you sure you want to accept this trade?
+            </p>
+
+            {/* Buttons */}
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <button
+                style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  color: "var(--text-main)",
+                  fontWeight: 600,
+                  padding: "0.75rem 2rem",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                }}
+                onClick={() => setShowAcceptConfirmModal(false)}
+              >
+                No, Go Back
+              </button>
+              <button
+                style={{
+                  background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                  color: "white",
+                  fontWeight: 700,
+                  padding: "0.75rem 2rem",
                   borderRadius: "8px",
                   border: "none",
                   cursor: "pointer",
@@ -444,18 +606,117 @@ export default function MyRosterPage() {
                   boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
                 }}
                 onClick={() => {
-                  alert("Trade accepted!");
-                  setShowTradeModal(false);
+                  // Check if accepting this trade means receiving more teams than giving
+                  const isNonEqualTrade = selectedTrade.teamFromReceives.length > selectedTrade.teamToReceives.length;
+
+                  setShowAcceptConfirmModal(false);
+
+                  if (isNonEqualTrade) {
+                    // Show drop modal to select a team to drop
+                    setShowTradeDropModal(true);
+                  } else {
+                    // Equal trade, complete it
+                    alert("Trade accepted!");
+                    setShowTradeModal(false);
+                  }
                 }}
               >
-                Accept
+                Yes, Accept Trade
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Decline Trade Confirmation Modal */}
+      {showDeclineConfirmModal && selectedTrade && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 90,
+          }}
+          onClick={() => setShowDeclineConfirmModal(false)}
+        >
+          <div
+            style={{
+              width: "min(500px, 92vw)",
+              background: "linear-gradient(135deg, #1a2332 0%, #0f1419 100%)",
+              border: "2px solid rgba(242, 182, 50, 0.3)",
+              borderRadius: "16px",
+              padding: "2rem",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.8)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Title */}
+            <h2
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: 700,
+                color: "var(--text-main)",
+                marginBottom: "1rem",
+                textAlign: "center",
+              }}
+            >
+              Decline Trade?
+            </h2>
+
+            {/* Trade Summary */}
+            <div
+              style={{
+                padding: "1rem",
+                background: "rgba(255, 255, 255, 0.05)",
+                borderRadius: "8px",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", textAlign: "center" }}>
+                <span style={{ color: "var(--text-main)", fontWeight: 600 }}>{selectedTrade.teamFrom}</span>
+                {" ↔ "}
+                <span style={{ color: "var(--text-main)", fontWeight: 600 }}>{selectedTrade.teamTo}</span>
+              </div>
+            </div>
+
+            {/* Confirmation Text */}
+            <p
+              style={{
+                fontSize: "1rem",
+                color: "var(--text-muted)",
+                textAlign: "center",
+                marginBottom: "1.5rem",
+              }}
+            >
+              Are you sure you want to decline this trade?
+            </p>
+
+            {/* Buttons */}
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <button
+                style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  color: "var(--text-main)",
+                  fontWeight: 600,
+                  padding: "0.75rem 2rem",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                }}
+                onClick={() => setShowDeclineConfirmModal(false)}
+              >
+                No, Go Back
               </button>
               <button
                 style={{
                   background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                   color: "white",
                   fontWeight: 700,
-                  padding: "0.75rem 3rem",
+                  padding: "0.75rem 2rem",
                   borderRadius: "8px",
                   border: "none",
                   cursor: "pointer",
@@ -464,11 +725,195 @@ export default function MyRosterPage() {
                 }}
                 onClick={() => {
                   alert("Trade declined!");
+                  setShowDeclineConfirmModal(false);
                   setShowTradeModal(false);
                 }}
               >
-                Decline
+                Yes, Decline Trade
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trade Accept Drop Modal - appears if accepting non-equal trade */}
+      {showTradeDropModal && selectedTrade && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 95,
+          }}
+          onClick={() => setShowTradeDropModal(false)}
+        >
+          <div
+            style={{
+              width: "min(900px, 92vw)",
+              background: "linear-gradient(135deg, #1a2332 0%, #0f1419 100%)",
+              border: "2px solid rgba(242, 182, 50, 0.3)",
+              borderRadius: "16px",
+              padding: "0",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.8)",
+              position: "relative",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowTradeDropModal(false);
+                setSelectedTradeDropTeam(null);
+              }}
+              style={{
+                position: "absolute",
+                top: "1rem",
+                left: "1rem",
+                background: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "8px",
+                width: "32px",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "var(--text-muted)",
+                fontSize: "1.2rem",
+                fontWeight: 700,
+                zIndex: 10,
+              }}
+            >
+              ×
+            </button>
+
+            {/* Confirm button */}
+            <button
+              onClick={() => {
+                if (selectedTradeDropTeam) {
+                  alert(`Trade accepted! You will drop ${selectedTradeDropTeam}`);
+                  setShowTradeDropModal(false);
+                  setShowTradeModal(false);
+                  setSelectedTradeDropTeam(null);
+                } else {
+                  alert("Please select a team to drop");
+                }
+              }}
+              style={{
+                position: "absolute",
+                top: "1rem",
+                right: "1rem",
+                background: "linear-gradient(135deg, var(--accent) 0%, #d4a832 100%)",
+                color: "#1a1a2e",
+                fontWeight: 700,
+                padding: "0.65rem 2rem",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem",
+                boxShadow: "0 4px 12px rgba(242, 182, 50, 0.4)",
+                zIndex: 10,
+              }}
+            >
+              Confirm
+            </button>
+
+            {/* Header - Team Info */}
+            <div style={{ padding: "3.5rem 2rem 1.5rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)" }}>
+                {roster.teamName}
+              </div>
+              <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                {roster.managerName}
+              </div>
+              <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                {roster.record.wins} - {roster.record.losses}  {roster.record.place}
+              </div>
+              <div style={{ fontSize: "0.9rem", color: "var(--accent)", marginTop: "1rem", fontWeight: 600 }}>
+                Select a team to drop (You're receiving more teams than you're sending)
+              </div>
+            </div>
+
+            {/* Roster Table with Radio Buttons */}
+            <div style={{ padding: "1.5rem 2rem" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid rgba(255, 255, 255, 0.2)" }}>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Slot</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fpts</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Rank</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teams.map((team, index) => (
+                      <tr
+                        key={index}
+                        style={{
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                          backgroundColor: selectedTradeDropTeam === team.name ? "rgba(242, 182, 50, 0.1)" : "transparent",
+                        }}
+                      >
+                        <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--accent)" }}>
+                          {team.slot}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <Image
+                              src={team.logoPath}
+                              alt={team.name}
+                              width={24}
+                              height={24}
+                              style={{ borderRadius: "4px" }}
+                            />
+                            <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>
+                              {team.leagueId} {team.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
+                          {team.fpts.toFixed(1)}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                          {team.teamRecord}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                          {team.fprk}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                          <button
+                            onClick={() => setSelectedTradeDropTeam(team.name)}
+                            style={{
+                              width: "24px",
+                              height: "24px",
+                              border: "2px solid var(--accent)",
+                              borderRadius: "4px",
+                              background: selectedTradeDropTeam === team.name ? "var(--accent)" : "transparent",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: selectedTradeDropTeam === team.name ? "#1a1a2e" : "transparent",
+                              fontWeight: 700,
+                              fontSize: "1rem",
+                            }}
+                          >
+                            ✓
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -1223,30 +1668,43 @@ export default function MyRosterPage() {
                           height={24}
                           style={{ borderRadius: "4px" }}
                         />
-                        <span
-                          onClick={(e) => {
-                            if (!moveMode) {
-                              e.stopPropagation();
-                              setSelectedTeam(team);
-                              setShowModal(true);
-                            }
-                          }}
-                          style={{
-                            fontWeight: 600,
-                            fontSize: "0.95rem",
-                            cursor: moveMode ? "default" : "pointer",
-                            color: "var(--text-main)",
-                            transition: "color 0.2s"
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!moveMode) {
-                              e.currentTarget.style.color = "var(--accent)";
-                            }
-                          }}
-                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
-                        >
-                          {team.leagueId} {team.name}
-                        </span>
+                        <div>
+                          <div
+                            onClick={(e) => {
+                              if (!moveMode) {
+                                e.stopPropagation();
+                                setSelectedTeam(team);
+                                setShowModal(true);
+                              }
+                            }}
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.95rem",
+                              cursor: moveMode ? "default" : "pointer",
+                              color: "var(--text-main)",
+                              transition: "color 0.2s"
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!moveMode) {
+                                e.currentTarget.style.color = "var(--accent)";
+                              }
+                            }}
+                            onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                          >
+                            {team.leagueId} {team.name}
+                          </div>
+                          {team.opponentTeam && team.opponentGameRecord && team.opponentFantasyRank && (
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                              vs. {team.opponentTeam.leagueId} {team.opponentTeam.name} {team.opponentGameRecord}{" "}
+                              <span style={{ color: getFantasyRankColor(team.opponentFantasyRank) }}>
+                                ({team.opponentFantasyRank}
+                                {team.opponentFantasyRank === 1 ? "st" :
+                                 team.opponentFantasyRank === 2 ? "nd" :
+                                 team.opponentFantasyRank === 3 ? "rd" : "th"})
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td style={{
@@ -1474,23 +1932,36 @@ export default function MyRosterPage() {
                             height={24}
                             style={{ borderRadius: "4px" }}
                           />
-                          <span
-                            onClick={() => {
-                              setSelectedTeam(team);
-                              setShowModal(true);
-                            }}
-                            style={{
-                              fontWeight: 600,
-                              fontSize: "0.95rem",
-                              cursor: "pointer",
-                              color: "var(--text-main)",
-                              transition: "color 0.2s"
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
-                            onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
-                          >
-                            {team.leagueId} {team.name}
-                          </span>
+                          <div>
+                            <div
+                              onClick={() => {
+                                setSelectedTeam(team);
+                                setShowModal(true);
+                              }}
+                              style={{
+                                fontWeight: 600,
+                                fontSize: "0.95rem",
+                                cursor: "pointer",
+                                color: "var(--text-main)",
+                                transition: "color 0.2s"
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                              onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                            >
+                              {team.leagueId} {team.name}
+                            </div>
+                            {team.opponentTeam && team.opponentGameRecord && team.opponentFantasyRank && (
+                              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                                vs. {team.opponentTeam.leagueId} {team.opponentTeam.name} {team.opponentGameRecord}{" "}
+                                <span style={{ color: getFantasyRankColor(team.opponentFantasyRank) }}>
+                                  ({team.opponentFantasyRank}
+                                  {team.opponentFantasyRank === 1 ? "st" :
+                                   team.opponentFantasyRank === 2 ? "nd" :
+                                   team.opponentFantasyRank === 3 ? "rd" : "th"})
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td style={{

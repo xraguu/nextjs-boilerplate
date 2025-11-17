@@ -60,9 +60,14 @@ export default function TradePage() {
 
   const [selectedMyTeams, setSelectedMyTeams] = useState<number[]>([]);
   const [selectedOpponentTeams, setSelectedOpponentTeams] = useState<number[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showDropModal, setShowDropModal] = useState(false);
+  const [selectedDropTeam, setSelectedDropTeam] = useState<string | null>(null);
 
   const opponent = otherManagers.find(m => m.id === managerId) || otherManagers[0];
   const opponentRoster = generateOpponentRoster();
+
+  const isNonEqualTrade = selectedMyTeams.length < selectedOpponentTeams.length;
 
   const toggleMyTeam = (index: number) => {
     setSelectedMyTeams(prev =>
@@ -78,6 +83,268 @@ export default function TradePage() {
 
   return (
     <>
+      {/* Confirmation Modal - "Are you sure?" */}
+      {showConfirmModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 90,
+          }}
+          onClick={() => setShowConfirmModal(false)}
+        >
+          <div
+            style={{
+              width: "min(500px, 90vw)",
+              background: "linear-gradient(135deg, #1a2332 0%, #0f1419 100%)",
+              border: "2px solid rgba(242, 182, 50, 0.3)",
+              borderRadius: "16px",
+              padding: "2rem",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.8)",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "1.5rem", textAlign: "center" }}>
+              Confirm Trade Proposal
+            </h2>
+
+            <p style={{ fontSize: "1rem", color: "var(--text-muted)", textAlign: "center", marginBottom: "2rem" }}>
+              Are you sure you want to propose this trade?
+              <br />
+              <strong>You're sending {selectedMyTeams.length} team(s) for {selectedOpponentTeams.length} team(s)</strong>
+            </p>
+
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "#ffffff",
+                  fontWeight: 600,
+                  padding: "0.75rem 2rem",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                }}
+              >
+                No, Go Back
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  if (isNonEqualTrade) {
+                    setShowDropModal(true);
+                  } else {
+                    alert("Trade proposed!");
+                  }
+                }}
+                style={{
+                  background: "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
+                  color: "#1a1a2e",
+                  fontWeight: 700,
+                  padding: "0.75rem 2rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  boxShadow: "0 4px 12px rgba(242, 182, 50, 0.4)",
+                }}
+              >
+                Yes, Propose Trade
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drop Team Modal - appears if non-equal trade */}
+      {showDropModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 95,
+          }}
+          onClick={() => setShowDropModal(false)}
+        >
+          <div
+            style={{
+              width: "min(900px, 92vw)",
+              background: "linear-gradient(135deg, #1a2332 0%, #0f1419 100%)",
+              border: "2px solid rgba(242, 182, 50, 0.3)",
+              borderRadius: "16px",
+              padding: "0",
+              boxShadow: "0 25px 50px rgba(0, 0, 0, 0.8)",
+              position: "relative",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowDropModal(false);
+                setSelectedDropTeam(null);
+              }}
+              style={{
+                position: "absolute",
+                top: "1rem",
+                left: "1rem",
+                background: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "8px",
+                width: "32px",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "var(--text-muted)",
+                fontSize: "1.2rem",
+                fontWeight: 700,
+                zIndex: 10,
+              }}
+            >
+              ×
+            </button>
+
+            {/* Confirm button */}
+            <button
+              onClick={() => {
+                if (selectedDropTeam) {
+                  alert(`Trade proposed! You will drop ${selectedDropTeam}`);
+                  setShowDropModal(false);
+                  setSelectedDropTeam(null);
+                } else {
+                  alert("Please select a team to drop");
+                }
+              }}
+              style={{
+                position: "absolute",
+                top: "1rem",
+                right: "1rem",
+                background: "linear-gradient(135deg, var(--accent) 0%, #d4a832 100%)",
+                color: "#1a1a2e",
+                fontWeight: 700,
+                padding: "0.65rem 2rem",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem",
+                boxShadow: "0 4px 12px rgba(242, 182, 50, 0.4)",
+                zIndex: 10,
+              }}
+            >
+              Confirm
+            </button>
+
+            {/* Header - Team Info */}
+            <div style={{ padding: "3.5rem 2rem 1.5rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)" }}>
+                {myRoster.teamName}
+              </div>
+              <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                {myRoster.managerName}
+              </div>
+              <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                {myRoster.record}  {myRoster.place}
+              </div>
+              <div style={{ fontSize: "0.9rem", color: "var(--accent)", marginTop: "1rem", fontWeight: 600 }}>
+                Select a team to drop (You're receiving more teams than you're sending)
+              </div>
+            </div>
+
+            {/* Roster Table with Checkboxes */}
+            <div style={{ padding: "1.5rem 2rem" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid rgba(255, 255, 255, 0.2)" }}>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Slot</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fpts</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Rk</th>
+                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myRoster.teams.map((team, index) => (
+                      <tr
+                        key={index}
+                        style={{
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                          backgroundColor: selectedDropTeam === team.name ? "rgba(242, 182, 50, 0.1)" : "transparent",
+                        }}
+                      >
+                        <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--accent)" }}>
+                          {team.slot}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <Image
+                              src={team.logo}
+                              alt={team.name}
+                              width={24}
+                              height={24}
+                              style={{ borderRadius: "4px" }}
+                            />
+                            <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>
+                              {team.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
+                          {team.fpts}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                          {team.record}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                          {team.rk}
+                        </td>
+                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                          <button
+                            onClick={() => setSelectedDropTeam(team.name)}
+                            style={{
+                              width: "24px",
+                              height: "24px",
+                              border: "2px solid var(--accent)",
+                              borderRadius: "4px",
+                              background: selectedDropTeam === team.name ? "var(--accent)" : "transparent",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: selectedDropTeam === team.name ? "#1a1a2e" : "transparent",
+                              fontWeight: 700,
+                              fontSize: "1rem",
+                            }}
+                          >
+                            ✓
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ marginBottom: "2rem" }}>
         <a
           href="/leagues/2025-alpha/opponents"
@@ -162,7 +429,7 @@ export default function TradePage() {
               whiteSpace: "nowrap",
               marginTop: "1rem"
             }}
-            onClick={() => alert(`Proposing trade:\nYour teams: ${selectedMyTeams.length}\nTheir teams: ${selectedOpponentTeams.length}`)}
+            onClick={() => setShowConfirmModal(true)}
           >
             Propose Trade
           </button>

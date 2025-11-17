@@ -12,6 +12,8 @@ export interface Team {
   secondaryColor: string; // from league.colorHextwo
   teamPrimaryColor: string; // team's primary color
   teamSecondaryColor: string; // team's secondary color
+  gameRecord: string; // "10-15" (wins-losses in MLE)
+  fantasyRank: number; // 1-32 (or 1-16 for smaller leagues)
 }
 
 /** Team franchise primary colors */
@@ -281,10 +283,18 @@ export const TEAMS: Team[] = (
   Object.keys(LEAGUE_TEAM_NAMES) as LeagueId[]
 ).flatMap((leagueId) => {
   const leagueMeta = getLeagueById(leagueId);
-  return LEAGUE_TEAM_NAMES[leagueId].map((name) => {
+  return LEAGUE_TEAM_NAMES[leagueId].map((name, index) => {
     const id = buildTeamId(leagueId, name); // "ALbulls"
     const slug = buildTeamSlug(leagueId, name); // "AL-bulls"
     const logoPath = buildLogoPath(leagueId, name);
+
+    // Generate mock game record (wins-losses, realistic spread)
+    const wins = Math.max(0, 12 - index);
+    const losses = Math.min(25, 3 + index * 2);
+    const gameRecord = `${wins}-${losses}`;
+
+    // Fantasy rank is position in the league (1-indexed)
+    const fantasyRank = index + 1;
 
     return {
       id,
@@ -296,6 +306,8 @@ export const TEAMS: Team[] = (
       secondaryColor: leagueMeta.colorHextwo,
       teamPrimaryColor: TEAM_PRIMARY_COLORS[name] || "#ffffff",
       teamSecondaryColor: TEAM_SECONDARY_COLORS[name] || "#ffffff",
+      gameRecord,
+      fantasyRank,
     } satisfies Team;
   });
 });

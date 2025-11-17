@@ -21,8 +21,10 @@ const defaultSettings = {
     benchSize: 3,
   },
   waivers: {
-    processingDay: "Wednesday",
-    processingTime: "03:00",
+    processingSchedule: [
+      { day: "Wednesday", time: "03:00" },
+      { day: "Sunday", time: "03:00" }
+    ],
     type: "rolling",
     faabBudget: 100,
   },
@@ -118,7 +120,7 @@ export default function SettingsPage() {
             color: "var(--accent)",
           }}
         >
-          ⚡ Season Settings
+          Season Settings
         </h2>
         <div
           style={{
@@ -323,7 +325,7 @@ export default function SettingsPage() {
             color: "var(--accent)",
           }}
         >
-          🎯 Scoring Rules
+          Scoring Rules
         </h2>
         <div
           style={{
@@ -532,8 +534,107 @@ export default function SettingsPage() {
             color: "var(--accent)",
           }}
         >
-          📋 Waiver Settings
+          Waiver Settings
         </h2>
+
+        {/* Waiver Processing Schedule */}
+        <div style={{ marginBottom: "2rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main)" }}>
+              Processing Schedule
+            </h3>
+            <button
+              className="btn btn-primary"
+              style={{ padding: "0.5rem 1rem", fontSize: "0.85rem" }}
+              onClick={() => {
+                const newSchedule = [...settings.waivers.processingSchedule, { day: "Monday", time: "03:00" }];
+                updateSetting("waivers", "processingSchedule", newSchedule);
+              }}
+            >
+              + Add Time
+            </button>
+          </div>
+
+          {settings.waivers.processingSchedule.map((schedule, index) => (
+            <div
+              key={index}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "200px 150px auto",
+                gap: "1rem",
+                marginBottom: "1rem",
+                alignItems: "end"
+              }}
+            >
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                  Day
+                </label>
+                <select
+                  value={schedule.day}
+                  onChange={(e) => {
+                    const newSchedule = [...settings.waivers.processingSchedule];
+                    newSchedule[index].day = e.target.value;
+                    updateSetting("waivers", "processingSchedule", newSchedule);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    background: "rgba(255,255,255,0.1)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    borderRadius: "6px",
+                    color: "var(--text-main)",
+                    fontSize: "0.95rem",
+                  }}
+                >
+                  <option>Monday</option>
+                  <option>Tuesday</option>
+                  <option>Wednesday</option>
+                  <option>Thursday</option>
+                  <option>Friday</option>
+                  <option>Saturday</option>
+                  <option>Sunday</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                  Time
+                </label>
+                <input
+                  type="time"
+                  value={schedule.time}
+                  onChange={(e) => {
+                    const newSchedule = [...settings.waivers.processingSchedule];
+                    newSchedule[index].time = e.target.value;
+                    updateSetting("waivers", "processingSchedule", newSchedule);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    background: "rgba(255,255,255,0.1)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    borderRadius: "6px",
+                    color: "var(--text-main)",
+                    fontSize: "0.95rem",
+                  }}
+                />
+              </div>
+
+              <button
+                className="btn btn-ghost"
+                style={{ padding: "0.75rem 1rem", fontSize: "0.85rem" }}
+                onClick={() => {
+                  const newSchedule = settings.waivers.processingSchedule.filter((_, i) => i !== index);
+                  updateSetting("waivers", "processingSchedule", newSchedule);
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+
         <div
           style={{
             display: "grid",
@@ -541,73 +642,6 @@ export default function SettingsPage() {
             gap: "1.5rem",
           }}
         >
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontSize: "0.9rem",
-                color: "var(--text-muted)",
-                fontWeight: 600,
-              }}
-            >
-              Processing Day
-            </label>
-            <select
-              value={settings.waivers.processingDay}
-              onChange={(e) =>
-                updateSetting("waivers", "processingDay", e.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "6px",
-                color: "var(--text-main)",
-                fontSize: "0.95rem",
-              }}
-            >
-              <option>Monday</option>
-              <option>Tuesday</option>
-              <option>Wednesday</option>
-              <option>Thursday</option>
-              <option>Friday</option>
-              <option>Saturday</option>
-              <option>Sunday</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontSize: "0.9rem",
-                color: "var(--text-muted)",
-                fontWeight: 600,
-              }}
-            >
-              Processing Time
-            </label>
-            <input
-              type="time"
-              value={settings.waivers.processingTime}
-              onChange={(e) =>
-                updateSetting("waivers", "processingTime", e.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "6px",
-                color: "var(--text-main)",
-                fontSize: "0.95rem",
-              }}
-            />
-          </div>
-
           <div>
             <label
               style={{
@@ -685,7 +719,7 @@ export default function SettingsPage() {
             color: "var(--accent)",
           }}
         >
-          🏆 League Settings
+          League Settings
         </h2>
         <div
           style={{
