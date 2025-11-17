@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
@@ -13,27 +13,6 @@ const getFantasyRankColor = (rank: number): string => {
   if (rank >= 25 && rank <= 32) return "#22c55e"; // green
   return "#9ca3af"; // default gray
 };
-
-// Generate weekly stats for modal
-// Static values to prevent hydration errors (no Math.random())
-const generateWeeklyStats = (teamName: string) => {
-  return Array.from({ length: 10 }, (_, i) => ({
-    week: i + 1,
-    opponent: TEAMS[(i * 7) % TEAMS.length].name,
-    fpts: 48 - i * 1.8,
-    avg: 50 - i * 1.5,
-    last: 48 - i * 1.8,
-    goals: 12 - i * 0.7,
-    shots: 75 - i * 2.5,
-    saves: 22 - i * 1.2,
-    assists: 9 - i * 0.5,
-    demos: 5 - i * 0.3,
-    record: `${1 + (i % 2)}-${1 - (i % 2)}`,
-  }));
-};
-
-type WeeklySortColumn = "week" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos";
-type SortDirection = "asc" | "desc";
 
 // Mock player data for rosters
 // Static values to prevent hydration errors (no Math.random())
@@ -191,7 +170,16 @@ export default function ScoreboardPage() {
   const searchParams = useSearchParams();
   const leagueId = params.LeagueID as string;
 
-  const [currentWeek, setCurrentWeek] = useState(3);
+  const [currentWeek, setCurrentWeek] = useState(() => {
+    const weekParam = searchParams.get('week');
+    if (weekParam) {
+      const weekNum = parseInt(weekParam);
+      if (!isNaN(weekNum) && weekNum >= 1 && weekNum <= 10) {
+        return weekNum;
+      }
+    }
+    return 3;
+  });
 
   // Helper functions for week navigation (weeks 1-10)
   const getNextWeek = (week: number) => {
@@ -204,59 +192,58 @@ export default function ScoreboardPage() {
     return week - 1;
   };
 
-  const [selectedMatchup, setSelectedMatchup] = useState<number | null>(null);
+  const [selectedMatchup, setSelectedMatchup] = useState<number | null>(() => {
+    const matchupParam = searchParams.get('matchup');
+    if (matchupParam) {
+      const matchupId = parseInt(matchupParam);
+      if (!isNaN(matchupId)) {
+        return matchupId;
+      }
+    }
+    return null;
+  });
   const [showModal, setShowModal] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
-  const [weeklySortColumn, setWeeklySortColumn] = useState<WeeklySortColumn>("week");
-  const [weeklySortDirection, setWeeklySortDirection] = useState<SortDirection>("asc");
+  const [selectedTeam, setSelectedTeam] = useState<(typeof TEAMS[0] & {
+    fpts?: number;
+    avg?: number;
+    last?: number;
+    rank?: number;
+    record?: string;
+    status?: string;
+  }) | null>(null);
   const [moveMode, setMoveMode] = useState(false);
   const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
 
   const matchups = generateMatchups(currentWeek);
   const selectedMatch = matchups.find(m => m.id === selectedMatchup);
 
-  // Use useMemo to derive userRoster from selectedMatch
-  const [userRoster, setUserRoster] = useState<any[]>([]);
+  // Type for roster team - this matches the player structure from generatePlayers
+  type RosterTeam = {
+    id: string;
+    name: string;
+    team: typeof TEAMS[0];
+    position: string;
+    points: number;
+    opponent: typeof TEAMS[0];
+    opponentRank: number;
+    opponentGameRecord: string;
+    hasPlayed: boolean;
+  };
 
-  useEffect(() => {
-    if (selectedMatch) {
-      setUserRoster([...selectedMatch.team1.roster]);
-    }
-  }, [selectedMatch?.id, currentWeek]);
+  // Derive userRoster from selectedMatch - we need state because it can be edited
+  const [userRoster, setUserRoster] = useState<RosterTeam[]>([]);
+  const [lastMatchId, setLastMatchId] = useState<number | null>(null);
 
-  // Auto-select matchup and week from query parameters
-  useEffect(() => {
-    const matchupParam = searchParams.get('matchup');
-    const weekParam = searchParams.get('week');
-
-    if (matchupParam) {
-      const matchupId = parseInt(matchupParam);
-      if (!isNaN(matchupId)) {
-        setSelectedMatchup(matchupId);
-      }
-    }
-
-    if (weekParam) {
-      const weekNum = parseInt(weekParam);
-      if (!isNaN(weekNum) && weekNum >= 1 && weekNum <= 10) {
-        setCurrentWeek(weekNum);
-      }
-    }
-  }, [searchParams]);
+  // Only update userRoster when selectedMatch changes
+  if (selectedMatch?.id !== lastMatchId) {
+    setLastMatchId(selectedMatch?.id ?? null);
+    setUserRoster(selectedMatch ? [...selectedMatch.team1.roster] : []);
+  }
 
   const handleManagerClick = (managerName: string) => {
     // Navigate to opponents page - you'll need to map manager name to manager ID
     // For now using the manager name as the ID
     router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(managerName)}`);
-  };
-
-  const handleWeeklySort = (column: WeeklySortColumn) => {
-    if (weeklySortColumn === column) {
-      setWeeklySortDirection(weeklySortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setWeeklySortColumn(column);
-      setWeeklySortDirection(column === "week" ? "asc" : "desc");
-    }
   };
 
   const handleMoveToggle = () => {
@@ -293,31 +280,7 @@ export default function ScoreboardPage() {
     }
   };
 
-  const weeklyStats = useMemo(() => {
-    if (!selectedTeam) return [];
-    const stats = generateWeeklyStats(selectedTeam.name);
-    return [...stats].sort((a, b) => {
-      const aValue = a[weeklySortColumn];
-      const bValue = b[weeklySortColumn];
-
-      if (weeklySortDirection === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-  }, [selectedTeam, weeklySortColumn, weeklySortDirection]);
-
-  const WeeklySortIcon = ({ column }: { column: WeeklySortColumn }) => {
-    if (weeklySortColumn !== column) return null;
-    return (
-      <span style={{ marginLeft: "0.25rem" }}>
-        {weeklySortDirection === "asc" ? "▲" : "▼"}
-      </span>
-    );
-  };
-
-  const openTeamModal = (player: any) => {
+  const openTeamModal = (player: { team: typeof TEAMS[0]; name: string }) => {
     setSelectedTeam({
       ...player.team,
       fpts: 425,
@@ -330,14 +293,14 @@ export default function ScoreboardPage() {
     setShowModal(true);
   };
 
-  const getTopPerformers = (roster: any[]) => {
+  const getTopPerformers = (roster: RosterTeam[]) => {
     return roster
       .filter(p => p.hasPlayed)
       .sort((a, b) => b.points - a.points)
       .slice(0, 2);
   };
 
-  const getToPlayCount = (roster: any[]) => {
+  const getToPlayCount = (roster: RosterTeam[]) => {
     return roster.filter(p => !p.hasPlayed).length;
   };
 
@@ -996,7 +959,7 @@ export default function ScoreboardPage() {
                           {player.position}
                         </span>
                         <span style={{
-                          color: LEAGUE_COLORS[player.team.leagueId] || "#4da6ff",
+                          color: (player.team.leagueId in LEAGUE_COLORS ? LEAGUE_COLORS[player.team.leagueId as keyof typeof LEAGUE_COLORS] : "#4da6ff"),
                           fontSize: "0.9rem",
                           fontWeight: 600
                         }}>
@@ -1055,7 +1018,7 @@ export default function ScoreboardPage() {
                           {player.position}
                         </span>
                         <span style={{
-                          color: LEAGUE_COLORS[player.team.leagueId] || "#4da6ff",
+                          color: (player.team.leagueId in LEAGUE_COLORS ? LEAGUE_COLORS[player.team.leagueId as keyof typeof LEAGUE_COLORS] : "#4da6ff"),
                           fontSize: "0.9rem",
                           fontWeight: 600
                         }}>

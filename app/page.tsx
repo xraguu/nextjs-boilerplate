@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
-import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
-import { LEAGUES } from "@/lib/leagues";
+import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
 // Mock data - replace with actual API calls when ready
@@ -219,8 +218,51 @@ const mockTopTeams = TEAMS.slice(0, 10).map((team, index) => ({
 type SortKey = 'rank' | 'name' | 'score' | 'fpts' | 'last' | 'avg' | 'shots' | 'goals' | 'assists' | 'saves' | 'demos';
 type SortDirection = 'asc' | 'desc';
 
+// Sortable Header Component
+function SortableHeader({
+  column,
+  label,
+  align = 'left',
+  sortKey,
+  sortDirection,
+  onSort
+}: {
+  column: SortKey;
+  label: string;
+  align?: 'left' | 'right' | 'center';
+  sortKey: SortKey;
+  sortDirection: SortDirection;
+  onSort: (column: SortKey) => void;
+}) {
+  return (
+    <th
+      onClick={() => onSort(column)}
+      style={{
+        padding: "0.75rem 0.5rem",
+        textAlign: align,
+        fontSize: "0.85rem",
+        color: sortKey === column ? "var(--accent)" : "var(--text-muted)",
+        fontWeight: 600,
+        cursor: "pointer",
+        userSelect: "none",
+        transition: "color 0.2s",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = sortKey === column ? "var(--accent)" : "var(--text-muted)")}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start', gap: "0.25rem" }}>
+        {label}
+        {sortKey === column && (
+          <span style={{ fontSize: "0.75rem" }}>
+            {sortDirection === 'asc' ? '▲' : '▼'}
+          </span>
+        )}
+      </div>
+    </th>
+  );
+}
+
 export default function HomePage() {
-  const { data: session } = useSession();
   const [selectedTeam, setSelectedTeam] = useState<
     (typeof mockTopTeams)[0] | null
   >(null);
@@ -298,33 +340,6 @@ export default function HomePage() {
       ? (aValue as number) - (bValue as number)
       : (bValue as number) - (aValue as number);
   });
-
-  const SortableHeader = ({ column, label, align = 'left' }: { column: SortKey; label: string; align?: 'left' | 'right' | 'center' }) => (
-    <th
-      onClick={() => handleSort(column)}
-      style={{
-        padding: "0.75rem 0.5rem",
-        textAlign: align,
-        fontSize: "0.85rem",
-        color: sortKey === column ? "var(--accent)" : "var(--text-muted)",
-        fontWeight: 600,
-        cursor: "pointer",
-        userSelect: "none",
-        transition: "color 0.2s",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-      onMouseLeave={(e) => (e.currentTarget.style.color = sortKey === column ? "var(--accent)" : "var(--text-muted)")}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start', gap: "0.25rem" }}>
-        {label}
-        {sortKey === column && (
-          <span style={{ fontSize: "0.75rem" }}>
-            {sortDirection === 'asc' ? '▲' : '▼'}
-          </span>
-        )}
-      </div>
-    </th>
-  );
 
   return (
     <>
@@ -728,17 +743,17 @@ export default function HomePage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
-                  <SortableHeader column="rank" label="Rank" />
-                  <SortableHeader column="name" label="Team" />
-                  <SortableHeader column="score" label="Score" align="right" />
-                  <SortableHeader column="fpts" label="Fpts" align="right" />
-                  <SortableHeader column="last" label="Last" align="right" />
-                  <SortableHeader column="avg" label="Avg" align="right" />
-                  <SortableHeader column="shots" label="Shots" align="right" />
-                  <SortableHeader column="goals" label="Goals" align="right" />
-                  <SortableHeader column="assists" label="Assists" align="right" />
-                  <SortableHeader column="saves" label="Saves" align="right" />
-                  <SortableHeader column="demos" label="Demos" align="right" />
+                  <SortableHeader column="rank" label="Rank" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="name" label="Team" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="score" label="Score" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="fpts" label="Fpts" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="last" label="Last" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="avg" label="Avg" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="shots" label="Shots" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="goals" label="Goals" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="assists" label="Assists" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="saves" label="Saves" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader column="demos" label="Demos" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
                 </tr>
               </thead>
               <tbody>

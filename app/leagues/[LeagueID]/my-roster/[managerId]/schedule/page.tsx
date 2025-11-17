@@ -19,8 +19,20 @@ const mockManagers = [
   { id: 12, name: "Manager 12", teamName: "Flames" },
 ];
 
+// Type definition for schedule game
+type ScheduleGame = {
+  week: number;
+  result: string | null;
+  myScore: number | null;
+  oppScore: number | null;
+  opponent: string;
+  oppRecord: string;
+  oppPlace: string;
+  manager: string;
+};
+
 // Mock schedule data for each manager
-const mockSchedule = {
+const mockSchedule: Record<number, ScheduleGame[]> = {
   1: [
     { week: 1, result: "W", myScore: 198, oppScore: 170, opponent: "Pixies", oppRecord: "2-1", oppPlace: "3rd", manager: "Crazy" },
     { week: 2, result: "L", myScore: 131, oppScore: 168, opponent: "Whiffers", oppRecord: "0-3", oppPlace: "8th", manager: "Rover" },
@@ -229,7 +241,7 @@ export default function SchedulePage() {
               </tr>
             </thead>
             <tbody>
-              {schedule.filter(game => game.week === currentWeek).map((game, index) => (
+              {schedule.filter((game: ScheduleGame) => game.week === currentWeek).map((game: ScheduleGame, index: number) => (
                 <tr
                   key={index}
                   style={{

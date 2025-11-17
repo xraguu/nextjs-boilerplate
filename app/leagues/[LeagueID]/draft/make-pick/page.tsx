@@ -175,27 +175,30 @@ export default function MakePickPage() {
 
   // Mock: Currently it's NOT the user's pick (Pixies is on the clock, user is Fantastic Ballers)
   const isMyPick = false; // In real implementation, this would check if current pick manager === user's manager
-  const [draftQueue, setDraftQueue] = useState<typeof availableTeams>([]);
   const [rightPanelTab, setRightPanelTab] = useState<"roster" | "queue">("roster");
-  const [autodraftEnabled, setAutodraftEnabled] = useState(false); // Track autodraft state
 
-  // Sync autodraft state with localStorage
-  useEffect(() => {
-    const savedAutodraft = localStorage.getItem("autodraftEnabled");
-    if (savedAutodraft) {
-      setAutodraftEnabled(savedAutodraft === "true");
+  // Use lazy initialization to read from localStorage on mount
+  const [autodraftEnabled, setAutodraftEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedAutodraft = localStorage.getItem("autodraftEnabled");
+      return savedAutodraft === "true";
     }
+    return false;
+  });
 
-    // Sync draft queue with localStorage
-    const savedQueue = localStorage.getItem("draftQueue");
-    if (savedQueue) {
-      try {
-        setDraftQueue(JSON.parse(savedQueue));
-      } catch (e) {
-        console.error("Failed to parse draft queue from localStorage", e);
+  const [draftQueue, setDraftQueue] = useState<typeof availableTeams>(() => {
+    if (typeof window !== 'undefined') {
+      const savedQueue = localStorage.getItem("draftQueue");
+      if (savedQueue) {
+        try {
+          return JSON.parse(savedQueue);
+        } catch (e) {
+          console.error("Failed to parse draft queue from localStorage", e);
+        }
       }
     }
-  }, []);
+    return [];
+  });
 
   const toggleAutodraft = () => {
     const newValue = !autodraftEnabled;
@@ -261,6 +264,7 @@ export default function MakePickPage() {
 
     // Apply mode filter (Note: Mode filter would require mode data on teams)
     // For now, we'll keep this placeholder for future implementation when team mode data is available
+    // When implemented, add modeFilter back to the dependency array
 
     // Apply sorting
     return filtered.sort((a, b) => {
@@ -272,7 +276,7 @@ export default function MakePickPage() {
         return aValue < bValue ? 1 : -1;
       }
     });
-  }, [leagueFilter, modeFilter, sortColumn, sortDirection]);
+  }, [leagueFilter, sortColumn, sortDirection]);
 
   return (
     <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
@@ -1110,7 +1114,7 @@ export default function MakePickPage() {
                   color: "var(--text-muted)"
                 }}>
                   <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>No teams in queue</p>
-                  <p style={{ fontSize: "0.85rem" }}>Click "Queue" on teams to add them to your draft queue</p>
+                  <p style={{ fontSize: "0.85rem" }}>Click &quot;Queue&quot; on teams to add them to your draft queue</p>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>

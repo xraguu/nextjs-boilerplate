@@ -10,7 +10,8 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(npx tsc:*)",
-      "Bash(nul)"
+      "Bash(nul)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

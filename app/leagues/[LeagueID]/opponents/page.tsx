@@ -73,7 +73,14 @@ export default function OpponentsPage() {
   const [activeTab, setActiveTab] = useState<"lineup" | "stats">("lineup");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
+  const [selectedTeam, setSelectedTeam] = useState<(typeof TEAMS[0] & {
+    fpts?: number;
+    avg?: number;
+    last?: number;
+    rank?: number;
+    record?: string;
+    status?: string;
+  }) | null>(null);
 
   // Helper functions for week navigation (weeks 1-10)
   const getNextWeek = (week: number) => {

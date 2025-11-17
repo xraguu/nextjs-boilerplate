@@ -201,7 +201,7 @@ interface TeamProps {
   onManagerClick: (manager: string) => void;
 }
 
-const TeamCard = ({ seed, teamName, manager, record, division, score, leagueId, onManagerClick }: TeamProps) => {
+const TeamCard = ({ seed, teamName, manager, record, division, score, onManagerClick }: TeamProps) => {
   return (
     <div style={{
       background: "linear-gradient(135deg, #1e2139 0%, #252844 100%)",
@@ -278,11 +278,6 @@ export default function PlayoffsPage() {
 
   const handleManagerClick = (manager: string) => {
     router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(manager)}`);
-  };
-
-  const handleMatchupClick = (matchupId: string, week: number = 14) => {
-    // Navigate to scoreboard matchup page
-    router.push(`/leagues/${leagueId}/scoreboard?week=${week}&matchup=${matchupId}`);
   };
 
   return (
