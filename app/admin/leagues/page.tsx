@@ -21,7 +21,6 @@ export default function ManageLeaguesPage() {
   const leagueStats = LEAGUES.map((league) => ({
     ...league,
     teamCount: TEAMS.filter((team) => team.leagueId === league.id).length,
-    fantasyLeaguesCount: mockFantasyLeagues.filter((fl) => fl.leagueType === league.id).length,
   }));
 
   const filteredLeagues = leagueStats.filter((league) =>
