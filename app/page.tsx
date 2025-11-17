@@ -1,5 +1,5 @@
 "use client";
-
+//hi
 import Link from "next/link";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -10,7 +10,7 @@ import TeamModal from "@/components/TeamModal";
 // Mock data - replace with actual API calls when ready
 const mockLeagues = [
   {
-    id: "2025-alpha",
+    id: "2025-gamma",
     name: "2025 RL Fantasy Alpha",
     season: 2025,
     currentWeek: 3,
@@ -215,21 +215,32 @@ const mockTopTeams = TEAMS.slice(0, 10).map((team, index) => ({
   status: "free-agent" as const,
 }));
 
-type SortKey = 'rank' | 'name' | 'score' | 'fpts' | 'last' | 'avg' | 'shots' | 'goals' | 'assists' | 'saves' | 'demos';
-type SortDirection = 'asc' | 'desc';
+type SortKey =
+  | "rank"
+  | "name"
+  | "score"
+  | "fpts"
+  | "last"
+  | "avg"
+  | "shots"
+  | "goals"
+  | "assists"
+  | "saves"
+  | "demos";
+type SortDirection = "asc" | "desc";
 
 // Sortable Header Component
 function SortableHeader({
   column,
   label,
-  align = 'left',
+  align = "left",
   sortKey,
   sortDirection,
-  onSort
+  onSort,
 }: {
   column: SortKey;
   label: string;
-  align?: 'left' | 'right' | 'center';
+  align?: "left" | "right" | "center";
   sortKey: SortKey;
   sortDirection: SortDirection;
   onSort: (column: SortKey) => void;
@@ -248,13 +259,28 @@ function SortableHeader({
         transition: "color 0.2s",
       }}
       onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-      onMouseLeave={(e) => (e.currentTarget.style.color = sortKey === column ? "var(--accent)" : "var(--text-muted)")}
+      onMouseLeave={(e) =>
+        (e.currentTarget.style.color =
+          sortKey === column ? "var(--accent)" : "var(--text-muted)")
+      }
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start', gap: "0.25rem" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent:
+            align === "right"
+              ? "flex-end"
+              : align === "center"
+              ? "center"
+              : "flex-start",
+          gap: "0.25rem",
+        }}
+      >
         {label}
         {sortKey === column && (
           <span style={{ fontSize: "0.75rem" }}>
-            {sortDirection === 'asc' ? '▲' : '▼'}
+            {sortDirection === "asc" ? "▲" : "▼"}
           </span>
         )}
       </div>
@@ -267,15 +293,15 @@ export default function HomePage() {
     (typeof mockTopTeams)[0] | null
   >(null);
   const [showModal, setShowModal] = useState(false);
-  const [sortKey, setSortKey] = useState<SortKey>('rank');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortKey, setSortKey] = useState<SortKey>("rank");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -284,59 +310,59 @@ export default function HomePage() {
     let bValue: number | string = 0;
 
     switch (sortKey) {
-      case 'rank':
+      case "rank":
         aValue = a.rank ?? 0;
         bValue = b.rank ?? 0;
         break;
-      case 'name':
+      case "name":
         aValue = a.name;
         bValue = b.name;
         break;
-      case 'score':
+      case "score":
         aValue = a.score ?? 0;
         bValue = b.score ?? 0;
         break;
-      case 'fpts':
+      case "fpts":
         aValue = a.fpts ?? 0;
         bValue = b.fpts ?? 0;
         break;
-      case 'last':
+      case "last":
         aValue = a.last ?? 0;
         bValue = b.last ?? 0;
         break;
-      case 'avg':
+      case "avg":
         aValue = a.avg ?? 0;
         bValue = b.avg ?? 0;
         break;
-      case 'shots':
+      case "shots":
         aValue = a.shots ?? 0;
         bValue = b.shots ?? 0;
         break;
-      case 'goals':
+      case "goals":
         aValue = a.goals ?? 0;
         bValue = b.goals ?? 0;
         break;
-      case 'assists':
+      case "assists":
         aValue = a.assists ?? 0;
         bValue = b.assists ?? 0;
         break;
-      case 'saves':
+      case "saves":
         aValue = a.saves ?? 0;
         bValue = b.saves ?? 0;
         break;
-      case 'demos':
+      case "demos":
         aValue = a.demos ?? 0;
         bValue = b.demos ?? 0;
         break;
     }
 
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return sortDirection === 'asc'
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortDirection === "asc"
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
 
-    return sortDirection === 'asc'
+    return sortDirection === "asc"
       ? (aValue as number) - (bValue as number)
       : (bValue as number) - (aValue as number);
   });
@@ -345,10 +371,17 @@ export default function HomePage() {
     <>
       {/* Team Stats Modal */}
       <TeamModal
-        team={showModal && selectedTeam ? {
-          ...selectedTeam,
-          rosteredBy: (selectedTeam.rank ?? 0) % 2 === 0 ? { rosterName: "Fantastic Ballers", managerName: "xenn" } : undefined
-        } : null}
+        team={
+          showModal && selectedTeam
+            ? {
+                ...selectedTeam,
+                rosteredBy:
+                  (selectedTeam.rank ?? 0) % 2 === 0
+                    ? { rosterName: "Fantastic Ballers", managerName: "xenn" }
+                    : undefined,
+              }
+            : null
+        }
         onClose={() => setShowModal(false)}
       />
 
@@ -415,7 +448,14 @@ export default function HomePage() {
           </div>
 
           {/* Right: User Section */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "flex-end" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.75rem",
+              alignItems: "flex-end",
+            }}
+          >
             {/* Sign Out Button */}
             <button
               onClick={() => signOut()}
@@ -432,11 +472,13 @@ export default function HomePage() {
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(42, 75, 130, 0.95)";
+                e.currentTarget.style.backgroundColor =
+                  "rgba(42, 75, 130, 0.95)";
                 e.currentTarget.style.borderColor = "var(--accent)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(42, 75, 130, 0.85)";
+                e.currentTarget.style.backgroundColor =
+                  "rgba(42, 75, 130, 0.85)";
                 e.currentTarget.style.borderColor = "rgba(242, 182, 50, 0.5)";
               }}
             >
@@ -477,7 +519,15 @@ export default function HomePage() {
 
         {/* Your Leagues Section - Horizontal Bar */}
         <section className="card" style={{ marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "1rem",
+            }}
+          >
             <div className="card-header" style={{ marginBottom: 0 }}>
               <h2 className="card-title">Your Leagues</h2>
             </div>
@@ -531,206 +581,200 @@ export default function HomePage() {
             </span>
           </div>
 
-            <div style={{ marginTop: "1rem", overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr
-                    style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}
+          <div style={{ marginTop: "1rem", overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
+                  <th
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
                   >
-                    <th
+                    Rank
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Manager
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Team
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    League
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    W-L
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Win %
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Total Pts
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Avg
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockGlobalLeaderboard.map((player) => (
+                  <tr
+                    key={player.rank}
+                    style={{
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
+                      backgroundColor: player.isYou
+                        ? "rgba(242, 182, 50, 0.08)"
+                        : "transparent",
+                      borderLeft: player.isYou
+                        ? "3px solid var(--accent)"
+                        : "3px solid transparent",
+                    }}
+                  >
+                    <td
                       style={{
                         padding: "0.75rem 0.5rem",
-                        textAlign: "left",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
+                        fontWeight: 700,
+                        fontSize: "1rem",
+                        color: player.rank <= 3 ? "var(--accent)" : "inherit",
                       }}
                     >
-                      Rank
-                    </th>
-                    <th
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        textAlign: "left",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Manager
-                    </th>
-                    <th
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        textAlign: "left",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Team
-                    </th>
-                    <th
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        textAlign: "left",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      League
-                    </th>
-                    <th
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        textAlign: "center",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      W-L
-                    </th>
-                    <th
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        textAlign: "center",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Win %
-                    </th>
-                    <th
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        textAlign: "right",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Total Pts
-                    </th>
-                    <th
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        textAlign: "right",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Avg
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockGlobalLeaderboard.map((player) => (
-                    <tr
-                      key={player.rank}
-                      style={{
-                        borderBottom: "1px solid rgba(255,255,255,0.05)",
-                        backgroundColor: player.isYou
-                          ? "rgba(242, 182, 50, 0.08)"
-                          : "transparent",
-                        borderLeft: player.isYou
-                          ? "3px solid var(--accent)"
-                          : "3px solid transparent",
-                      }}
-                    >
-                      <td
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          fontWeight: 700,
-                          fontSize: "1rem",
-                          color: player.rank <= 3 ? "var(--accent)" : "inherit",
-                        }}
-                      >
-                        {player.rank}
-                      </td>
-                      <td
-                        style={{ padding: "0.75rem 0.5rem", fontWeight: 600 }}
-                      >
-                        {player.manager}
-                        {player.isYou && (
-                          <span
-                            style={{
-                              marginLeft: "0.5rem",
-                              fontSize: "0.75rem",
-                              color: "var(--accent)",
-                            }}
-                          >
-                            (You)
-                          </span>
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          color: "var(--text-muted)",
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        {player.team}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          color: "var(--text-muted)",
-                          fontSize: "0.85rem",
-                        }}
-                      >
-                        {player.league}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          textAlign: "center",
-                          fontWeight: 500,
-                        }}
-                      >
-                        <span style={{ color: "#22c55e" }}>{player.wins}</span>-
-                        <span style={{ color: "#ef4444" }}>
-                          {player.losses}
+                      {player.rank}
+                    </td>
+                    <td style={{ padding: "0.75rem 0.5rem", fontWeight: 600 }}>
+                      {player.manager}
+                      {player.isYou && (
+                        <span
+                          style={{
+                            marginLeft: "0.5rem",
+                            fontSize: "0.75rem",
+                            color: "var(--accent)",
+                          }}
+                        >
+                          (You)
                         </span>
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          textAlign: "center",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {player.winRate.toFixed(0)}%
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          textAlign: "right",
-                          fontWeight: 700,
-                          color: "var(--accent)",
-                        }}
-                      >
-                        {player.totalPoints.toFixed(1)}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          textAlign: "right",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        {player.avgPoints.toFixed(1)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                      )}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 0.5rem",
+                        color: "var(--text-muted)",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {player.team}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 0.5rem",
+                        color: "var(--text-muted)",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      {player.league}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 0.5rem",
+                        textAlign: "center",
+                        fontWeight: 500,
+                      }}
+                    >
+                      <span style={{ color: "#22c55e" }}>{player.wins}</span>-
+                      <span style={{ color: "#ef4444" }}>{player.losses}</span>
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 0.5rem",
+                        textAlign: "center",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {player.winRate.toFixed(0)}%
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 0.5rem",
+                        textAlign: "right",
+                        fontWeight: 700,
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {player.totalPoints.toFixed(1)}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 0.5rem",
+                        textAlign: "right",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      {player.avgPoints.toFixed(1)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         {/* Team Stats Section */}
         <section className="card" style={{ marginTop: "1.5rem" }}>
@@ -743,17 +787,92 @@ export default function HomePage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
-                  <SortableHeader column="rank" label="Rank" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="name" label="Team" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="score" label="Score" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="fpts" label="Fpts" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="last" label="Last" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="avg" label="Avg" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="shots" label="Shots" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="goals" label="Goals" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="assists" label="Assists" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="saves" label="Saves" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
-                  <SortableHeader column="demos" label="Demos" align="right" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader
+                    column="rank"
+                    label="Rank"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="name"
+                    label="Team"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="score"
+                    label="Score"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="fpts"
+                    label="Fpts"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="last"
+                    label="Last"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="avg"
+                    label="Avg"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="shots"
+                    label="Shots"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="goals"
+                    label="Goals"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="assists"
+                    label="Assists"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="saves"
+                    label="Saves"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    column="demos"
+                    label="Demos"
+                    align="right"
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
                 </tr>
               </thead>
               <tbody>
