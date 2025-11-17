@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
+import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
 // Mock team stats and availability
@@ -22,7 +22,7 @@ const mockTeamData = TEAMS.map((team, index) => ({
   status: index % 2 === 0 ? "rostered" : (index % 10 < 3 ? "waiver" : "free-agent"),
 }));
 
-type SortColumn = "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos";
+type SortColumn = "rank" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos";
 type SortDirection = "asc" | "desc";
 
 // Mock roster data for the waiver modal
@@ -45,6 +45,16 @@ const mockRoster = {
     demos: 55 - index * 3,
     teamRecord: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
   }))
+};
+
+// SortIcon component defined outside to avoid recreation during render
+const SortIcon = ({ column, sortColumn, sortDirection }: { column: SortColumn; sortColumn: SortColumn; sortDirection: SortDirection }) => {
+  if (sortColumn !== column) return null;
+  return (
+    <span style={{ marginLeft: "0.25rem" }}>
+      {sortDirection === "asc" ? "▲" : "▼"}
+    </span>
+  );
 };
 
 export default function TeamPortalPage() {
@@ -121,16 +131,7 @@ export default function TeamPortalPage() {
         return aValue < bValue ? 1 : -1;
       }
     });
-  }, [sortColumn, sortDirection, leagueFilter, modeFilter, availabilityFilter]);
-
-  const SortIcon = ({ column }: { column: SortColumn }) => {
-    if (sortColumn !== column) return null;
-    return (
-      <span style={{ marginLeft: "0.25rem" }}>
-        {sortDirection === "asc" ? "▲" : "▼"}
-      </span>
-    );
-  };
+  }, [sortColumn, sortDirection, leagueFilter, availabilityFilter]);
 
   return (
     <>
@@ -634,11 +635,11 @@ export default function TeamPortalPage() {
                 zIndex: 1000,
               }}
             >
-              {["All", "Foundation", "Academy", "Champion", "Master", "Premier"].map((league) => (
+              {(["All", "Foundation", "Academy", "Champion", "Master", "Premier"] as const).map((league) => (
                 <button
                   key={league}
                   onClick={() => {
-                    setLeagueFilter(league as any);
+                    setLeagueFilter(league);
                     setLeagueFilterOpen(false);
                   }}
                   style={{
@@ -708,11 +709,11 @@ export default function TeamPortalPage() {
                 zIndex: 1000,
               }}
             >
-              {["2s", "3s"].map((mode) => (
+              {(["2s", "3s"] as const).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => {
-                    setModeFilter(mode as any);
+                    setModeFilter(mode);
                     setModeFilterOpen(false);
                   }}
                   style={{
@@ -754,7 +755,7 @@ export default function TeamPortalPage() {
                   onClick={() => handleSort("rank")}
                   style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Rank<SortIcon column="rank" />
+                  Rank<SortIcon column="rank" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Action</th>
@@ -762,49 +763,49 @@ export default function TeamPortalPage() {
                   onClick={() => handleSort("fpts")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Fpts<SortIcon column="fpts" />
+                  Fpts<SortIcon column="fpts" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th
                   onClick={() => handleSort("avg")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Avg<SortIcon column="avg" />
+                  Avg<SortIcon column="avg" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th
                   onClick={() => handleSort("last")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Last<SortIcon column="last" />
+                  Last<SortIcon column="last" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th
                   onClick={() => handleSort("goals")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Goals<SortIcon column="goals" />
+                  Goals<SortIcon column="goals" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th
                   onClick={() => handleSort("shots")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Shots<SortIcon column="shots" />
+                  Shots<SortIcon column="shots" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th
                   onClick={() => handleSort("saves")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Saves<SortIcon column="saves" />
+                  Saves<SortIcon column="saves" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th
                   onClick={() => handleSort("assists")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Assists<SortIcon column="assists" />
+                  Assists<SortIcon column="assists" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th
                   onClick={() => handleSort("demos")}
                   style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}
                 >
-                  Demos<SortIcon column="demos" />
+                  Demos<SortIcon column="demos" sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
                 <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
               </tr>
