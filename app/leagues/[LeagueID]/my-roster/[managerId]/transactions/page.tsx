@@ -220,7 +220,7 @@ export default function TransactionsPage() {
                       </div>
                     </div>
                   </>
-                ) : (
+                ) : transaction.teamAdded && transaction.teamDropped ? (
                   <>
                     {/* Team Added */}
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1 }}>
@@ -265,7 +265,7 @@ export default function TransactionsPage() {
                       </div>
                     </div>
                   </>
-                )}
+                ) : null}
 
                 {/* Timestamp */}
                 <div
