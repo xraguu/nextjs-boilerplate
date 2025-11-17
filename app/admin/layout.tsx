@@ -1,21 +1,8 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
-
-// TODO: Replace this with actual Discord OAuth authentication
-// This is a placeholder auth check - will need to integrate with:
-// - Discord OAuth flow (app/api/auth/signin/route.ts)
-// - Session management (consider next-auth or custom solution)
-// - User role checking (add 'role' field to User interface in lib/users.ts)
-const checkIsAdmin = (): boolean => {
-  // PLACEHOLDER: For now, allow access to everyone
-  // In production, this should check:
-  // 1. User session exists
-  // 2. User has admin role/permissions
-  // 3. Maybe check against a whitelist of Discord IDs
-  return true; // TODO: Implement real auth check
-};
 
 export default function AdminLayout({
   children,
@@ -23,7 +10,45 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const isAdmin = checkIsAdmin();
+  const { data: session, status } = useSession();
+
+  const isLoading = status === "loading";
+  const isAdmin = session?.user?.role === "admin";
+
+  // Show loading state while checking session
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: "3rem",
+              marginBottom: "1rem",
+              animation: "spin 1s linear infinite",
+            }}
+          >
+            ⚙️
+          </div>
+          <p style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>
+            Loading...
+          </p>
+        </div>
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   // If user is not an admin, show access denied message
   if (!isAdmin) {

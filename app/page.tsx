@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
 import { LEAGUES } from "@/lib/leagues";
@@ -219,6 +220,7 @@ type SortKey = 'rank' | 'name' | 'score' | 'fpts' | 'last' | 'avg' | 'shots' | '
 type SortDirection = 'asc' | 'desc';
 
 export default function HomePage() {
+  const { data: session } = useSession();
   const [selectedTeam, setSelectedTeam] = useState<
     (typeof mockTopTeams)[0] | null
   >(null);
@@ -397,33 +399,63 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right: Help Section */}
-          <div
-            style={{
-              textAlign: "right",
-              padding: "0.75rem 1rem",
-              backgroundColor: "rgba(42, 75, 130, 0.2)",
-              borderRadius: "12px",
-              border: "1px solid rgba(242, 182, 50, 0.3)",
-            }}
-          >
-            <div
+          {/* Right: User Section */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "flex-end" }}>
+            {/* Sign Out Button */}
+            <button
+              onClick={() => signOut()}
               style={{
-                fontSize: "0.85rem",
-                color: "var(--text-muted)",
-                marginBottom: "0.25rem",
-              }}
-            >
-              Need Help?
-            </div>
-            <div
-              style={{
+                padding: "0.65rem 1.5rem",
+                backgroundColor: "rgba(42, 75, 130, 0.85)",
+                color: "var(--text-main)",
+                border: "2px solid rgba(242, 182, 50, 0.5)",
+                borderRadius: "12px",
+                fontWeight: 700,
                 fontSize: "0.95rem",
-                fontWeight: 600,
-                color: "var(--accent)",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(42, 75, 130, 0.95)";
+                e.currentTarget.style.borderColor = "var(--accent)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(42, 75, 130, 0.85)";
+                e.currentTarget.style.borderColor = "rgba(242, 182, 50, 0.5)";
               }}
             >
-              Contact MLE Mailbox
+              Sign Out
+            </button>
+
+            {/* Help Section */}
+            <div
+              style={{
+                textAlign: "right",
+                padding: "0.75rem 1rem",
+                backgroundColor: "rgba(42, 75, 130, 0.85)",
+                borderRadius: "12px",
+                border: "1px solid rgba(242, 182, 50, 0.3)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text-muted)",
+                  marginBottom: "0.25rem",
+                }}
+              >
+                Need Help?
+              </div>
+              <div
+                style={{
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  color: "var(--accent)",
+                }}
+              >
+                Contact MLE Mailbox
+              </div>
             </div>
           </div>
         </div>
