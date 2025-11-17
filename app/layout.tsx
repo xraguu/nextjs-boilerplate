@@ -6,32 +6,32 @@ import "./globals.css";
 const industry = localFont({
   src: [
     {
-      path: "../fonts/Industry/Industry-Light.woff",
+      path: "../Fonts/Industry/Industry-Light.woff",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../fonts/Industry/Industry-Book.woff",
+      path: "../Fonts/Industry/Industry-Book.woff",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../fonts/Industry/Industry-Medium.woff",
+      path: "../Fonts/Industry/Industry-Medium.woff",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../fonts/Industry/Industry-Demi.woff",
+      path: "../Fonts/Industry/Industry-Demi.woff",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../fonts/Industry/Industry-Bold.woff",
+      path: "../Fonts/Industry/Industry-Bold.woff",
       weight: "700",
       style: "normal",
     },
     {
-      path: "../fonts/Industry/Industry-Black.woff",
+      path: "../Fonts/Industry/Industry-Black.woff",
       weight: "900",
       style: "normal",
     },
@@ -42,27 +42,27 @@ const industry = localFont({
 const zuume = localFont({
   src: [
     {
-      path: "../fonts/zuume-cufonfonts/Zuume Light.ttf",
+      path: "../Fonts/zuume-cufonfonts/Zuume Light.ttf",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../fonts/zuume-cufonfonts/Zuume Regular.ttf",
+      path: "../Fonts/zuume-cufonfonts/Zuume Regular.ttf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../fonts/zuume-cufonfonts/Zuume Medium.ttf",
+      path: "../Fonts/zuume-cufonfonts/Zuume Medium.ttf",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../fonts/zuume-cufonfonts/Zuume SemiBold.ttf",
+      path: "../Fonts/zuume-cufonfonts/Zuume SemiBold.ttf",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../fonts/zuume-cufonfonts/Zuume Bold.ttf",
+      path: "../Fonts/zuume-cufonfonts/Zuume Bold.ttf",
       weight: "700",
       style: "normal",
     },
