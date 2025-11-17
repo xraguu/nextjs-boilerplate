@@ -16,7 +16,7 @@ const getFantasyRankColor = (rank: number): string => {
 
 // Generate weekly stats for modal
 // Static values to prevent hydration errors (no Math.random())
-const generateWeeklyStats = (teamName: string) => {
+const generateWeeklyStats = () => {
   return Array.from({ length: 10 }, (_, i) => ({
     week: i + 1,
     opponent: TEAMS[(i * 7) % TEAMS.length].name,
@@ -206,23 +206,43 @@ export default function ScoreboardPage() {
 
   const [selectedMatchup, setSelectedMatchup] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
-  const [weeklySortColumn, setWeeklySortColumn] = useState<WeeklySortColumn>("week");
-  const [weeklySortDirection, setWeeklySortDirection] = useState<SortDirection>("asc");
+  const [selectedTeam, setSelectedTeam] = useState<(typeof TEAMS[0] & {
+    fpts?: number;
+    avg?: number;
+    last?: number;
+    rank?: number;
+    record?: string;
+    status?: string;
+  }) | null>(null);
   const [moveMode, setMoveMode] = useState(false);
   const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
 
   const matchups = generateMatchups(currentWeek);
   const selectedMatch = matchups.find(m => m.id === selectedMatchup);
 
+  // Type for roster team - this matches the player structure from generatePlayers
+  type RosterTeam = {
+    id: string;
+    name: string;
+    team: typeof TEAMS[0];
+    position: string;
+    points: number;
+    opponent: typeof TEAMS[0];
+    opponentRank: number;
+    opponentGameRecord: string;
+    hasPlayed: boolean;
+  };
+
   // Use useMemo to derive userRoster from selectedMatch
-  const [userRoster, setUserRoster] = useState<any[]>([]);
+  const [userRoster, setUserRoster] = useState<RosterTeam[]>(() =>
+    selectedMatch ? [...selectedMatch.team1.roster] : []
+  );
 
   useEffect(() => {
     if (selectedMatch) {
       setUserRoster([...selectedMatch.team1.roster]);
     }
-  }, [selectedMatch?.id, currentWeek]);
+  }, [selectedMatch]);
 
   // Auto-select matchup and week from query parameters
   useEffect(() => {
@@ -248,15 +268,6 @@ export default function ScoreboardPage() {
     // Navigate to opponents page - you'll need to map manager name to manager ID
     // For now using the manager name as the ID
     router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(managerName)}`);
-  };
-
-  const handleWeeklySort = (column: WeeklySortColumn) => {
-    if (weeklySortColumn === column) {
-      setWeeklySortDirection(weeklySortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setWeeklySortColumn(column);
-      setWeeklySortDirection(column === "week" ? "asc" : "desc");
-    }
   };
 
   const handleMoveToggle = () => {
@@ -293,31 +304,7 @@ export default function ScoreboardPage() {
     }
   };
 
-  const weeklyStats = useMemo(() => {
-    if (!selectedTeam) return [];
-    const stats = generateWeeklyStats(selectedTeam.name);
-    return [...stats].sort((a, b) => {
-      const aValue = a[weeklySortColumn];
-      const bValue = b[weeklySortColumn];
-
-      if (weeklySortDirection === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-  }, [selectedTeam, weeklySortColumn, weeklySortDirection]);
-
-  const WeeklySortIcon = ({ column }: { column: WeeklySortColumn }) => {
-    if (weeklySortColumn !== column) return null;
-    return (
-      <span style={{ marginLeft: "0.25rem" }}>
-        {weeklySortDirection === "asc" ? "▲" : "▼"}
-      </span>
-    );
-  };
-
-  const openTeamModal = (player: any) => {
+  const openTeamModal = (player: { team: typeof TEAMS[0]; name: string }) => {
     setSelectedTeam({
       ...player.team,
       fpts: 425,
@@ -330,14 +317,14 @@ export default function ScoreboardPage() {
     setShowModal(true);
   };
 
-  const getTopPerformers = (roster: any[]) => {
+  const getTopPerformers = (roster: RosterTeam[]) => {
     return roster
       .filter(p => p.hasPlayed)
       .sort((a, b) => b.points - a.points)
       .slice(0, 2);
   };
 
-  const getToPlayCount = (roster: any[]) => {
+  const getToPlayCount = (roster: RosterTeam[]) => {
     return roster.filter(p => !p.hasPlayed).length;
   };
 
@@ -996,7 +983,7 @@ export default function ScoreboardPage() {
                           {player.position}
                         </span>
                         <span style={{
-                          color: LEAGUE_COLORS[player.team.leagueId] || "#4da6ff",
+                          color: (player.team.leagueId in LEAGUE_COLORS ? LEAGUE_COLORS[player.team.leagueId as keyof typeof LEAGUE_COLORS] : "#4da6ff"),
                           fontSize: "0.9rem",
                           fontWeight: 600
                         }}>
@@ -1055,7 +1042,7 @@ export default function ScoreboardPage() {
                           {player.position}
                         </span>
                         <span style={{
-                          color: LEAGUE_COLORS[player.team.leagueId] || "#4da6ff",
+                          color: (player.team.leagueId in LEAGUE_COLORS ? LEAGUE_COLORS[player.team.leagueId as keyof typeof LEAGUE_COLORS] : "#4da6ff"),
                           fontSize: "0.9rem",
                           fontWeight: 600
                         }}>
