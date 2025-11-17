@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
-import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
+import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
 // Helper function to get fantasy rank color
@@ -198,7 +198,7 @@ export default function MyRosterPage() {
         return aValue < bValue ? 1 : -1;
       }
     });
-  }, [statsSortColumn, statsSortDirection]);
+  }, [statsSortColumn, statsSortDirection, roster.teams]);
 
   const handleScheduleClick = () => {
     router.push(`/leagues/${params.LeagueID}/schedule`);
@@ -835,7 +835,7 @@ export default function MyRosterPage() {
                 {roster.record.wins} - {roster.record.losses}  {roster.record.place}
               </div>
               <div style={{ fontSize: "0.9rem", color: "var(--accent)", marginTop: "1rem", fontWeight: 600 }}>
-                Select a team to drop (You're receiving more teams than you're sending)
+                Select a team to drop (You&apos;re receiving more teams than you&apos;re sending)
               </div>
             </div>
 
@@ -1717,7 +1717,7 @@ export default function MyRosterPage() {
                       {team.score > 0 ? team.score.toFixed(1) : "-"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                      {team.opponent || "-"}
+                      {team.opponentTeam?.name || "-"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem" }}>
                       {team.oprk || "-"}
