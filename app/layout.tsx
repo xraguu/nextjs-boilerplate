@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import "./globals.css";
+import SessionProvider from "@/components/SessionProvider";
 
 const industry = localFont({
   src: [
@@ -74,7 +75,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={`${industry.variable} ${zuume.variable}`}>
-        {children}
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );
