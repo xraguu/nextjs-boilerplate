@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { TEAMS } from "@/lib/teams";
 
@@ -116,7 +117,7 @@ export default function TradePage() {
             <p style={{ fontSize: "1rem", color: "var(--text-muted)", textAlign: "center", marginBottom: "2rem" }}>
               Are you sure you want to propose this trade?
               <br />
-              <strong>You're sending {selectedMyTeams.length} team(s) for {selectedOpponentTeams.length} team(s)</strong>
+              <strong>You&apos;re sending {selectedMyTeams.length} team(s) for {selectedOpponentTeams.length} team(s)</strong>
             </p>
 
             <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
@@ -261,7 +262,7 @@ export default function TradePage() {
                 {myRoster.record}  {myRoster.place}
               </div>
               <div style={{ fontSize: "0.9rem", color: "var(--accent)", marginTop: "1rem", fontWeight: 600 }}>
-                Select a team to drop (You're receiving more teams than you're sending)
+                Select a team to drop (You&apos;re receiving more teams than you&apos;re sending)
               </div>
             </div>
 
@@ -346,7 +347,7 @@ export default function TradePage() {
       )}
 
       <div style={{ marginBottom: "2rem" }}>
-        <a
+        <Link
           href="/leagues/2025-alpha/opponents"
           style={{
             display: "inline-block",
@@ -361,7 +362,7 @@ export default function TradePage() {
           }}
         >
           ← Back to Opponents
-        </a>
+        </Link>
         <h1 className="page-heading" style={{ color: "#d4af37", fontSize: "2.5rem", margin: 0 }}>Trade</h1>
       </div>
 
