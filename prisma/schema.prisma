@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // Uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // Uses a direct connection for migrations
+}
+
+model ManualStatsOverride {
+  id              String   @id @default(cuid())
+  teamId          String   // MLE Team ID (e.g., "ALbulls")
+  week            Int      // Week number (1-14)
+
+  // Stats fields
+  goals           Int      // Goals scored
+  shots           Int      // Shots taken
+  saves           Int      // Saves made
+  assists         Int      // Assists
+  demosInflicted  Int      // Demos inflicted on opponents
+  demosTaken      Int      // Demos taken from opponents
+  saveRate        Float    // Sprocket Rating (SR)
+  gameRecord      String   // Win-Loss record (e.g., "9-4")
+
+  // Metadata
+  adminUserId     String   // Discord ID of admin who created this override
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Ensure only one override per team per week
+  @@unique([teamId, week])
+  @@index([week])
+  @@index([teamId])
+}

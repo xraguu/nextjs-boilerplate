@@ -116,7 +116,7 @@ export default function AdminLayout({
     { label: "Manage Leagues", path: "/admin/leagues" },
     { label: "Lock Lineups", path: "/admin/lock-lineups" },
     { label: "Transactions", path: "/admin/waivers" },
-    { label: "Recompute Stats", path: "/admin/stats" },
+    { label: "Manual Stats Overrides", path: "/admin/stats" },
     { label: "Manage Users", path: "/admin/users" },
     { label: "Settings", path: "/admin/settings" },
     { label: "Database Tools", path: "/admin/database" },
@@ -218,7 +218,7 @@ export default function AdminLayout({
             style={{
               fontSize: "2rem",
               fontWeight: 700,
-              color: "var(--text-main)",
+              color: "var(--accent)",
               marginBottom: "0.25rem",
             }}
           >

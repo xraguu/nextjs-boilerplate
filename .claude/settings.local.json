@@ -15,7 +15,13 @@
       "Bash(taskkill /F /PID 35220)",
       "Bash(npm install:*)",
       "Bash(openssl rand:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(cat:*)",
+      "Bash(npx prisma init:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(npx prisma db push:*)"
     ],
     "deny": [],
     "ask": []
