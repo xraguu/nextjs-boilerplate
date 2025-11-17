@@ -171,7 +171,7 @@ export default function MakePickPage() {
   const [selectedManager, setSelectedManager] = useState("Fantastic Ballers");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [modalTeam, setModalTeam] = useState<typeof availableTeams[0] | null>(null);
+  const [modalTeam, setModalTeam] = useState<typeof TEAMS[0] | null>(null);
 
   // Mock: Currently it's NOT the user's pick (Pixies is on the clock, user is Fantastic Ballers)
   const isMyPick = false; // In real implementation, this would check if current pick manager === user's manager
