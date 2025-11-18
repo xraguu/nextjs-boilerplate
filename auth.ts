@@ -2,7 +2,13 @@ import NextAuth from "next-auth";
 import Discord from "next-auth/providers/discord";
 import { prisma } from "@/lib/prisma";
 
+// Debug logging
+console.log("AUTH_DISCORD_ID:", process.env.AUTH_DISCORD_ID);
+console.log("AUTH_DISCORD_SECRET length:", process.env.AUTH_DISCORD_SECRET?.length);
+console.log("AUTH_DISCORD_SECRET first 10 chars:", process.env.AUTH_DISCORD_SECRET?.substring(0, 10));
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  debug: true,
   providers: [
     Discord({
       clientId: process.env.AUTH_DISCORD_ID!,

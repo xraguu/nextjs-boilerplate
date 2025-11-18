@@ -23,7 +23,11 @@
       "Bash(timeout /t 5 /nobreak)",
       "Bash(npx prisma db push:*)",
       "Bash(npm run build:*)",
-      "Bash(npx next lint:*)"
+      "Bash(npx next lint:*)",
+      "Bash(npx dotenv:*)",
+      "Bash(ping:*)",
+      "Bash(taskkill:*)",
+      "Bash(AUTH_DISCORD_SECRET=q8qbz_JP5gLNejxkRb0TCgT-ZoTmvKeH npm run dev:*)"
     ],
     "deny": [],
     "ask": []
