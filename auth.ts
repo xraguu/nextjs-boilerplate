@@ -12,24 +12,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, profile }) {
       // Create or update user in database on sign in
-      if (profile && profile.id) {
-        const adminIds = process.env.ADMIN_DISCORD_IDS?.split(',') || [];
-        const role = adminIds.includes(profile.id as string) ? 'admin' : 'user';
+      try {
+        if (profile && profile.id) {
+          const adminIds = process.env.ADMIN_DISCORD_IDS?.split(',') || [];
+          const role = adminIds.includes(profile.id as string) ? 'admin' : 'user';
 
-        await prisma.user.upsert({
-          where: { discordId: profile.id as string },
-          update: {
-            displayName: user.name || profile.username || "Unknown",
-            avatarUrl: user.image || null,
-            role,
-          },
-          create: {
-            discordId: profile.id as string,
-            displayName: user.name || profile.username || "Unknown",
-            avatarUrl: user.image || null,
-            role,
-          },
-        });
+          await prisma.user.upsert({
+            where: { discordId: profile.id as string },
+            update: {
+              displayName: user.name || "Unknown User",
+              avatarUrl: user.image || null,
+              role,
+            },
+            create: {
+              discordId: profile.id as string,
+              displayName: user.name || "Unknown User",
+              avatarUrl: user.image || null,
+              role,
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error creating/updating user in database:", error);
+        // Still allow sign in even if database update fails
       }
       return true;
     },
@@ -45,12 +50,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // If we have a discordId but no user ID, fetch it from database
       if (token.discordId && !token.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { discordId: token.discordId as string },
-        });
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.role = dbUser.role;
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { discordId: token.discordId as string },
+          });
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+          }
+        } catch (error) {
+          console.error("Error fetching user from database:", error);
+          // Continue without user ID if database error
         }
       }
 
