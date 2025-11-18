@@ -27,7 +27,8 @@
       "Bash(npx dotenv:*)",
       "Bash(ping:*)",
       "Bash(taskkill:*)",
-      "Bash(AUTH_DISCORD_SECRET=q8qbz_JP5gLNejxkRb0TCgT-ZoTmvKeH npm run dev:*)"
+      "Bash(AUTH_DISCORD_SECRET=q8qbz_JP5gLNejxkRb0TCgT-ZoTmvKeH npm run dev:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,5 +1,165 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
-export async function GET() {
-  return NextResponse.json({ ok: true });
+// GET /api/leagues/[leagueId] - Get league details
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { leagueId: string } }
+) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { leagueId } = params;
+
+    // Fetch league with all relevant details
+    const league = await prisma.fantasyLeague.findUnique({
+      where: { id: leagueId },
+      include: {
+        fantasyTeams: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                displayName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+          orderBy: {
+            draftPosition: "asc",
+          },
+        },
+        _count: {
+          select: {
+            fantasyTeams: true,
+            matchups: true,
+            trades: true,
+            waivers: true,
+          },
+        },
+      },
+    });
+
+    if (!league) {
+      return NextResponse.json({ error: "League not found" }, { status: 404 });
+    }
+
+    // Check if user is a member of the league
+    const isMember = league.fantasyTeams.some(
+      (team) => team.ownerUserId === session.user.id
+    );
+    const isAdmin = session.user.role === "admin";
+
+    if (!isMember && !isAdmin) {
+      return NextResponse.json(
+        { error: "You are not a member of this league" },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json({ league });
+  } catch (error) {
+    console.error("Error fetching league:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch league" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/leagues/[leagueId] - Update league settings (commissioner only)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { leagueId: string } }
+) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { leagueId } = params;
+
+    // Check if user is the league creator (commissioner) or admin
+    const league = await prisma.fantasyLeague.findUnique({
+      where: { id: leagueId },
+      select: {
+        createdByUserId: true,
+      },
+    });
+
+    if (!league) {
+      return NextResponse.json({ error: "League not found" }, { status: 404 });
+    }
+
+    const isCommissioner = league.createdByUserId === session.user.id;
+    const isAdmin = session.user.role === "admin";
+
+    if (!isCommissioner && !isAdmin) {
+      return NextResponse.json(
+        { error: "Only the league commissioner can update league settings" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      name,
+      maxTeams,
+      currentWeek,
+      playoffTeams,
+      draftType,
+      waiverSystem,
+      faabBudget,
+      rosterConfig,
+    } = body;
+
+    // Build update data object
+    const updateData: any = {};
+
+    if (name !== undefined) updateData.name = name;
+    if (maxTeams !== undefined) updateData.maxTeams = maxTeams;
+    if (currentWeek !== undefined) updateData.currentWeek = currentWeek;
+    if (playoffTeams !== undefined) updateData.playoffTeams = playoffTeams;
+    if (draftType !== undefined) {
+      if (!["snake", "linear"].includes(draftType)) {
+        return NextResponse.json(
+          { error: "Draft type must be 'snake' or 'linear'" },
+          { status: 400 }
+        );
+      }
+      updateData.draftType = draftType;
+    }
+    if (waiverSystem !== undefined) {
+      if (!["faab", "rolling", "fixed"].includes(waiverSystem)) {
+        return NextResponse.json(
+          { error: "Invalid waiver system" },
+          { status: 400 }
+        );
+      }
+      updateData.waiverSystem = waiverSystem;
+    }
+    if (faabBudget !== undefined) updateData.faabBudget = faabBudget;
+    if (rosterConfig !== undefined) updateData.rosterConfig = rosterConfig;
+
+    // Update the league
+    const updatedLeague = await prisma.fantasyLeague.update({
+      where: { id: leagueId },
+      data: updateData,
+    });
+
+    return NextResponse.json({ league: updatedLeague });
+  } catch (error) {
+    console.error("Error updating league:", error);
+    return NextResponse.json(
+      { error: "Failed to update league" },
+      { status: 500 }
+    );
+  }
 }
