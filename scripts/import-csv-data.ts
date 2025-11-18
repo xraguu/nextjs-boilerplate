@@ -2,7 +2,7 @@
  * CSV Import Script for MLE Fantasy Platform
  *
  * This script imports data from MLE CSV files into the database.
- * Run with: npx tsx scripts/import-csv-data.ts
+ * Run with: npm run import:csv
  */
 
 import { PrismaClient } from "@/lib/generated/prisma";
@@ -15,66 +15,123 @@ const prisma = new PrismaClient();
 // CSV file paths (relative to project root)
 const CSV_DIR = path.join(process.cwd(), "data", "csv");
 
+// CSV row interfaces matching actual column names
 interface TeamRow {
-  id: string;
-  name: string;
-  league: string;
-  slug: string;
-  logoPath: string;
-  primaryColor: string;
-  secondaryColor: string;
-  colorHex: string;
-  colorHexTwo?: string;
+  Conference: string;
+  "Super Division": string;
+  Division: string;
+  Franchise: string;
+  Code: string;
+  "Primary Color": string;
+  "Secondary Color": string;
+  "Photo URL": string;
 }
 
 interface PlayerRow {
-  id: string;
   name: string;
-  teamId?: string;
+  salary: string;
+  sprocket_player_id: string;
+  member_id: string;
+  skill_group: string;
+  franchise: string;
+  "Franchise Staff Position": string;
+  slot: string;
+  current_scrim_points: string;
+  "Eligible Until": string;
 }
 
 interface FixtureRow {
-  id: string;
-  date: string;
+  fixture_id: string;
+  match_group_id: string;
+  home: string;
+  away: string;
 }
 
 interface MatchRow {
-  id: string;
-  fixtureId: string;
-  roundId: string;
-  matchGroupId: string;
-  homeTeamId: string;
-  awayTeamId: string;
-  scheduledDate: string;
+  match_id: string;
+  fixture_id: string;
+  match_group_id: string;
+  scheduling_start_time: string;
+  scheduling_end_time: string;
+  home: string;
+  away: string;
+  league: string;
+  game_mode: string;
+  home_wins: string;
+  away_wins: string;
+  winning_team: string;
+}
+
+interface RoundRow {
+  match_id: string;
+  round_id: string;
+  Home: string;
+  "Home Goals": string;
+  Away: string;
+  "Away Goals": string;
 }
 
 interface RoleUsageRow {
-  playerId: string;
+  doubles_uses: string;
+  standard_uses: string;
+  total_uses: string;
+  season_number: string;
+  team_name: string;
+  league: string;
   role: string;
-  gamesPlayed: string;
 }
 
 interface PlayerStatsRow {
-  playerId: string;
-  matchId: string;
+  member_id: string;
+  team_name: string;
+  skill_group: string;
+  gamemode: string;
+  match_id: string;
+  round_id: string;
+  replays_submitted_at: string;
+  home_won: string;
+  dpi: string;
+  gpi: string;
+  opi: string;
   goals: string;
-  shots: string;
   saves: string;
+  score: string;
+  shots: string;
   assists: string;
-  demosInflicted: string;
-  demosTaken: string;
-  sprocketRating: string;
+  goals_against: string;
+  shots_against: string;
+  demos_inflicted: string;
+  demos_taken: string;
 }
 
 interface HistoricalStatsRow {
-  playerId: string;
-  totalGoals: string;
-  totalShots: string;
-  totalSaves: string;
-  totalAssists: string;
-  totalDemos: string;
-  avgSR: string;
-  gamesPlayed: string;
+  name: string;
+  member_id: string;
+  gamemode: string;
+  skill_group: string;
+  team_name: string;
+  season: string;
+  games_played: string;
+  sprocket_rating: string;
+  dpi_per_game: string;
+  opi_per_game: string;
+  avg_score: string;
+  goals_per_game: string;
+  total_goals: string;
+  saves_per_game: string;
+  total_saves: string;
+  shots_per_game: string;
+  total_shots: string;
+  assists_per_game: string;
+  total_assists: string;
+  avg_goals_against: string;
+  total_goals_against: string;
+  avg_shots_against: string;
+  total_shots_against: string;
+  avg_demos_inflicted: string;
+  total_demos_inflicted: string;
+  avg_demos_taken: string;
+  total_demos_taken: string;
 }
 
 function readCSV<T>(filename: string): T[] {
@@ -105,15 +162,16 @@ async function importLeaguesAndTeams() {
     return;
   }
 
-  // Extract unique leagues
+  // Extract unique leagues (conferences)
   const leaguesMap = new Map<string, { name: string; colorHex: string; colorHexTwo?: string }>();
 
   teams.forEach((team) => {
-    if (!leaguesMap.has(team.league)) {
-      leaguesMap.set(team.league, {
-        name: team.league,
-        colorHex: team.colorHex || "#FFFFFF",
-        colorHexTwo: team.colorHexTwo,
+    const leagueId = team.Conference;
+    if (!leaguesMap.has(leagueId)) {
+      leaguesMap.set(leagueId, {
+        name: team.Conference,
+        colorHex: team["Primary Color"] || "#FFFFFF",
+        colorHexTwo: team["Secondary Color"] || undefined,
       });
     }
   });
@@ -135,24 +193,27 @@ async function importLeaguesAndTeams() {
   // Import teams
   let teamCount = 0;
   for (const team of teams) {
+    const teamId = team.Code; // Use Code as team ID
+    const slug = team.Franchise.toLowerCase().replace(/\s+/g, "-");
+
     await prisma.mLETeam.upsert({
-      where: { id: team.id },
+      where: { id: teamId },
       update: {
-        name: team.name,
-        leagueId: team.league,
-        slug: team.slug,
-        logoPath: team.logoPath || "",
-        primaryColor: team.primaryColor || "#FFFFFF",
-        secondaryColor: team.secondaryColor || "#000000",
+        name: team.Franchise,
+        leagueId: team.Conference,
+        slug,
+        logoPath: team["Photo URL"] || "",
+        primaryColor: team["Primary Color"] || "#FFFFFF",
+        secondaryColor: team["Secondary Color"] || "#000000",
       },
       create: {
-        id: team.id,
-        name: team.name,
-        leagueId: team.league,
-        slug: team.slug,
-        logoPath: team.logoPath || "",
-        primaryColor: team.primaryColor || "#FFFFFF",
-        secondaryColor: team.secondaryColor || "#000000",
+        id: teamId,
+        name: team.Franchise,
+        leagueId: team.Conference,
+        slug,
+        logoPath: team["Photo URL"] || "",
+        primaryColor: team["Primary Color"] || "#FFFFFF",
+        secondaryColor: team["Secondary Color"] || "#000000",
       },
     });
     teamCount++;
@@ -173,16 +234,18 @@ async function importPlayers() {
 
   let count = 0;
   for (const player of players) {
+    const playerId = player.member_id; // Use member_id as player ID
+
     await prisma.mLEPlayer.upsert({
-      where: { id: player.id },
+      where: { id: playerId },
       update: {
         name: player.name,
-        teamId: player.teamId || null,
+        teamId: player.franchise || null,
       },
       create: {
-        id: player.id,
+        id: playerId,
         name: player.name,
-        teamId: player.teamId || null,
+        teamId: player.franchise || null,
       },
     });
     count++;
@@ -203,14 +266,16 @@ async function importFixtures() {
 
   let count = 0;
   for (const fixture of fixtures) {
+    // Fixture date would need to come from match_groups or matches
+    // For now, use a placeholder date
     await prisma.fixture.upsert({
-      where: { id: fixture.id },
+      where: { id: fixture.fixture_id },
       update: {
-        date: new Date(fixture.date),
+        date: new Date(), // TODO: Get actual date from match_groups
       },
       create: {
-        id: fixture.id,
-        date: new Date(fixture.date),
+        id: fixture.fixture_id,
+        date: new Date(), // TODO: Get actual date from match_groups
       },
     });
     count++;
@@ -230,42 +295,41 @@ async function importMatches() {
   }
 
   // Helper function to calculate fantasy week from date
-  // Assumes each week is 7 days and starts from a base date
   const calculateWeek = (date: Date): number => {
     // TODO: This should be calculated based on season settings weekDates
-    // For now, return a default week calculation
-    const seasonStart = new Date("2025-01-01"); // Adjust this
+    const seasonStart = new Date("2025-01-01");
     const daysDiff = Math.floor((date.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24));
     const week = Math.floor(daysDiff / 7) + 1;
-    return Math.min(Math.max(week, 1), 10); // Clamp between 1-10
+    return Math.min(Math.max(week, 1), 10);
   };
 
   let count = 0;
   for (const match of matches) {
-    const scheduledDate = new Date(match.scheduledDate);
+    const scheduledDate = new Date(match.scheduling_start_time);
     const week = calculateWeek(scheduledDate);
 
     await prisma.match.upsert({
-      where: { id: match.id },
+      where: { id: match.match_id },
       update: {
-        fixtureId: match.fixtureId,
-        roundId: match.roundId,
-        matchGroupId: match.matchGroupId,
-        homeTeamId: match.homeTeamId,
-        awayTeamId: match.awayTeamId,
+        fixtureId: match.fixture_id,
+        roundId: "round_placeholder", // Rounds will be imported separately
+        matchGroupId: match.match_group_id,
+        homeTeamId: match.home,
+        awayTeamId: match.away,
         scheduledDate,
         week,
+        completed: match.winning_team !== "",
       },
       create: {
-        id: match.id,
-        fixtureId: match.fixtureId,
-        roundId: match.roundId,
-        matchGroupId: match.matchGroupId,
-        homeTeamId: match.homeTeamId,
-        awayTeamId: match.awayTeamId,
+        id: match.match_id,
+        fixtureId: match.fixture_id,
+        roundId: "round_placeholder",
+        matchGroupId: match.match_group_id,
+        homeTeamId: match.home,
+        awayTeamId: match.away,
         scheduledDate,
         week,
-        completed: false,
+        completed: match.winning_team !== "",
       },
     });
     count++;
@@ -286,30 +350,17 @@ async function importRoleUsages() {
 
   let count = 0;
   for (const roleUsage of roleUsages) {
-    try {
-      await prisma.roleUsage.upsert({
-        where: {
-          playerId_role: {
-            playerId: roleUsage.playerId,
-            role: roleUsage.role,
-          },
-        },
-        update: {
-          gamesPlayed: parseInt(roleUsage.gamesPlayed) || 0,
-        },
-        create: {
-          playerId: roleUsage.playerId,
-          role: roleUsage.role,
-          gamesPlayed: parseInt(roleUsage.gamesPlayed) || 0,
-        },
-      });
-      count++;
-    } catch (error) {
-      console.warn(`⚠️  Failed to import role usage for player ${roleUsage.playerId}: ${error}`);
-    }
+    // We need to find the player ID from team_name
+    // For now, skip if we can't determine the player
+    const role = roleUsage.gamemode === "doubles" ? "2s" : "3s";
+    const totalUses = parseInt(roleUsage.total_uses) || 0;
+
+    // TODO: Map team_name to actual player IDs
+    // This requires a lookup table or additional data
+    count++;
   }
 
-  console.log(`✅ Imported ${count} role usages`);
+  console.log(`⚠️  Role usage import requires player ID mapping (skipped for now)`);
 }
 
 async function importPlayerStats() {
@@ -323,13 +374,15 @@ async function importPlayerStats() {
   }
 
   let count = 0;
+  let skipped = 0;
+
   for (const stat of playerStats) {
     try {
       await prisma.playerMatchStats.upsert({
         where: {
           playerId_matchId: {
-            playerId: stat.playerId,
-            matchId: stat.matchId,
+            playerId: stat.member_id,
+            matchId: stat.match_id,
           },
         },
         update: {
@@ -337,29 +390,32 @@ async function importPlayerStats() {
           shots: parseInt(stat.shots) || 0,
           saves: parseInt(stat.saves) || 0,
           assists: parseInt(stat.assists) || 0,
-          demosInflicted: parseInt(stat.demosInflicted) || 0,
-          demosTaken: parseInt(stat.demosTaken) || 0,
-          sprocketRating: parseFloat(stat.sprocketRating) || 0,
+          demosInflicted: parseInt(stat.demos_inflicted) || 0,
+          demosTaken: parseInt(stat.demos_taken) || 0,
+          sprocketRating: parseFloat(stat.score) || 0, // Using score as SR
         },
         create: {
-          playerId: stat.playerId,
-          matchId: stat.matchId,
+          playerId: stat.member_id,
+          matchId: stat.match_id,
           goals: parseInt(stat.goals) || 0,
           shots: parseInt(stat.shots) || 0,
           saves: parseInt(stat.saves) || 0,
           assists: parseInt(stat.assists) || 0,
-          demosInflicted: parseInt(stat.demosInflicted) || 0,
-          demosTaken: parseInt(stat.demosTaken) || 0,
-          sprocketRating: parseFloat(stat.sprocketRating) || 0,
+          demosInflicted: parseInt(stat.demos_inflicted) || 0,
+          demosTaken: parseInt(stat.demos_taken) || 0,
+          sprocketRating: parseFloat(stat.score) || 0,
         },
       });
       count++;
     } catch (error) {
-      console.warn(`⚠️  Failed to import stat for player ${stat.playerId} in match ${stat.matchId}`);
+      skipped++;
+      if (skipped < 10) {
+        console.warn(`⚠️  Skipped stat for player ${stat.member_id} in match ${stat.match_id}`);
+      }
     }
   }
 
-  console.log(`✅ Imported ${count} player match stats`);
+  console.log(`✅ Imported ${count} player match stats (${skipped} skipped)`);
 }
 
 async function importHistoricalStats() {
@@ -373,38 +429,43 @@ async function importHistoricalStats() {
   }
 
   let count = 0;
+  let skipped = 0;
+
   for (const stat of historicalStats) {
     try {
       await prisma.playerHistoricalStats.upsert({
-        where: { id: stat.playerId },
+        where: { id: stat.member_id },
         update: {
-          totalGoals: parseInt(stat.totalGoals) || 0,
-          totalShots: parseInt(stat.totalShots) || 0,
-          totalSaves: parseInt(stat.totalSaves) || 0,
-          totalAssists: parseInt(stat.totalAssists) || 0,
-          totalDemos: parseInt(stat.totalDemos) || 0,
-          avgSR: parseFloat(stat.avgSR) || 0,
-          gamesPlayed: parseInt(stat.gamesPlayed) || 0,
+          totalGoals: parseInt(stat.total_goals) || 0,
+          totalShots: parseInt(stat.total_shots) || 0,
+          totalSaves: parseInt(stat.total_saves) || 0,
+          totalAssists: parseInt(stat.total_assists) || 0,
+          totalDemos: parseInt(stat.total_demos_inflicted) || 0,
+          avgSR: parseFloat(stat.sprocket_rating) || 0,
+          gamesPlayed: parseInt(stat.games_played) || 0,
         },
         create: {
-          id: stat.playerId,
-          playerId: stat.playerId,
-          totalGoals: parseInt(stat.totalGoals) || 0,
-          totalShots: parseInt(stat.totalShots) || 0,
-          totalSaves: parseInt(stat.totalSaves) || 0,
-          totalAssists: parseInt(stat.totalAssists) || 0,
-          totalDemos: parseInt(stat.totalDemos) || 0,
-          avgSR: parseFloat(stat.avgSR) || 0,
-          gamesPlayed: parseInt(stat.gamesPlayed) || 0,
+          id: stat.member_id,
+          playerId: stat.member_id,
+          totalGoals: parseInt(stat.total_goals) || 0,
+          totalShots: parseInt(stat.total_shots) || 0,
+          totalSaves: parseInt(stat.total_saves) || 0,
+          totalAssists: parseInt(stat.total_assists) || 0,
+          totalDemos: parseInt(stat.total_demos_inflicted) || 0,
+          avgSR: parseFloat(stat.sprocket_rating) || 0,
+          gamesPlayed: parseInt(stat.games_played) || 0,
         },
       });
       count++;
     } catch (error) {
-      console.warn(`⚠️  Failed to import historical stats for player ${stat.playerId}`);
+      skipped++;
+      if (skipped < 10) {
+        console.warn(`⚠️  Skipped historical stats for player ${stat.member_id}`);
+      }
     }
   }
 
-  console.log(`✅ Imported ${count} historical player stats`);
+  console.log(`✅ Imported ${count} historical player stats (${skipped} skipped)`);
 }
 
 async function main() {
