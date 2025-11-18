@@ -15,7 +15,7 @@ const prisma = new PrismaClient();
 // CSV file paths (relative to project root)
 const CSV_DIR = path.join(process.cwd(), "data", "csv");
 
-// CSV row interfaces matching actual column names
+// CSV row interfaces - only including fields we actually use
 interface TeamRow {
   Conference: string;
   "Super Division": string;
@@ -28,16 +28,12 @@ interface TeamRow {
 }
 
 interface PlayerRow {
-  name: string;
-  salary: string;
-  sprocket_player_id: string;
   member_id: string;
   skill_group: string;
   franchise: string;
   "Franchise Staff Position": string;
   slot: string;
-  current_scrim_points: string;
-  "Eligible Until": string;
+  name: string; // Also needed for display
 }
 
 interface FixtureRow {
@@ -51,15 +47,13 @@ interface MatchRow {
   match_id: string;
   fixture_id: string;
   match_group_id: string;
-  scheduling_start_time: string;
-  scheduling_end_time: string;
   home: string;
   away: string;
   league: string;
   game_mode: string;
   home_wins: string;
   away_wins: string;
-  winning_team: string;
+  scheduling_start_time: string; // For date calculation
 }
 
 interface RoundRow {
@@ -71,10 +65,15 @@ interface RoundRow {
   "Away Goals": string;
 }
 
+interface MatchGroupRow {
+  match_group_id: string;
+  match_group_title: string;
+  parent_group_title: string;
+}
+
 interface RoleUsageRow {
   doubles_uses: string;
   standard_uses: string;
-  total_uses: string;
   season_number: string;
   team_name: string;
   league: string;
@@ -88,14 +87,9 @@ interface PlayerStatsRow {
   gamemode: string;
   match_id: string;
   round_id: string;
-  replays_submitted_at: string;
-  home_won: string;
-  dpi: string;
   gpi: string;
-  opi: string;
   goals: string;
   saves: string;
-  score: string;
   shots: string;
   assists: string;
   goals_against: string;
@@ -108,29 +102,13 @@ interface HistoricalStatsRow {
   name: string;
   member_id: string;
   gamemode: string;
-  skill_group: string;
-  team_name: string;
-  season: string;
   games_played: string;
   sprocket_rating: string;
-  dpi_per_game: string;
-  opi_per_game: string;
-  avg_score: string;
-  goals_per_game: string;
   total_goals: string;
-  saves_per_game: string;
   total_saves: string;
-  shots_per_game: string;
   total_shots: string;
-  assists_per_game: string;
   total_assists: string;
-  avg_goals_against: string;
-  total_goals_against: string;
-  avg_shots_against: string;
-  total_shots_against: string;
-  avg_demos_inflicted: string;
   total_demos_inflicted: string;
-  avg_demos_taken: string;
   total_demos_taken: string;
 }
 
@@ -392,7 +370,7 @@ async function importPlayerStats() {
           assists: parseInt(stat.assists) || 0,
           demosInflicted: parseInt(stat.demos_inflicted) || 0,
           demosTaken: parseInt(stat.demos_taken) || 0,
-          sprocketRating: parseFloat(stat.score) || 0, // Using score as SR
+          sprocketRating: parseFloat(stat.gpi) || 0, // Using GPI as Sprocket Rating
         },
         create: {
           playerId: stat.member_id,
@@ -403,7 +381,7 @@ async function importPlayerStats() {
           assists: parseInt(stat.assists) || 0,
           demosInflicted: parseInt(stat.demos_inflicted) || 0,
           demosTaken: parseInt(stat.demos_taken) || 0,
-          sprocketRating: parseFloat(stat.score) || 0,
+          sprocketRating: parseFloat(stat.gpi) || 0,
         },
       });
       count++;

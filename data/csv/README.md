@@ -6,40 +6,43 @@ This directory contains CSV files for importing MLE data into the fantasy platfo
 
 Place the following CSV files from the `imports/` directory into this `data/csv/` directory:
 
+### MLE Data (not Fantasy League data)
+**Note:** MLE teams/players are separate from fantasy managers/leagues. Fantasy managers are users who sign in with Discord.
+
 1. **teams.csv** - MLE teams and leagues data
-   - Columns: `Conference, Super Division, Division, Franchise, Code, Primary Color, Secondary Color, Photo URL`
+   - All columns imported (Conference, Division, Franchise, Code, Colors, etc.)
    - Used to create MLELeague and MLETeam records
 
 2. **players.csv** - MLE players data
-   - Columns: `name, salary, sprocket_player_id, member_id, skill_group, franchise, Franchise Staff Position, slot, current_scrim_points, Eligible Until`
+   - **Used columns:** `member_id, skill_group, franchise, Franchise Staff Position, slot`
    - Used to create MLEPlayer records
 
 3. **fixtures.csv** - Match fixtures
-   - Columns: `fixture_id, match_group_id, home, away`
+   - **Used columns:** `fixture_id, match_group_id, home, away`
    - Used to create Fixture records
 
 4. **matches.csv** - Individual matches
-   - Columns: `match_id, fixture_id, match_group_id, scheduling_start_time, scheduling_end_time, home, away, league, game_mode, home_wins, away_wins, winning_team`
-   - Used to create Match records with fantasy week calculations
+   - **Used columns:** `match_id, fixture_id, match_group_id, home, away, league, game_mode, home_wins, away_wins`
+   - Used to create Match records
 
 5. **rounds_s18.csv** - Season 18 rounds data
-   - Columns: `match_id, round_id, Home, Home Goals, Away, Away Goals`
+   - **Used columns:** `match_id, round_id, Home, Home Goals, Away, Away Goals`
    - Used to map matches to rounds and calculate game results
 
 6. **match_groups.csv** - Match group information
-   - Columns: `match_group_id, start, end, match_group_title, parent_group_title`
+   - **Used columns:** `match_group_id, match_group_title, parent_group_title`
    - Used for organizing matches into groups
 
-7. **role_usages.csv** - Player position usage
-   - Columns: `doubles_uses, standard_uses, total_uses, season_number, team_name, league, role`
-   - Used to create RoleUsage records (2s vs 3s)
+7. **role_usages.csv** - Player position usage (2s vs 3s)
+   - **Used columns:** `doubles_uses, standard_uses, season_number, team_name, league, role`
+   - Used to create RoleUsage records
 
 8. **player_stats_s18.csv** - Player match statistics
-   - Columns: `member_id, team_name, skill_group, gamemode, match_id, round_id, replays_submitted_at, home_won, dpi, gpi, opi, goals, saves, score, shots, assists, goals_against, shots_against, demos_inflicted, demos_taken`
+   - **Used columns:** `member_id, team_name, skill_group, gamemode, match_id, round_id, gpi, goals, saves, shots, assists, goals_against, shots_against, demos_inflicted, demos_taken`
    - Used to create PlayerMatchStats records
 
 9. **historicalAggregatedPlayerStats.csv** - Historical player statistics
-   - Columns: `name, member_id, gamemode, skill_group, team_name, season, games_played, sprocket_rating, dpi_per_game, opi_per_game, avg_score, goals_per_game, total_goals, saves_per_game, total_saves, shots_per_game, total_shots, assists_per_game, total_assists, avg_goals_against, total_goals_against, avg_shots_against, total_shots_against, avg_demos_inflicted, total_demos_inflicted, avg_demos_taken, total_demos_taken`
+   - **Used columns:** `name, member_id, gamemode, games_played, sprocket_rating, total_goals, total_saves, total_shots, total_assists, total_demos_inflicted, total_demos_taken`
    - Used to create PlayerHistoricalStats records
 
 ## Running the Import
