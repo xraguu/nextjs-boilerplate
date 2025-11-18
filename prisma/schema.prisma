@@ -15,6 +15,348 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING") // Uses a direct connection for migrations
 }
 
+// ============================================================================
+// AUTHENTICATION & USERS
+// ============================================================================
+
+model User {
+  id          String   @id @default(cuid())
+  discordId   String   @unique
+  displayName String
+  avatarUrl   String?
+  role        String   @default("user") // admin, commissioner, user
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fantasyTeams     FantasyTeam[]
+  proposedTrades   Trade[]        @relation("TradeProposer")
+  receivedTrades   Trade[]        @relation("TradeReceiver")
+  waiverClaims     WaiverClaim[]
+}
+
+// ============================================================================
+// MLE LEAGUE & TEAM DATA (from CSV)
+// ============================================================================
+
+model MLELeague {
+  id              String    @id // "AL", "CL", etc.
+  name            String
+  colorHex        String
+  colorHexTwo     String?
+  teams           MLETeam[]
+}
+
+model MLETeam {
+  id              String       @id // "ALbulls"
+  name            String       // "Bulls"
+  leagueId        String
+  league          MLELeague    @relation(fields: [leagueId], references: [id])
+  slug            String       @unique
+  logoPath        String
+  primaryColor    String
+  secondaryColor  String
+
+  players         MLEPlayer[]
+  homeMatches     Match[]      @relation("HomeTeam")
+  awayMatches     Match[]      @relation("AwayTeam")
+  rosterSlots     RosterSlot[]
+  weeklyStats     TeamWeeklyStats[]
+}
+
+model MLEPlayer {
+  id                String            @id
+  name              String
+  teamId            String?
+  team              MLETeam?          @relation(fields: [teamId], references: [id])
+  roleUsages        RoleUsage[]
+  matchStats        PlayerMatchStats[]
+  historicalStats   PlayerHistoricalStats?
+}
+
+model RoleUsage {
+  id              String    @id @default(cuid())
+  playerId        String
+  player          MLEPlayer @relation(fields: [playerId], references: [id])
+  role            String    // "2s", "3s", etc.
+  gamesPlayed     Int
+
+  @@unique([playerId, role])
+}
+
+// ============================================================================
+// MATCHES & FIXTURES
+// ============================================================================
+
+model Fixture {
+  id          String    @id
+  date        DateTime
+  matches     Match[]
+}
+
+model Match {
+  id              String   @id
+  fixtureId       String
+  roundId         String
+  matchGroupId    String
+  homeTeamId      String
+  awayTeamId      String
+  homeTeam        MLETeam  @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam        MLETeam  @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  scheduledDate   DateTime
+  week            Int      // Fantasy week 1-10
+  completed       Boolean  @default(false)
+
+  playerStats     PlayerMatchStats[]
+  fixture         Fixture  @relation(fields: [fixtureId], references: [id])
+}
+
+// ============================================================================
+// PLAYER & TEAM STATISTICS
+// ============================================================================
+
+model PlayerMatchStats {
+  id              String    @id @default(cuid())
+  playerId        String
+  matchId         String
+  player          MLEPlayer @relation(fields: [playerId], references: [id])
+  match           Match     @relation(fields: [matchId], references: [id])
+
+  goals           Int
+  shots           Int
+  saves           Int
+  assists         Int
+  demosInflicted  Int
+  demosTaken      Int
+  sprocketRating  Float
+
+  @@unique([playerId, matchId])
+}
+
+model PlayerHistoricalStats {
+  id              String    @id
+  playerId        String    @unique
+  player          MLEPlayer @relation(fields: [playerId], references: [id])
+
+  totalGoals      Int
+  totalShots      Int
+  totalSaves      Int
+  totalAssists    Int
+  totalDemos      Int
+  avgSR           Float
+  gamesPlayed     Int
+}
+
+model TeamWeeklyStats {
+  id              String   @id @default(cuid())
+  teamId          String
+  week            Int
+  team            MLETeam  @relation(fields: [teamId], references: [id])
+
+  goals           Int
+  shots           Int
+  saves           Int
+  assists         Int
+  demosInflicted  Int
+  demosTaken      Int
+  sprocketRating  Float
+  wins            Int
+  losses          Int
+
+  @@unique([teamId, week])
+}
+
+// ============================================================================
+// FANTASY LEAGUES & TEAMS
+// ============================================================================
+
+model FantasyLeague {
+  id              String        @id @default(cuid())
+  name            String
+  season          Int
+  maxTeams        Int           @default(12)
+  currentWeek     Int           @default(1)
+  playoffTeams    Int           @default(4)
+
+  // League-specific settings
+  draftType       String        // "snake" or "linear"
+  waiverSystem    String        // "faab", "rolling", "fixed"
+  faabBudget      Int?
+  rosterConfig    Json          // { "2s": 2, "3s": 2, "flx": 1, "be": 3 }
+
+  createdAt       DateTime      @default(now())
+  createdByUserId String
+
+  fantasyTeams    FantasyTeam[]
+  draftPicks      DraftPick[]
+  trades          Trade[]
+  waivers         WaiverClaim[]
+  matchups        Matchup[]
+}
+
+model FantasyTeam {
+  id                String         @id @default(cuid())
+  fantasyLeagueId   String
+  ownerUserId       String
+  displayName       String
+  shortCode         String
+  draftPosition     Int?
+  faabRemaining     Int?
+  waiverPriority    Int?
+
+  league            FantasyLeague  @relation(fields: [fantasyLeagueId], references: [id])
+  owner             User           @relation(fields: [ownerUserId], references: [id])
+
+  roster            RosterSlot[]
+  homeMatchups      Matchup[]      @relation("HomeFantasyTeam")
+  awayMatchups      Matchup[]      @relation("AwayFantasyTeam")
+  proposedTrades    Trade[]        @relation("TradeProposerTeam")
+  receivedTrades    Trade[]        @relation("TradeReceiverTeam")
+  waiverClaims      WaiverClaim[]
+
+  @@unique([fantasyLeagueId, ownerUserId])
+}
+
+model RosterSlot {
+  id              String       @id @default(cuid())
+  fantasyTeamId   String
+  mleTeamId       String
+  week            Int
+  position        String       // "2s", "3s", "flx", "be"
+  slotIndex       Int
+  isLocked        Boolean      @default(false)
+  fantasyPoints   Float?
+
+  fantasyTeam     FantasyTeam  @relation(fields: [fantasyTeamId], references: [id])
+  mleTeam         MLETeam      @relation(fields: [mleTeamId], references: [id])
+
+  @@unique([fantasyTeamId, week, position, slotIndex])
+  @@index([week])
+}
+
+// ============================================================================
+// DRAFT
+// ============================================================================
+
+model DraftPick {
+  id              String        @id @default(cuid())
+  fantasyLeagueId String
+  round           Int
+  pickNumber      Int
+  overallPick     Int
+  fantasyTeamId   String?
+  mleTeamId       String?
+  pickedAt        DateTime?
+
+  league          FantasyLeague @relation(fields: [fantasyLeagueId], references: [id])
+
+  @@unique([fantasyLeagueId, overallPick])
+  @@index([fantasyLeagueId, round, pickNumber])
+}
+
+// ============================================================================
+// TRADES
+// ============================================================================
+
+model Trade {
+  id                  String        @id @default(cuid())
+  fantasyLeagueId     String
+  proposerTeamId      String
+  receiverTeamId      String
+  proposerUserId      String
+  receiverUserId      String
+
+  proposerGives       String[]      // Array of MLETeam IDs
+  receiverGives       String[]
+
+  status              String        @default("pending") // pending, accepted, declined, executed
+  executedAt          DateTime?
+
+  league              FantasyLeague @relation(fields: [fantasyLeagueId], references: [id])
+  proposerTeam        FantasyTeam   @relation("TradeProposerTeam", fields: [proposerTeamId], references: [id])
+  receiverTeam        FantasyTeam   @relation("TradeReceiverTeam", fields: [receiverTeamId], references: [id])
+  proposer            User          @relation("TradeProposer", fields: [proposerUserId], references: [id])
+  receiver            User          @relation("TradeReceiver", fields: [receiverUserId], references: [id])
+
+  createdAt           DateTime      @default(now())
+}
+
+// ============================================================================
+// WAIVERS
+// ============================================================================
+
+model WaiverClaim {
+  id              String        @id @default(cuid())
+  fantasyLeagueId String
+  fantasyTeamId   String
+  userId          String
+
+  addTeamId       String        // MLE team to add
+  dropTeamId      String?       // MLE team to drop
+  faabBid         Int?
+  priority        Int
+
+  status          String        @default("pending") // pending, approved, denied, failed
+  processedAt     DateTime?
+
+  league          FantasyLeague @relation(fields: [fantasyLeagueId], references: [id])
+  fantasyTeam     FantasyTeam   @relation(fields: [fantasyTeamId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
+
+  createdAt       DateTime      @default(now())
+}
+
+// ============================================================================
+// MATCHUPS & SCORING
+// ============================================================================
+
+model Matchup {
+  id                String        @id @default(cuid())
+  fantasyLeagueId   String
+  week              Int
+  homeTeamId        String
+  awayTeamId        String
+
+  homeScore         Float?
+  awayScore         Float?
+  isPlayoff         Boolean       @default(false)
+
+  league            FantasyLeague @relation(fields: [fantasyLeagueId], references: [id])
+  homeTeam          FantasyTeam   @relation("HomeFantasyTeam", fields: [homeTeamId], references: [id])
+  awayTeam          FantasyTeam   @relation("AwayFantasyTeam", fields: [awayTeamId], references: [id])
+
+  @@unique([fantasyLeagueId, week, homeTeamId])
+  @@index([week])
+}
+
+// ============================================================================
+// SETTINGS
+// ============================================================================
+
+model SeasonSettings {
+  id              String   @id @default(cuid())
+  season          Int      @unique
+  currentWeek     Int
+  playoffStartWeek Int     @default(9)
+  tradeCutoffWeek Int      @default(8)
+  lineupLockTime  String   @default("00:01") // 24h format
+
+  // Week dates (JSON array of {week, startDate, endDate})
+  weekDates       Json
+
+  // Scoring rules (JSON object with points per stat)
+  scoringRules    Json     // { goals: 2, shots: 0.1, saves: 1, ... }
+
+  // Waiver processing schedule
+  waiverSchedule  Json     // [{ day: "Wednesday", time: "03:00" }, ...]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ============================================================================
+// MANUAL STATS OVERRIDES (Legacy/Admin Tool)
+// ============================================================================
+
 model ManualStatsOverride {
   id              String   @id @default(cuid())
   teamId          String   // MLE Team ID (e.g., "ALbulls")

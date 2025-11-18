@@ -6,17 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "import:csv": "tsx scripts/import-csv-data.ts"
   },
   "dependencies": {
     "@auth/core": "^0.41.0",
     "@prisma/client": "^6.19.0",
+    "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
     "next": "16.0.1",
     "next-auth": "^5.0.0-beta.30",
     "prisma": "^6.19.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "tsx": "^4.20.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
