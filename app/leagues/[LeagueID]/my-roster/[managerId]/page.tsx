@@ -45,6 +45,9 @@ export default function MyRosterPage() {
   const roster = mockRoster;
   const [currentWeek, setCurrentWeek] = useState(roster.currentWeek);
   const [activeTab, setActiveTab] = useState<"lineup" | "stats">("lineup");
+  const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
+  const [flexMode, setFlexMode] = useState<"2s" | "3s">("2s");
+  const [benchModes, setBenchModes] = useState<("2s" | "3s")[]>(["2s", "2s", "2s"]);
 
   const handleScheduleClick = () => {
     router.push(`/leagues/${params.LeagueID}/my-roster/${params.managerId}/schedule`);
@@ -206,6 +209,7 @@ export default function MyRosterPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
+                  <th style={{ padding: "0.75rem 0.5rem", width: "50px" }}></th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Slot</th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
@@ -218,7 +222,13 @@ export default function MyRosterPage() {
                 </tr>
               </thead>
               <tbody>
-                {roster.teams.map((team, index) => (
+                {roster.teams.map((team, index) => {
+                  const isFlex = team.slot === "FLX";
+                  const isBench = team.slot === "BE";
+                  const benchIndex = isBench ? index - 5 : 0;
+                  const currentMode = isFlex ? flexMode : isBench ? benchModes[benchIndex] : team.slot;
+
+                  return (
                   <tr
                     key={index}
                     style={{
@@ -227,13 +237,43 @@ export default function MyRosterPage() {
                       borderTop: team.slot === "BE" && index === 5 ? "2px solid rgba(255,255,255,0.15)" : "none"
                     }}
                   >
+                    <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                      {(isFlex || isBench) && (
+                        <button
+                          onClick={() => {
+                            if (isFlex) {
+                              setFlexMode(flexMode === "2s" ? "3s" : "2s");
+                            } else {
+                              const newModes = [...benchModes];
+                              newModes[benchIndex] = benchModes[benchIndex] === "2s" ? "3s" : "2s";
+                              setBenchModes(newModes);
+                            }
+                          }}
+                          style={{
+                            background: "rgba(255,255,255,0.1)",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "0.25rem 0.5rem",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "var(--accent)",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(242, 182, 50, 0.2)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                        >
+                          ⇄
+                        </button>
+                      )}
+                    </td>
                     <td style={{
                       padding: "0.75rem 1rem",
                       fontWeight: 700,
                       fontSize: "0.9rem",
                       color: team.slot === "BE" ? "var(--text-muted)" : "var(--accent)"
                     }}>
-                      {team.slot}
+                      {(isFlex || isBench) ? currentMode : team.slot}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", fontWeight: 600, fontSize: "0.95rem" }}>
                       {team.name || "-"}
@@ -266,7 +306,8 @@ export default function MyRosterPage() {
                       {team.last ? team.last.toFixed(1) : "-"}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -276,10 +317,10 @@ export default function MyRosterPage() {
       {/* Stats Tab */}
       {activeTab === "stats" && (
         <section className="card">
-          {/* Week Navigation */}
+          {/* Week Navigation and Mode Toggle */}
           <div style={{
             display: "flex",
-            justifyContent: "center",
+            justifyContent: "space-between",
             alignItems: "center",
             padding: "1rem 1.5rem",
             borderBottom: "1px solid rgba(255,255,255,0.1)"
@@ -301,6 +342,41 @@ export default function MyRosterPage() {
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
               >
                 Week {currentWeek + 1} ►
+              </button>
+            </div>
+            {/* Game Mode Toggle */}
+            <div style={{ display: "flex", gap: "0.5rem", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: "6px", padding: "0.25rem" }}>
+              <button
+                onClick={() => setGameMode("2s")}
+                style={{
+                  padding: "0.4rem 1rem",
+                  borderRadius: "4px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "2s" ? "var(--accent)" : "transparent",
+                  color: gameMode === "2s" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                2s
+              </button>
+              <button
+                onClick={() => setGameMode("3s")}
+                style={{
+                  padding: "0.4rem 1rem",
+                  borderRadius: "4px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "3s" ? "var(--accent)" : "transparent",
+                  color: gameMode === "3s" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                3s
               </button>
             </div>
           </div>
@@ -326,6 +402,16 @@ export default function MyRosterPage() {
               </thead>
               <tbody>
                 {roster.teams
+                  .filter((team) => {
+                    if (team.slot === "2s") return gameMode === "2s";
+                    if (team.slot === "3s") return gameMode === "3s";
+                    if (team.slot === "FLX") return flexMode === gameMode;
+                    if (team.slot === "BE") {
+                      const benchIndex = roster.teams.indexOf(team) - 5;
+                      return benchModes[benchIndex] === gameMode;
+                    }
+                    return true;
+                  })
                   .sort((a, b) => a.fprk - b.fprk)
                   .map((team, index) => (
                     <tr

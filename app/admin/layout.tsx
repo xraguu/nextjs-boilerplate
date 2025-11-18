@@ -11,6 +11,7 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const pathname = usePathname();
 
   const isLoading = status === "loading";
   const isAdmin = session?.user?.role === "admin";
@@ -109,14 +110,12 @@ export default function AdminLayout({
   }
 
   // Admin users see the admin panel
-  const pathname = usePathname();
-
   const adminNavItems = [
     { label: "Dashboard", path: "/admin" },
     { label: "Manage Leagues", path: "/admin/leagues" },
     { label: "Lock Lineups", path: "/admin/lock-lineups" },
     { label: "Transactions", path: "/admin/waivers" },
-    { label: "Manual Stats Overrides", path: "/admin/stats" },
+    { label: "Manual Stats Override", path: "/admin/stats" },
     { label: "Manage Users", path: "/admin/users" },
     { label: "Settings", path: "/admin/settings" },
     { label: "Database Tools", path: "/admin/database" },
@@ -155,7 +154,9 @@ export default function AdminLayout({
         </div>
 
         {/* Navigation Links */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}
+        >
           {adminNavItems.map((item) => {
             const isActive = pathname === item.path;
             return (
@@ -170,8 +171,12 @@ export default function AdminLayout({
                   fontSize: "0.95rem",
                   fontWeight: isActive ? 600 : 500,
                   color: isActive ? "var(--accent)" : "var(--text-main)",
-                  background: isActive ? "rgba(242, 182, 50, 0.1)" : "transparent",
-                  borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
+                  background: isActive
+                    ? "rgba(242, 182, 50, 0.1)"
+                    : "transparent",
+                  borderLeft: isActive
+                    ? "3px solid var(--accent)"
+                    : "3px solid transparent",
                   transition: "all 0.2s ease",
                   textDecoration: "none",
                 }}
@@ -193,7 +198,13 @@ export default function AdminLayout({
         </div>
 
         {/* Back to Home Link */}
-        <div style={{ padding: "2rem 1.5rem 0 1.5rem", borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "2rem" }}>
+        <div
+          style={{
+            padding: "2rem 1.5rem 0 1.5rem",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            marginTop: "2rem",
+          }}
+        >
           <Link
             href="/"
             className="btn btn-ghost"
@@ -218,11 +229,12 @@ export default function AdminLayout({
             style={{
               fontSize: "2rem",
               fontWeight: 700,
-              color: "var(--accent)",
+              color: "var(--text-main)",
               marginBottom: "0.25rem",
             }}
           >
-            {adminNavItems.find((item) => item.path === pathname)?.label || "Admin Control Panel"}
+            {adminNavItems.find((item) => item.path === pathname)?.label ||
+              "Admin Control Panel"}
           </h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
             Manage leagues, users, and system settings
@@ -230,9 +242,7 @@ export default function AdminLayout({
         </div>
 
         {/* Page Content */}
-        <div style={{ maxWidth: "1400px" }}>
-          {children}
-        </div>
+        <div style={{ maxWidth: "1400px" }}>{children}</div>
       </div>
     </div>
   );

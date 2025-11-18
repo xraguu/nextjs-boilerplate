@@ -32,12 +32,13 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
   const mockFranchiseManager = "Hermanos";
   const mockGeneralManager = "thecyco";
   const mockTeamCaptain = "xraguu";
+  const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
   const [playerSortColumn, setPlayerSortColumn] = useState<string>("goals");
   const [playerSortDirection, setPlayerSortDirection] = useState<"asc" | "desc">("desc");
   const [weeklyStats] = useState([
-    { week: 1, opponent: "AL Comets", fpts: 52, avg: 53, last: 48, goals: 8, shots: 142, saves: 89, assists: 12, demos: 18, record: "W" },
-    { week: 2, opponent: "AL Dodgers", fpts: 48, avg: 52, last: 52, goals: 6, shots: 128, saves: 95, assists: 10, demos: 15, record: "L" },
-    { week: 3, opponent: "AL Ducks", fpts: 55, avg: 52, last: 48, goals: 9, shots: 155, saves: 82, assists: 14, demos: 20, record: "W" },
+    { week: 1, opponent: "AL Comets", fpts: 52, sprocketRating: 1250, goals: 8, saves: 89, shots: 142, assists: 12, goalsAgainst: 6, shotsAgainst: 135, demosInflicted: 18, demosTaken: 12, matchResult: "3-2" },
+    { week: 2, opponent: "AL Dodgers", fpts: 48, sprocketRating: 1230, goals: 6, saves: 95, shots: 128, assists: 10, goalsAgainst: 7, shotsAgainst: 148, demosInflicted: 15, demosTaken: 14, matchResult: "2-3" },
+    { week: 3, opponent: "AL Ducks", fpts: 55, sprocketRating: 1275, goals: 9, saves: 82, shots: 155, assists: 14, goalsAgainst: 5, shotsAgainst: 128, demosInflicted: 20, demosTaken: 10, matchResult: "3-1" },
   ]);
   const [weeklySortColumn, setWeeklySortColumn] = useState<string>("week");
   const [weeklySortDirection, setWeeklySortDirection] = useState<"asc" | "desc">("asc");
@@ -278,15 +279,52 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
 
         {/* Players Table */}
         <div style={{ position: "relative", zIndex: 1, marginBottom: "2rem" }}>
-          <h3 style={{
-            fontSize: "1.1rem",
-            fontWeight: 600,
-            color: "#ffffff",
-            marginBottom: "1rem",
-            textShadow: "0 2px 4px rgba(0,0,0,0.3)"
-          }}>
-            Roster
-          </h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <h3 style={{
+              fontSize: "1.1rem",
+              fontWeight: 600,
+              color: "#ffffff",
+              margin: 0,
+              textShadow: "0 2px 4px rgba(0,0,0,0.3)"
+            }}>
+              Roster
+            </h3>
+            {/* Game Mode Toggle */}
+            <div style={{ display: "flex", gap: "0.5rem", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: "6px", padding: "0.25rem" }}>
+              <button
+                onClick={() => setGameMode("2s")}
+                style={{
+                  padding: "0.4rem 1rem",
+                  borderRadius: "4px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "2s" ? "rgba(255,255,255,0.9)" : "transparent",
+                  color: gameMode === "2s" ? team.teamPrimaryColor : "#ffffff",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                2s
+              </button>
+              <button
+                onClick={() => setGameMode("3s")}
+                style={{
+                  padding: "0.4rem 1rem",
+                  borderRadius: "4px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "3s" ? "rgba(255,255,255,0.9)" : "transparent",
+                  color: gameMode === "3s" ? team.teamPrimaryColor : "#ffffff",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                3s
+              </button>
+            </div>
+          </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -298,8 +336,7 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
                   <th onClick={() => handlePlayerSort("assists")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Assists<PlayerSortIcon column="assists" /></th>
                   <th onClick={() => handlePlayerSort("demos")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Demos<PlayerSortIcon column="demos" /></th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Record</th>
-                  <th onClick={() => handlePlayerSort("2sU")} style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>2sU<PlayerSortIcon column="2sU" /></th>
-                  <th onClick={() => handlePlayerSort("3sU")} style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>3sU<PlayerSortIcon column="3sU" /></th>
+                  <th onClick={() => handlePlayerSort(gameMode === "2s" ? "2sU" : "3sU")} style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>{gameMode === "2s" ? "2sU" : "3sU"}<PlayerSortIcon column={gameMode === "2s" ? "2sU" : "3sU"} /></th>
                 </tr>
               </thead>
               <tbody>
@@ -312,8 +349,7 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.assists}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.demos}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.8)" }}>{player.record}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player["2sU"]}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player["3sU"]}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{gameMode === "2s" ? player["2sU"] : player["3sU"]}</td>
                   </tr>
                 ))}
               </tbody>
@@ -340,14 +376,16 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
                   <th onClick={() => handleWeeklySort("week")} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Week<WeeklySortIcon column="week" /></th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Opponent</th>
                   <th onClick={() => handleWeeklySort("fpts")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Fpts<WeeklySortIcon column="fpts" /></th>
-                  <th onClick={() => handleWeeklySort("avg")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Avg<WeeklySortIcon column="avg" /></th>
-                  <th onClick={() => handleWeeklySort("last")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Last<WeeklySortIcon column="last" /></th>
+                  <th onClick={() => handleWeeklySort("sprocketRating")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Sprocket Rating<WeeklySortIcon column="sprocketRating" /></th>
                   <th onClick={() => handleWeeklySort("goals")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Goals<WeeklySortIcon column="goals" /></th>
-                  <th onClick={() => handleWeeklySort("shots")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Shots<WeeklySortIcon column="shots" /></th>
                   <th onClick={() => handleWeeklySort("saves")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Saves<WeeklySortIcon column="saves" /></th>
+                  <th onClick={() => handleWeeklySort("shots")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Shots<WeeklySortIcon column="shots" /></th>
                   <th onClick={() => handleWeeklySort("assists")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Assists<WeeklySortIcon column="assists" /></th>
-                  <th onClick={() => handleWeeklySort("demos")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Demos<WeeklySortIcon column="demos" /></th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Record</th>
+                  <th onClick={() => handleWeeklySort("goalsAgainst")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Goals Against<WeeklySortIcon column="goalsAgainst" /></th>
+                  <th onClick={() => handleWeeklySort("shotsAgainst")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Shots Against<WeeklySortIcon column="shotsAgainst" /></th>
+                  <th onClick={() => handleWeeklySort("demosInflicted")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Demos Inflicted<WeeklySortIcon column="demosInflicted" /></th>
+                  <th onClick={() => handleWeeklySort("demosTaken")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Demos Taken<WeeklySortIcon column="demosTaken" /></th>
+                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Match Result</th>
                 </tr>
               </thead>
               <tbody>
@@ -356,14 +394,16 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
                     <td style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "#ffffff" }}>{week.week}</td>
                     <td style={{ padding: "0.75rem 1rem", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.opponent}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem", color: "#ffffff" }}>{week.fpts}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "rgba(255,255,255,0.8)", fontSize: "0.9rem" }}>{week.avg}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "rgba(255,255,255,0.8)", fontSize: "0.9rem" }}>{week.last}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.sprocketRating}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.goals}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.shots}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.saves}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.shots}</td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.assists}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.demos}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.8)" }}>{week.record}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.goalsAgainst}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.shotsAgainst}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.demosInflicted}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.demosTaken}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", fontWeight: 600, color: "rgba(255,255,255,0.95)" }}>{week.matchResult}</td>
                   </tr>
                 ))}
               </tbody>

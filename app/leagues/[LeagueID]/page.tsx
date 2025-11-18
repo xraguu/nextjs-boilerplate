@@ -23,24 +23,43 @@ const selectedTeams = TEAMS.slice(0, 8).map((team, index) => {
   return {
     ...team,
     slot: index < 2 ? "2s" : index < 4 ? "3s" : index === 4 ? "FLX" : "BE",
-    score: index < 5 ? (45 - index * 1.5) : 0,
     opponentTeam: TEAMS[(index * 7) % TEAMS.length],
-    oprk: (index * 3) % 10 + 1,
-    fprk: index + 1,
-    fpts: 380 - index * 10,
-    avg: 50 - index * 2,
-    last: 48 - index * 2.5,
-    goals: 140 - index * 5,
-    shots: 750 - index * 20,
-    saves: 220 - index * 10,
-    assists: 95 - index * 5,
-    demos: 55 - index * 3,
-    teamRecord: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
     rank: index + 1,
-    record: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
     status: "free-agent" as const,
     opponentGameRecord: opponentGameRecords[index],
-    opponentFantasyRank: opponentFantasyRanks[index]
+    opponentFantasyRank: opponentFantasyRanks[index],
+    // 2s stats
+    twos: {
+      score: index < 5 ? (45 - index * 1.5) : 0,
+      oprk: (index * 3) % 10 + 1,
+      fprk: index + 1,
+      fpts: 380 - index * 10,
+      avg: 50 - index * 2,
+      last: 48 - index * 2.5,
+      goals: 140 - index * 5,
+      shots: 750 - index * 20,
+      saves: 220 - index * 10,
+      assists: 95 - index * 5,
+      demos: 55 - index * 3,
+      teamRecord: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
+      record: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`
+    },
+    // 3s stats (slightly different values)
+    threes: {
+      score: index < 5 ? (43 - index * 1.5) : 0,
+      oprk: (index * 2 + 1) % 10 + 1,
+      fprk: index + 2,
+      fpts: 370 - index * 10,
+      avg: 48 - index * 2,
+      last: 46 - index * 2.5,
+      goals: 135 - index * 5,
+      shots: 730 - index * 20,
+      saves: 210 - index * 10,
+      assists: 90 - index * 5,
+      demos: 52 - index * 3,
+      teamRecord: `${5 - Math.floor(index / 2)}-${3 + Math.floor(index / 2)}`,
+      record: `${5 - Math.floor(index / 2)}-${3 + Math.floor(index / 2)}`
+    }
   };
 });
 
@@ -157,6 +176,12 @@ export default function MyRosterPage() {
     return week - 1;
   };
   const [activeTab, setActiveTab] = useState<"lineup" | "stats" | "waivers" | "trades">("lineup");
+  const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
+  // Initialize modes for all 8 slots based on their slot type
+  // FLX slot (index 4) defaults to whichever mode has higher score
+  const flexTeam = roster.teams[4];
+  const flexDefaultMode = flexTeam.twos.score > flexTeam.threes.score ? "2s" : "3s";
+  const [slotModes, setSlotModes] = useState<("2s" | "3s")[]>(["2s", "2s", "3s", "3s", flexDefaultMode, "2s", "2s", "2s"]);
   const [selectedTeam, setSelectedTeam] = useState<typeof selectedTeams[0] | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<typeof mockMyTrades.pending[0] | null>(null);
@@ -189,16 +214,24 @@ export default function MyRosterPage() {
 
   // Sorted roster teams for stats tab
   const sortedRosterTeams = useMemo(() => {
-    return [...roster.teams].sort((a, b) => {
-      const aValue = a[statsSortColumn];
-      const bValue = b[statsSortColumn];
+    return [...roster.teams].map(team => {
+      // Use the global gameMode toggle for stats tab
+      const stats = gameMode === "2s" ? team.twos : team.threes;
+
+      return {
+        ...team,
+        displayStats: stats
+      };
+    }).sort((a, b) => {
+      const aValue = a.displayStats[statsSortColumn];
+      const bValue = b.displayStats[statsSortColumn];
       if (statsSortDirection === "asc") {
         return aValue > bValue ? 1 : -1;
       } else {
         return aValue < bValue ? 1 : -1;
       }
     });
-  }, [statsSortColumn, statsSortDirection, roster.teams]);
+  }, [statsSortColumn, statsSortDirection, roster.teams, gameMode]);
 
   const handleScheduleClick = () => {
     router.push(`/leagues/${params.LeagueID}/schedule`);
@@ -880,13 +913,13 @@ export default function MyRosterPage() {
                           </div>
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
-                          {team.fpts.toFixed(1)}
+                          {team.twos.fpts.toFixed(1)}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                          {team.teamRecord}
+                          {team.twos.teamRecord}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                          {team.fprk}
+                          {team.twos.fprk}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
                           <button
@@ -1091,31 +1124,31 @@ export default function MyRosterPage() {
                           </div>
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
-                          {team.fpts.toFixed(1)}
+                          {team.twos.fpts.toFixed(1)}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                          {team.avg.toFixed(1)}
+                          {team.twos.avg.toFixed(1)}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                          {team.last.toFixed(1)}
+                          {team.twos.last.toFixed(1)}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.goals}
+                          {team.twos.goals}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.shots}
+                          {team.twos.shots}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.saves}
+                          {team.twos.saves}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.assists}
+                          {team.twos.assists}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.demos}
+                          {team.twos.demos}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                          {team.teamRecord}
+                          {team.twos.teamRecord}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
                           <button
@@ -1294,31 +1327,31 @@ export default function MyRosterPage() {
                           </div>
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
-                          {team.fpts.toFixed(1)}
+                          {team.twos.fpts.toFixed(1)}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                          {team.avg.toFixed(1)}
+                          {team.twos.avg.toFixed(1)}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                          {team.last.toFixed(1)}
+                          {team.twos.last.toFixed(1)}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.goals}
+                          {team.twos.goals}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.shots}
+                          {team.twos.shots}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.saves}
+                          {team.twos.saves}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.assists}
+                          {team.twos.assists}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.demos}
+                          {team.twos.demos}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                          {team.teamRecord}
+                          {team.twos.teamRecord}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
                           <button
@@ -1612,6 +1645,7 @@ export default function MyRosterPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
+                  <th style={{ padding: "0.75rem 0.5rem", width: "50px" }}></th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Slot</th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
                   <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
@@ -1624,7 +1658,11 @@ export default function MyRosterPage() {
                 </tr>
               </thead>
               <tbody>
-                {teams.map((team, index) => (
+                {teams.map((team, index) => {
+                  const currentMode = slotModes[index];
+                  const stats = currentMode === "2s" ? team.twos : team.threes;
+
+                  return (
                   <tr
                     key={index}
                     onClick={() => handleTeamClick(index)}
@@ -1651,6 +1689,36 @@ export default function MyRosterPage() {
                       }
                     }}
                   >
+                    <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", justifyContent: "center" }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newModes = [...slotModes];
+                            newModes[index] = slotModes[index] === "2s" ? "3s" : "2s";
+                            setSlotModes(newModes);
+                          }}
+                          style={{
+                            background: "rgba(255,255,255,0.1)",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "0.25rem 0.5rem",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "var(--accent)",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(242, 182, 50, 0.2)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                        >
+                          ⇄
+                        </button>
+                        <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--accent)" }}>
+                          {currentMode}
+                        </span>
+                      </div>
+                    </td>
                     <td style={{
                       padding: "0.75rem 1rem",
                       fontWeight: 700,
@@ -1712,30 +1780,31 @@ export default function MyRosterPage() {
                       textAlign: "center",
                       fontWeight: 700,
                       fontSize: "1rem",
-                      color: team.score > 0 ? "var(--accent)" : "var(--text-muted)"
+                      color: stats.score > 0 ? "var(--accent)" : "var(--text-muted)"
                     }}>
-                      {team.score > 0 ? team.score.toFixed(1) : "-"}
+                      {stats.score > 0 ? stats.score.toFixed(1) : "-"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", fontSize: "0.9rem", color: "var(--text-muted)" }}>
                       {team.opponentTeam?.name || "-"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem" }}>
-                      {team.oprk || "-"}
+                      {stats.oprk || "-"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", fontWeight: 600 }}>
-                      {team.fprk || "-"}
+                      {stats.fprk || "-"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.95rem" }}>
-                      {team.fpts ? team.fpts.toFixed(1) : "-"}
+                      {stats.fpts ? stats.fpts.toFixed(1) : "-"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                      {team.avg ? team.avg.toFixed(1) : "-"}
+                      {stats.avg ? stats.avg.toFixed(1) : "-"}
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                      {team.last ? team.last.toFixed(1) : "-"}
+                      {stats.last ? stats.last.toFixed(1) : "-"}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1745,10 +1814,10 @@ export default function MyRosterPage() {
       {/* Stats Tab */}
       {activeTab === "stats" && (
         <section className="card">
-          {/* Week Navigation */}
+          {/* Week Navigation and Mode Toggle */}
           <div style={{
             display: "flex",
-            justifyContent: "center",
+            justifyContent: "space-between",
             alignItems: "center",
             padding: "1rem 1.5rem",
             borderBottom: "1px solid rgba(255,255,255,0.1)"
@@ -1772,6 +1841,41 @@ export default function MyRosterPage() {
                 disabled={currentWeek === 10}
               >
                 Week {getNextWeek(currentWeek)} ►
+              </button>
+            </div>
+            {/* Game Mode Toggle */}
+            <div style={{ display: "flex", gap: "0.5rem", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: "6px", padding: "0.25rem" }}>
+              <button
+                onClick={() => setGameMode("2s")}
+                style={{
+                  padding: "0.4rem 1rem",
+                  borderRadius: "4px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "2s" ? "var(--accent)" : "transparent",
+                  color: gameMode === "2s" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                2s
+              </button>
+              <button
+                onClick={() => setGameMode("3s")}
+                style={{
+                  padding: "0.4rem 1rem",
+                  borderRadius: "4px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "3s" ? "var(--accent)" : "transparent",
+                  color: gameMode === "3s" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                3s
               </button>
             </div>
           </div>
@@ -1971,37 +2075,37 @@ export default function MyRosterPage() {
                         fontSize: "1rem",
                         color: "var(--accent)"
                       }}>
-                        {team.score > 0 ? team.score.toFixed(1) : "-"}
+                        {team.displayStats.score > 0 ? team.displayStats.score.toFixed(1) : "-"}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", fontWeight: 600 }}>
-                        {team.fprk}
+                        {team.displayStats.fprk}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.95rem" }}>
-                        {team.fpts.toFixed(1)}
+                        {team.displayStats.fpts.toFixed(1)}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                        {team.avg.toFixed(1)}
+                        {team.displayStats.avg.toFixed(1)}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                        {team.last.toFixed(1)}
+                        {team.displayStats.last.toFixed(1)}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                        {team.goals}
+                        {team.displayStats.goals}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                        {team.shots}
+                        {team.displayStats.shots}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                        {team.saves}
+                        {team.displayStats.saves}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                        {team.assists}
+                        {team.displayStats.assists}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
-                        {team.demos}
+                        {team.displayStats.demos}
                       </td>
                       <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                        {team.teamRecord}
+                        {team.displayStats.teamRecord}
                       </td>
                     </tr>
                   ))}

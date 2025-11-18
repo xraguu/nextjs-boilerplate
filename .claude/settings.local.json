@@ -22,7 +22,8 @@
       "Bash(npx prisma migrate:*)",
       "Bash(timeout /t 5 /nobreak)",
       "Bash(npx prisma db push:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx next lint:*)"
     ],
     "deny": [],
     "ask": []

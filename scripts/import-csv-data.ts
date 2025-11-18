@@ -5,7 +5,7 @@
  * Run with: npm run import:csv
  */
 
-import { PrismaClient } from "@/lib/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "csv-parse/sync";
@@ -53,6 +53,7 @@ interface MatchRow {
   game_mode: string;
   home_wins: string;
   away_wins: string;
+  winning_team: string;
   scheduling_start_time: string; // For date calculation
 }
 
@@ -74,10 +75,12 @@ interface MatchGroupRow {
 interface RoleUsageRow {
   doubles_uses: string;
   standard_uses: string;
+  total_uses: string;
   season_number: string;
   team_name: string;
   league: string;
   role: string;
+  gamemode: string;
 }
 
 interface PlayerStatsRow {
