@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "import:csv": "tsx scripts/import-csv-data.ts"
+    "import:csv": "tsx scripts/import-csv-data.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/core": "^0.41.0",

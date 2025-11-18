@@ -41,18 +41,29 @@ export async function getTeamStatsForWeek(
 
     // If override exists, return it with flag
     if (override) {
+      // Calculate fpts from stored stats (this is a placeholder calculation)
+      // You should implement your actual scoring logic here
+      const fpts =
+        override.goals * 2 +
+        override.assists * 1.5 +
+        override.saves * 1 +
+        override.shots * 0.1 +
+        override.demosInflicted * 0.5 -
+        override.demosTaken * 0.5 +
+        override.saveRate * 0.1;
+
       return {
         teamId: override.teamId as TeamId,
         week: override.week,
-        fpts: override.fpts,
-        avg: override.avg,
-        last: override.last,
+        fpts: Math.round(fpts * 10) / 10, // Round to 1 decimal
+        avg: override.saveRate, // Use SR as avg for now
+        last: override.saveRate, // Use SR as last for now
         goals: override.goals,
         shots: override.shots,
         saves: override.saves,
         assists: override.assists,
-        demos: override.demos,
-        record: override.record,
+        demos: override.demosInflicted, // Use demosInflicted as demos
+        record: override.gameRecord,
         isManualOverride: true,
       };
     }
@@ -88,20 +99,31 @@ export async function getManualOverridesForWeek(
       orderBy: { teamId: "asc" },
     });
 
-    return overrides.map((override) => ({
-      teamId: override.teamId as TeamId,
-      week: override.week,
-      fpts: override.fpts,
-      avg: override.avg,
-      last: override.last,
-      goals: override.goals,
-      shots: override.shots,
-      saves: override.saves,
-      assists: override.assists,
-      demos: override.demos,
-      record: override.record,
-      isManualOverride: true,
-    }));
+    return overrides.map((override) => {
+      const fpts =
+        override.goals * 2 +
+        override.assists * 1.5 +
+        override.saves * 1 +
+        override.shots * 0.1 +
+        override.demosInflicted * 0.5 -
+        override.demosTaken * 0.5 +
+        override.saveRate * 0.1;
+
+      return {
+        teamId: override.teamId as TeamId,
+        week: override.week,
+        fpts: Math.round(fpts * 10) / 10,
+        avg: override.saveRate,
+        last: override.saveRate,
+        goals: override.goals,
+        shots: override.shots,
+        saves: override.saves,
+        assists: override.assists,
+        demos: override.demosInflicted,
+        record: override.gameRecord,
+        isManualOverride: true,
+      };
+    });
   } catch (error) {
     console.error(`Error fetching overrides for week ${week}:`, error);
     return [];
