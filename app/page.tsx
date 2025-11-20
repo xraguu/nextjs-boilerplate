@@ -1,7 +1,7 @@
 "use client";
 //hi
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { TEAMS } from "@/lib/teams";
@@ -289,12 +289,54 @@ function SortableHeader({
 }
 
 export default function HomePage() {
-  const [selectedTeam, setSelectedTeam] = useState<
-    (typeof mockTopTeams)[0] | null
-  >(null);
+  const { data: session } = useSession();
+  const [selectedTeam, setSelectedTeam] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("rank");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [topTeams, setTopTeams] = useState<any[]>(mockTopTeams);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch top teams from API
+  useEffect(() => {
+    const fetchTopTeams = async () => {
+      try {
+        const response = await fetch(`/api/teams/top`);
+        if (response.ok) {
+          const data = await response.json();
+          setTopTeams(data.teams);
+        } else {
+          console.warn("Failed to fetch top teams, using mock data");
+        }
+      } catch (error) {
+        console.error("Error fetching top teams:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopTeams();
+  }, []);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!session?.user?.id) return;
+
+      try {
+        const response = await fetch(`/api/user/role`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdmin(data.role === "admin");
+        }
+      } catch (error) {
+        console.error("Failed to check admin status:", error);
+      }
+    };
+
+    checkAdmin();
+  }, [session]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -305,7 +347,7 @@ export default function HomePage() {
     }
   };
 
-  const sortedTeams = [...mockTopTeams].sort((a, b) => {
+  const sortedTeams = [...topTeams].sort((a, b) => {
     let aValue: number | string = 0;
     let bValue: number | string = 0;
 
@@ -399,16 +441,26 @@ export default function HomePage() {
         >
           {/* Left: Logo and Title */}
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-            <Link
-              href="/admin"
-              style={{
-                display: "block",
-                cursor: "pointer",
-                transition: "opacity 0.2s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
+            {isAdmin ? (
+              <Link
+                href="/admin"
+                style={{
+                  display: "block",
+                  cursor: "pointer",
+                  transition: "opacity 0.2s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                <Image
+                  src="/mle-logo.png"
+                  alt="MLE Logo"
+                  width={80}
+                  height={80}
+                  style={{ display: "block" }}
+                />
+              </Link>
+            ) : (
               <Image
                 src="/mle-logo.png"
                 alt="MLE Logo"
@@ -416,7 +468,7 @@ export default function HomePage() {
                 height={80}
                 style={{ display: "block" }}
               />
-            </Link>
+            )}
             <div>
               <h1
                 style={{

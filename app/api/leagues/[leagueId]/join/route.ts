@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // POST /api/leagues/[leagueId]/join - Join a fantasy league
 export async function POST(
   request: NextRequest,
-  { params }: { params: { leagueId: string } }
+  { params }: { params: Promise<{ leagueId: string }> }
 ) {
   try {
     const session = await auth();
@@ -27,7 +27,7 @@ export async function POST(
       );
     }
 
-    const { leagueId } = params;
+    const { leagueId } = await params;
     const body = await request.json();
     const { teamName, shortCode } = body;
 

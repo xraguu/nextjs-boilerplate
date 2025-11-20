@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // DELETE /api/leagues/[leagueId]/leave - Leave a fantasy league
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { leagueId: string } }
+  { params }: { params: Promise<{ leagueId: string }> }
 ) {
   try {
     const session = await auth();
@@ -14,7 +14,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     // Find the user's fantasy team in this league
     const fantasyTeam = await prisma.fantasyTeam.findFirst({

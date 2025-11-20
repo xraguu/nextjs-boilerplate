@@ -35,4 +35,16 @@ async function testLeagueAPI() {
       console.log(`❌ Failed: ${createResponse.status} ${createResponse.statusText}`);
       const error = await createResponse.json();
       console.log('   Error:', error);
-      console.log('\n⚠️  Make sure you are logged in! Visit http://localhost:3000
+      console.log('\n⚠️  Make sure you are logged in! Visit http://localhost:3000');
+      return;
+    }
+
+    const createdLeague = await createResponse.json();
+    console.log('✅ Success! League created:', createdLeague);
+
+  } catch (error) {
+    console.error('❌ Test failed with error:', error);
+  }
+}
+
+testLeagueAPI();
