@@ -183,6 +183,11 @@ model FantasyLeague {
   faabBudget      Int?
   rosterConfig    Json          // { "2s": 2, "3s": 2, "flx": 1, "be": 3 }
 
+  // Draft settings
+  draftStatus         String?   @default("not_started") // "not_started" | "in_progress" | "paused" | "completed"
+  draftPickDeadline   DateTime? // Current pick deadline
+  draftPickTimeSeconds Int?     @default(90) // Time per pick in seconds
+
   createdAt       DateTime      @default(now())
   createdByUserId String
 

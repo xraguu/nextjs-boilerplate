@@ -1,32 +1,120 @@
 "use client";
 
-import { useState } from "react";
-import { LEAGUES } from "@/lib/leagues";
-import { TEAMS } from "@/lib/teams";
+import { useState, useEffect } from "react";
 
-// Mock fantasy leagues data
-const mockFantasyLeagues = [
-  { id: "2025-alpha", name: "2025 RL Fantasy Alpha", activeTeams: 12, season: 2025, commissioner: "Nick", status: "Active" },
-  { id: "2025-beta", name: "2025 RL Fantasy Beta", activeTeams: 10, season: 2025, commissioner: "Rover", status: "Active" },
-  { id: "2025-gamma", name: "2025 RL Fantasy Gamma", activeTeams: 12, season: 2025, commissioner: "FlipReset", status: "Active" },
-  { id: "2024-championship", name: "2024 Championship League", activeTeams: 12, season: 2024, commissioner: "AirDribbler", status: "Archived" },
-];
+interface FantasyLeague {
+  id: string;
+  name: string;
+  season: number;
+  maxTeams: number;
+  currentWeek: number;
+  draftType: string;
+  waiverSystem: string;
+  _count: {
+    fantasyTeams: number;
+    draftPicks: number;
+    matchups: number;
+  };
+  fantasyTeams: {
+    owner: {
+      displayName: string;
+      discordId: string;
+    };
+  }[];
+}
 
 export default function ManageLeaguesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedLeague, setSelectedLeague] = useState<typeof LEAGUES[0] | null>(null);
+  const [leagues, setLeagues] = useState<FantasyLeague[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    name: "",
+    season: new Date().getFullYear(),
+    maxTeams: 12,
+    draftType: "snake",
+    waiverSystem: "rolling",
+    faabBudget: 100,
+    playoffTeams: 4,
+  });
 
-  // Calculate team counts per MLE league
-  const leagueStats = LEAGUES.map((league) => ({
-    ...league,
-    teamCount: TEAMS.filter((team) => team.leagueId === league.id).length,
-  }));
+  // Fetch leagues on mount
+  useEffect(() => {
+    fetchLeagues();
+  }, []);
 
-  const filteredLeagues = leagueStats.filter((league) =>
+  const fetchLeagues = async () => {
+    try {
+      const response = await fetch("/api/admin/leagues");
+      if (!response.ok) throw new Error("Failed to fetch leagues");
+      const data = await response.json();
+      setLeagues(data.leagues || []);
+    } catch (error) {
+      console.error("Error fetching leagues:", error);
+      alert("Failed to load leagues");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateLeague = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/admin/leagues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create league");
+      }
+
+      const data = await response.json();
+      alert("League created successfully!");
+      setShowCreateModal(false);
+
+      // Reset form
+      setFormData({
+        name: "",
+        season: new Date().getFullYear(),
+        maxTeams: 12,
+        draftType: "snake",
+        waiverSystem: "rolling",
+        faabBudget: 100,
+        playoffTeams: 4,
+      });
+
+      // Refresh leagues
+      fetchLeagues();
+    } catch (error: any) {
+      console.error("Error creating league:", error);
+      alert(error.message || "Failed to create league");
+    }
+  };
+
+  const filteredLeagues = leagues.filter((league) =>
     league.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     league.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
+        <div style={{ fontSize: "1.2rem", color: "var(--text-muted)" }}>
+          Loading leagues...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -60,13 +148,7 @@ export default function ManageLeaguesPage() {
               >
                 Create New Fantasy League
               </h2>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  alert("League created successfully!");
-                  setShowCreateModal(false);
-                }}
-              >
+              <form onSubmit={handleCreateLeague}>
                 <div style={{ marginBottom: "1rem" }}>
                   <label
                     style={{
@@ -81,6 +163,41 @@ export default function ManageLeaguesPage() {
                   <input
                     type="text"
                     placeholder="2025 RL Fantasy Alpha"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      background: "rgba(255,255,255,0.1)",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      borderRadius: "6px",
+                      color: "var(--text-main)",
+                      fontSize: "0.95rem",
+                    }}
+                    required
+                  />
+                </div>
+                <div style={{ marginBottom: "1rem" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Season
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.season}
+                    onChange={(e) =>
+                      setFormData({ ...formData, season: parseInt(e.target.value) })
+                    }
+                    min={2020}
+                    max={2030}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
@@ -106,7 +223,10 @@ export default function ManageLeaguesPage() {
                   </label>
                   <input
                     type="number"
-                    defaultValue={12}
+                    value={formData.maxTeams}
+                    onChange={(e) =>
+                      setFormData({ ...formData, maxTeams: parseInt(e.target.value) })
+                    }
                     min={2}
                     max={16}
                     style={{
@@ -121,6 +241,101 @@ export default function ManageLeaguesPage() {
                     required
                   />
                 </div>
+                <div style={{ marginBottom: "1rem" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Draft Type
+                  </label>
+                  <select
+                    value={formData.draftType}
+                    onChange={(e) =>
+                      setFormData({ ...formData, draftType: e.target.value })
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      background: "rgba(255,255,255,0.1)",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      borderRadius: "6px",
+                      color: "var(--text-main)",
+                      fontSize: "0.95rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="snake">Snake Draft</option>
+                    <option value="linear">Linear Draft</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: "1rem" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Waiver System
+                  </label>
+                  <select
+                    value={formData.waiverSystem}
+                    onChange={(e) =>
+                      setFormData({ ...formData, waiverSystem: e.target.value })
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      background: "rgba(255,255,255,0.1)",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      borderRadius: "6px",
+                      color: "var(--text-main)",
+                      fontSize: "0.95rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="rolling">Rolling Waivers</option>
+                    <option value="faab">FAAB (Free Agent Budget)</option>
+                    <option value="fixed">Fixed Order</option>
+                  </select>
+                </div>
+                {formData.waiverSystem === "faab" && (
+                  <div style={{ marginBottom: "1rem" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "0.5rem",
+                        fontSize: "0.9rem",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      FAAB Budget
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.faabBudget}
+                      onChange={(e) =>
+                        setFormData({ ...formData, faabBudget: parseInt(e.target.value) })
+                      }
+                      min={0}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        background: "rgba(255,255,255,0.1)",
+                        border: "1px solid rgba(255,255,255,0.2)",
+                        borderRadius: "6px",
+                        color: "var(--text-main)",
+                        fontSize: "0.95rem",
+                      }}
+                      required
+                    />
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem" }}>
                   <button
                     type="button"
@@ -249,66 +464,104 @@ export default function ManageLeaguesPage() {
             </tr>
           </thead>
           <tbody>
-            {mockFantasyLeagues.map((league) => (
-              <tr
-                key={league.id}
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-              >
-                <td style={{ padding: "0.75rem 0.5rem" }}>
-                  <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
-                    {league.name}
-                  </span>
-                </td>
+            {filteredLeagues.length === 0 ? (
+              <tr>
                 <td
+                  colSpan={5}
                   style={{
-                    padding: "0.75rem 0.5rem",
+                    padding: "3rem",
                     textAlign: "center",
-                    fontWeight: 600,
+                    color: "var(--text-muted)",
                   }}
                 >
-                  {league.activeTeams}/12
-                </td>
-                <td
-                  style={{
-                    padding: "0.75rem 0.5rem",
-                    textAlign: "center",
-                  }}
-                >
-                  {league.commissioner}
-                </td>
-                <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                  <span
-                    style={{
-                      padding: "0.4rem 1rem",
-                      borderRadius: "20px",
-                      fontWeight: 600,
-                      fontSize: "0.8rem",
-                      background:
-                        league.status === "Active"
-                          ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
-                          : "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)",
-                      color: "white",
-                    }}
-                  >
-                    {league.status}
-                  </span>
-                </td>
-                <td
-                  style={{
-                    padding: "0.75rem 0.5rem",
-                    textAlign: "right",
-                  }}
-                >
-                  <button
-                    className="btn btn-ghost"
-                    style={{ padding: "0.4rem 1rem", fontSize: "0.85rem" }}
-                    onClick={() => alert(`Edit ${league.name}`)}
-                  >
-                    Edit
-                  </button>
+                  {searchTerm
+                    ? "No leagues found matching your search"
+                    : "No leagues created yet. Click 'Create Fantasy League' to get started!"}
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredLeagues.map((league) => (
+                <tr
+                  key={league.id}
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                >
+                  <td style={{ padding: "0.75rem 0.5rem" }}>
+                    <div>
+                      <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                        {league.name}
+                      </span>
+                      <div
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "var(--text-muted)",
+                          marginTop: "0.25rem",
+                        }}
+                      >
+                        {league.draftType === "snake" ? "Snake" : "Linear"} Draft •{" "}
+                        {league.waiverSystem === "faab"
+                          ? "FAAB"
+                          : league.waiverSystem === "rolling"
+                          ? "Rolling"
+                          : "Fixed"}{" "}
+                        Waivers
+                      </div>
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {league._count.fantasyTeams}/{league.maxTeams}
+                  </td>
+                  <td
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "center",
+                    }}
+                  >
+                    {league.fantasyTeams.length > 0
+                      ? league.fantasyTeams[0].owner.displayName
+                      : "None"}
+                  </td>
+                  <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                    <span
+                      style={{
+                        padding: "0.4rem 1rem",
+                        borderRadius: "20px",
+                        fontWeight: 600,
+                        fontSize: "0.8rem",
+                        background:
+                          league._count.fantasyTeams >= league.maxTeams
+                            ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)"
+                            : "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                        color: "white",
+                      }}
+                    >
+                      {league._count.fantasyTeams >= league.maxTeams ? "Full" : "Open"}
+                    </span>
+                  </td>
+                  <td
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      textAlign: "right",
+                    }}
+                  >
+                    <button
+                      className="btn btn-ghost"
+                      style={{ padding: "0.4rem 1rem", fontSize: "0.85rem" }}
+                      onClick={() =>
+                        (window.location.href = `/admin/leagues/${league.id}`)
+                      }
+                    >
+                      Manage
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

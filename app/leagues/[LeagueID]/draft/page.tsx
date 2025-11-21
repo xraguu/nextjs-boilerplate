@@ -70,6 +70,7 @@ export default function DraftPage() {
   const [showModal, setShowModal] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState<"rosters" | "teams" | "queue">("rosters");
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Draft queue and autodraft (stored in localStorage)
   const [draftQueue, setDraftQueue] = useState<MLETeam[]>(() => {
@@ -93,6 +94,22 @@ export default function DraftPage() {
       localStorage.setItem(`draftQueue_${leagueId}`, JSON.stringify(draftQueue));
     }
   }, [draftQueue, leagueId]);
+
+  // Fetch current user session
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        if (response.ok) {
+          const session = await response.json();
+          setCurrentUserId(session?.user?.id || null);
+        }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+      }
+    };
+    fetchSession();
+  }, []);
 
   // Fetch draft state
   const fetchDraftState = useCallback(async () => {
@@ -191,6 +208,18 @@ export default function DraftPage() {
   const currentTeam = draftState.fantasyTeams.find((t) => t.displayName === selectedManager);
   const currentRoster = currentTeam?.roster || [];
 
+  // Find current user's fantasy team
+  const currentUserTeam = draftState.fantasyTeams.find((t) => t.ownerUserId === currentUserId);
+
+  // Find current pick
+  const currentPick = draftState.picks.find((pick) => pick.overallPick === draftState.currentPickNumber);
+
+  // Check if it's the current user's turn
+  const isMyTurn = currentUserTeam && currentPick && currentPick.fantasyTeamId === currentUserTeam.id;
+
+  // Get the fantasy team whose turn it is
+  const currentPickTeam = currentPick ? draftState.fantasyTeams.find((t) => t.id === currentPick.fantasyTeamId) : null;
+
   // Determine pick status
   const getPickStatus = (pick: DraftPick): "picked" | "current" | "upcoming" => {
     if (pick.pickedAt) return "picked";
@@ -234,6 +263,29 @@ export default function DraftPage() {
               {draftState.leagueName} • {draftState.draftType === "snake" ? "Snake" : "Linear"} Draft •{" "}
               <span style={{ textTransform: "capitalize" }}>{draftState.status.replace("_", " ")}</span>
             </div>
+            {draftState.status === "in_progress" && currentPickTeam && (
+              <div
+                style={{
+                  marginTop: "0.75rem",
+                  padding: "0.75rem 1.25rem",
+                  background: isMyTurn
+                    ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
+                    : "rgba(255,255,255,0.1)",
+                  borderRadius: "8px",
+                  border: isMyTurn ? "2px solid #f2b632" : "1px solid rgba(255,255,255,0.2)",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  color: isMyTurn ? "#ffffff" : "var(--text-main)",
+                  boxShadow: isMyTurn ? "0 4px 12px rgba(242, 182, 50, 0.4)" : "none",
+                }}
+              >
+                {isMyTurn ? (
+                  <>🎯 YOUR TURN TO PICK! ({currentPickTeam.displayName})</>
+                ) : (
+                  <>On the clock: {currentPickTeam.displayName} ({currentPickTeam.ownerDisplayName})</>
+                )}
+              </div>
+            )}
           </div>
 
           <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
@@ -595,21 +647,27 @@ export default function DraftPage() {
             {rightPanelTab === "teams" && (
               <div>
                 <button
-                  onClick={() => router.push(`/leagues/${leagueId}/draft/make-pick`)}
+                  onClick={() => isMyTurn && router.push(`/leagues/${leagueId}/draft/make-pick`)}
+                  disabled={!isMyTurn}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem",
-                    background: "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
+                    background: isMyTurn
+                      ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
+                      : "rgba(255,255,255,0.1)",
                     border: "none",
                     borderRadius: "8px",
-                    color: "#ffffff",
+                    color: isMyTurn ? "#ffffff" : "var(--text-muted)",
                     fontWeight: 600,
                     fontSize: "0.9rem",
-                    cursor: "pointer",
+                    cursor: isMyTurn ? "pointer" : "not-allowed",
                     marginBottom: "1rem",
+                    opacity: isMyTurn ? 1 : 0.5,
+                    transition: "all 0.2s ease",
                   }}
+                  title={isMyTurn ? "Make your pick" : "Wait for your turn"}
                 >
-                  See Full Stats
+                  {isMyTurn ? "Make Pick" : "Not Your Turn"}
                 </button>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>

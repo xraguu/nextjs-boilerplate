@@ -1,0 +1,126 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+
+// POST /api/admin/leagues/[leagueId]/initialize-draft - Initialize draft picks for the league
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ leagueId: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { leagueId } = await params;
+
+    // Get league with teams
+    const league = await prisma.fantasyLeague.findUnique({
+      where: { id: leagueId },
+      include: {
+        fantasyTeams: {
+          orderBy: { draftPosition: "asc" },
+        },
+        draftPicks: true,
+      },
+    });
+
+    if (!league) {
+      return NextResponse.json({ error: "League not found" }, { status: 404 });
+    }
+
+    // Check if teams have draft positions assigned
+    const teamsWithoutPosition = league.fantasyTeams.filter(
+      (team) => team.draftPosition === null
+    );
+
+    if (teamsWithoutPosition.length > 0) {
+      return NextResponse.json(
+        { error: "All teams must have draft positions assigned before initializing draft" },
+        { status: 400 }
+      );
+    }
+
+    // Check if draft picks already exist
+    if (league.draftPicks.length > 0) {
+      return NextResponse.json(
+        { error: "Draft picks already initialized for this league" },
+        { status: 400 }
+      );
+    }
+
+    const numTeams = league.fantasyTeams.length;
+    if (numTeams === 0) {
+      return NextResponse.json(
+        { error: "Cannot initialize draft with no teams" },
+        { status: 400 }
+      );
+    }
+
+    // Calculate number of rounds (8 teams per fantasy team based on default roster config)
+    const rosterConfig = league.rosterConfig as any;
+    const totalRosterSlots =
+      (rosterConfig["2s"] || 0) +
+      (rosterConfig["3s"] || 0) +
+      (rosterConfig["flx"] || 0) +
+      (rosterConfig["be"] || 0);
+    const numRounds = totalRosterSlots;
+
+    // Generate draft picks
+    const draftPicks = [];
+    let overallPick = 1;
+
+    for (let round = 1; round <= numRounds; round++) {
+      let pickOrder = [...league.fantasyTeams];
+
+      // For snake draft, reverse order on even rounds
+      if (league.draftType === "snake" && round % 2 === 0) {
+        pickOrder = pickOrder.reverse();
+      }
+
+      for (let i = 0; i < pickOrder.length; i++) {
+        draftPicks.push({
+          fantasyLeagueId: leagueId,
+          round,
+          pickNumber: i + 1,
+          overallPick,
+          fantasyTeamId: pickOrder[i].id,
+          mleTeamId: null,
+          pickedAt: null,
+        });
+        overallPick++;
+      }
+    }
+
+    // Create all draft picks and start the draft
+    const pickTimeSeconds = league.draftPickTimeSeconds || 90;
+    const firstPickDeadline = new Date(Date.now() + pickTimeSeconds * 1000);
+
+    await prisma.$transaction([
+      prisma.draftPick.createMany({
+        data: draftPicks,
+      }),
+      prisma.fantasyLeague.update({
+        where: { id: leagueId },
+        data: {
+          draftStatus: "in_progress",
+          draftPickDeadline: firstPickDeadline,
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      message: `Draft started! Created ${draftPicks.length} draft picks (${numRounds} rounds x ${numTeams} teams)`,
+      picksCreated: draftPicks.length,
+      firstPickDeadline,
+    });
+  } catch (error) {
+    console.error("Error initializing draft:", error);
+    return NextResponse.json(
+      { error: "Failed to initialize draft" },
+      { status: 500 }
+    );
+  }
+}
