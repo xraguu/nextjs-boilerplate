@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // GET /api/leagues/[leagueId] - Get league details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { leagueId: string } }
+  { params }: { params: Promise<{ leagueId: string }> }
 ) {
   try {
     const session = await auth();
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     // Fetch league with all relevant details
     const league = await prisma.fantasyLeague.findUnique({
@@ -75,7 +75,7 @@ export async function GET(
 // PATCH /api/leagues/[leagueId] - Update league settings (commissioner only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { leagueId: string } }
+  { params }: { params: Promise<{ leagueId: string }> }
 ) {
   try {
     const session = await auth();
@@ -84,7 +84,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { leagueId } = params;
+    const { leagueId } = await params;
 
     // Check if user is the league creator (commissioner) or admin
     const league = await prisma.fantasyLeague.findUnique({

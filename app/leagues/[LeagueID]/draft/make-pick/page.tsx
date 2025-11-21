@@ -177,6 +177,54 @@ export default function MakePickPage() {
   const isMyPick = false; // In real implementation, this would check if current pick manager === user's manager
   const [rightPanelTab, setRightPanelTab] = useState<"roster" | "queue">("roster");
 
+  // Draft state and timer
+  const [draftStatus, setDraftStatus] = useState<string>("not_started");
+  const [timeRemaining, setTimeRemaining] = useState(0);
+
+  // Fetch draft state to get status and timer
+  useEffect(() => {
+    const fetchDraftState = async () => {
+      try {
+        const response = await fetch(`/api/leagues/${leagueId}/draft`);
+        if (response.ok) {
+          const data = await response.json();
+          setDraftStatus(data.status);
+
+          // Update timer if draft is in progress
+          if (data.status === "in_progress" && data.currentPickDeadline) {
+            const deadline = new Date(data.currentPickDeadline).getTime();
+            const now = Date.now();
+            const remaining = Math.max(0, Math.floor((deadline - now) / 1000));
+            setTimeRemaining(remaining);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch draft state:", error);
+      }
+    };
+
+    fetchDraftState();
+    const interval = setInterval(fetchDraftState, 3000); // Poll every 3 seconds
+    return () => clearInterval(interval);
+  }, [leagueId]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (draftStatus !== "in_progress" || timeRemaining === 0) return;
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [draftStatus, timeRemaining]);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
   // Use lazy initialization to read from localStorage on mount
   const [autodraftEnabled, setAutodraftEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -460,17 +508,21 @@ export default function MakePickPage() {
 
         <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
           {/* Timer */}
-          <div style={{
-            background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
-            padding: "0.75rem 2rem",
-            borderRadius: "25px",
-            fontWeight: 700,
-            fontSize: "1.1rem",
-            color: "#ffffff",
-            boxShadow: "0 4px 10px rgba(74, 222, 128, 0.3)"
-          }}>
-            00:17
-          </div>
+          {draftStatus === "in_progress" && (
+            <div style={{
+              background: timeRemaining <= 10
+                ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+                : "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
+              padding: "0.75rem 2rem",
+              borderRadius: "25px",
+              fontWeight: 700,
+              fontSize: "1.1rem",
+              color: "#ffffff",
+              boxShadow: "0 4px 10px rgba(74, 222, 128, 0.3)"
+            }}>
+              {formatTime(timeRemaining)}
+            </div>
+          )}
 
           {/* Autodraft Button */}
           <button

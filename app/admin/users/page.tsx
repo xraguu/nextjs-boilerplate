@@ -69,6 +69,33 @@ export default function ManageUsersPage() {
     }
   };
 
+  const updateUserRole = async (userId: string, role: "admin" | "user") => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update role");
+
+      // Update local state
+      setUsers((prev) =>
+        prev.map((user) => (user.id === userId ? { ...user, role } : user))
+      );
+
+      // Update selected user if it's the one being modified
+      if (selectedUser?.id === userId) {
+        setSelectedUser({ ...selectedUser, role });
+      }
+
+      alert(`User role updated to ${role} successfully!`);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      alert("Failed to update user role");
+    }
+  };
+
   const roleStats = {
     total: users.length,
     admins: users.filter((u) => u.role === "admin").length,
@@ -155,23 +182,54 @@ export default function ManageUsersPage() {
                     marginBottom: "0.5rem",
                   }}
                 >
-                  Role: {selectedUser.role}
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "var(--text-muted)",
-                  }}
-                >
                   Member Since: {formatDate(selectedUser.createdAt)}
                 </div>
                 <div
                   style={{
                     fontSize: "0.85rem",
                     color: "var(--text-muted)",
+                    marginBottom: "0.5rem",
                   }}
                 >
                   Status: {selectedUser.status}
+                </div>
+
+                {/* Role Selection */}
+                <div style={{ marginTop: "1rem" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      marginBottom: "0.5rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Role
+                  </label>
+                  <select
+                    value={selectedUser.role}
+                    onChange={(e) => {
+                      const newRole = e.target.value as "admin" | "user";
+                      if (confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+                        updateUserRole(selectedUser.id, newRole);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem",
+                      background: "rgba(255,255,255,0.1)",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      borderRadius: "6px",
+                      color: "var(--text-main)",
+                      fontSize: "0.95rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
                 </div>
               </div>
               <div style={{ display: "flex", gap: "0.75rem" }}>

@@ -1,280 +1,312 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
-import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
-// helper type so we can optionally reference `rank`
-type TeamWithRank = (typeof TEAMS)[number] & { rank?: number };
+// Types
+interface DraftPick {
+  id: string;
+  round: number;
+  pickNumber: number;
+  overallPick: number;
+  fantasyTeamId: string | null;
+  mleTeamId: string | null;
+  pickedAt: Date | null;
+}
 
-// Mock draft data
-const mockDraftPicks = [
-  {
-    round: 1,
-    pick: 1,
-    manager: "Fantastic Ballers",
-    team: TEAMS[0],
-    status: "picked",
-  },
-  { round: 1, pick: 2, manager: "Pixies", team: null, status: "current" },
-  { round: 1, pick: 3, manager: "Thunder", team: null, status: "upcoming" },
-  { round: 1, pick: 4, manager: "Blazers", team: null, status: "upcoming" },
-  { round: 2, pick: 5, manager: "Storm", team: null, status: "upcoming" },
-  { round: 2, pick: 6, manager: "Lightning", team: null, status: "upcoming" },
-  { round: 2, pick: 7, manager: "Phoenix", team: null, status: "upcoming" },
-  { round: 2, pick: 8, manager: "Eclipse", team: null, status: "upcoming" },
-  { round: 3, pick: 9, manager: "Vortex", team: null, status: "upcoming" },
-  { round: 3, pick: 10, manager: "Flames", team: null, status: "upcoming" },
-];
+interface MLETeam {
+  id: string;
+  name: string;
+  leagueId: string;
+  slug: string;
+  logoPath: string;
+  primaryColor: string;
+  secondaryColor: string;
+}
 
-// Mock manager rosters
-const managers = [
-  "Fantastic Ballers",
-  "Pixies",
-  "Thunder Strikers",
-  "Ice Warriors",
-  "Fire Dragons",
-  "Sky Hunters",
-  "Storm Chasers",
-  "Lightning Bolts",
-  "Phoenix Rising",
-  "Thunder Wolves",
-  "Ice Breakers",
-  "Fire Hawks",
-];
+interface FantasyTeam {
+  id: string;
+  displayName: string;
+  shortCode: string;
+  draftPosition: number | null;
+  ownerUserId: string;
+  ownerDisplayName: string;
+  ownerDiscordId: string;
+  roster: Array<{
+    week: number;
+    position: string;
+    slotIndex: number;
+    mleTeamId: string;
+    mleTeam: MLETeam | null;
+  }>;
+}
 
-const mockRosters = {
-  "Fantastic Ballers": [
-    { slot: "2s", team: TEAMS[0], pick: "1.1 (1)" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  Pixies: [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Thunder Strikers": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Ice Warriors": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Fire Dragons": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Sky Hunters": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Storm Chasers": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Lightning Bolts": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Phoenix Rising": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Thunder Wolves": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Ice Breakers": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-  "Fire Hawks": [
-    { slot: "2s", team: null, pick: "" },
-    { slot: "2s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "3s", team: null, pick: "" },
-    { slot: "FLX", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-    { slot: "BE", team: null, pick: "" },
-  ],
-};
+interface DraftState {
+  leagueId: string;
+  leagueName: string;
+  draftType: string;
+  status: "not_started" | "in_progress" | "paused" | "completed";
+  currentPickNumber: number | null;
+  currentPickDeadline: string | null;
+  pickTimeSeconds: number;
+  picks: DraftPick[];
+  fantasyTeams: FantasyTeam[];
+  availableTeams: MLETeam[];
+}
 
 export default function DraftPage() {
   const router = useRouter();
   const params = useParams();
   const leagueId = params.LeagueID as string;
 
-  const [selectedManager, setSelectedManager] = useState("Fantastic Ballers");
+  const [draftState, setDraftState] = useState<DraftState | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedManager, setSelectedManager] = useState<string>("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<
-    (typeof TEAMS)[number] | null
-  >(null);
+  const [selectedTeam, setSelectedTeam] = useState<MLETeam | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<
-    "rosters" | "teams" | "queue"
-  >("rosters");
+  const [rightPanelTab, setRightPanelTab] = useState<"rosters" | "teams" | "queue">("rosters");
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // lazy initialize draftQueue and autodraftEnabled from localStorage to avoid setState in mount effect
-  const [draftQueue, setDraftQueue] = useState<typeof TEAMS>(() => {
+  // Draft queue and autodraft (stored in localStorage)
+  const [draftQueue, setDraftQueue] = useState<MLETeam[]>(() => {
     if (typeof window === "undefined") return [];
-    const saved = localStorage.getItem("draftQueue");
+    const saved = localStorage.getItem(`draftQueue_${leagueId}`);
     try {
       return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error("Failed to parse draft queue from localStorage", e);
+    } catch {
       return [];
     }
   });
 
   const [autodraftEnabled, setAutodraftEnabled] = useState(() => {
     if (typeof window === "undefined") return false;
-    return localStorage.getItem("autodraftEnabled") === "true";
+    return localStorage.getItem(`autodraft_${leagueId}`) === "true";
   });
 
-  // Sync queue changes to localStorage
+  // Save queue to localStorage
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("draftQueue", JSON.stringify(draftQueue));
-  }, [draftQueue]);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`draftQueue_${leagueId}`, JSON.stringify(draftQueue));
+    }
+  }, [draftQueue, leagueId]);
+
+  // Fetch current user session
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        if (response.ok) {
+          const session = await response.json();
+          setCurrentUserId(session?.user?.id || null);
+        }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+      }
+    };
+    fetchSession();
+  }, []);
+
+  // Fetch draft state
+  const fetchDraftState = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/leagues/${leagueId}/draft`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch draft state");
+      }
+      const data = await response.json();
+      setDraftState(data);
+
+      // Set default selected manager to first team
+      if (!selectedManager && data.fantasyTeams.length > 0) {
+        setSelectedManager(data.fantasyTeams[0].displayName);
+      }
+
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load draft");
+    } finally {
+      setLoading(false);
+    }
+  }, [leagueId, selectedManager]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchDraftState();
+  }, [fetchDraftState]);
+
+  // Polling for updates (every 3 seconds when draft is active)
+  useEffect(() => {
+    if (!draftState || draftState.status !== "in_progress") return;
+
+    const interval = setInterval(fetchDraftState, 3000);
+    return () => clearInterval(interval);
+  }, [draftState, fetchDraftState]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (!draftState?.currentPickDeadline) {
+      setTimeRemaining(0);
+      return;
+    }
+
+    const updateTimer = () => {
+      const deadline = new Date(draftState.currentPickDeadline!).getTime();
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((deadline - now) / 1000));
+      setTimeRemaining(remaining);
+
+      // Auto-pick if time runs out and autodraft is enabled
+      if (remaining === 0 && autodraftEnabled && draftState.status === "in_progress") {
+        const currentPick = draftState.picks.find((p) => !p.pickedAt);
+        if (currentPick) {
+          // Check if it's the user's pick
+          // handleAutoPick();
+        }
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [draftState, autodraftEnabled]);
 
   const toggleAutodraft = () => {
     const newValue = !autodraftEnabled;
     setAutodraftEnabled(newValue);
     if (typeof window !== "undefined") {
-      localStorage.setItem("autodraftEnabled", String(newValue));
+      localStorage.setItem(`autodraft_${leagueId}`, String(newValue));
     }
   };
 
-  const currentRoster =
-    mockRosters[selectedManager as keyof typeof mockRosters] ||
-    mockRosters["Fantastic Ballers"];
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", padding: "2rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "var(--text-main)", fontSize: "1.2rem" }}>Loading draft...</div>
+      </div>
+    );
+  }
+
+  if (error || !draftState) {
+    return (
+      <div style={{ minHeight: "100vh", padding: "2rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#ef4444", fontSize: "1.2rem" }}>Error: {error || "Draft not found"}</div>
+      </div>
+    );
+  }
+
+  const currentTeam = draftState.fantasyTeams.find((t) => t.displayName === selectedManager);
+  const currentRoster = currentTeam?.roster || [];
+
+  // Find current user's fantasy team
+  const currentUserTeam = draftState.fantasyTeams.find((t) => t.ownerUserId === currentUserId);
+
+  // Find current pick
+  const currentPick = draftState.picks.find((pick) => pick.overallPick === draftState.currentPickNumber);
+
+  // Check if it's the current user's turn
+  const isMyTurn = currentUserTeam && currentPick && currentPick.fantasyTeamId === currentUserTeam.id;
+
+  // Get the fantasy team whose turn it is
+  const currentPickTeam = currentPick ? draftState.fantasyTeams.find((t) => t.id === currentPick.fantasyTeamId) : null;
+
+  // Determine pick status
+  const getPickStatus = (pick: DraftPick): "picked" | "current" | "upcoming" => {
+    if (pick.pickedAt) return "picked";
+    if (pick.overallPick === draftState.currentPickNumber) return "current";
+    return "upcoming";
+  };
+
+  // Get team by ID from available or picked teams
+  const getTeamById = (teamId: string): MLETeam | undefined => {
+    return draftState.availableTeams.find((t) => t.id === teamId) ||
+           draftState.picks.find((p) => p.mleTeamId === teamId)
+             ? ({ id: teamId } as MLETeam) // Simplified, you'd need full data
+             : undefined;
+  };
+
+  const getFantasyTeamById = (teamId: string): FantasyTeam | undefined => {
+    return draftState.fantasyTeams.find((t) => t.id === teamId);
+  };
 
   return (
     <div>
       {/* Team Stats Modal */}
       <TeamModal
-        team={
-          showModal && selectedTeam
-            ? {
-                ...(selectedTeam as TeamWithRank),
-                rosteredBy:
-                  ((selectedTeam as TeamWithRank).rank ?? 0) % 2 === 0
-                    ? { rosterName: "Fantastic Ballers", managerName: "xenn" }
-                    : undefined,
-              }
-            : null
-        }
+        team={showModal && selectedTeam ? {
+          ...selectedTeam,
+          teamPrimaryColor: selectedTeam.primaryColor,
+          teamSecondaryColor: selectedTeam.secondaryColor,
+        } : null}
         onClose={() => setShowModal(false)}
         isDraftContext={true}
       />
 
       <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
-        {/* Header with Timer and Roster Selector */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: "2rem",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "2.5rem",
-              fontWeight: 700,
-              color: "var(--accent)",
-              margin: 0,
-            }}
-          >
-            Draft Room
-          </h1>
-
-          <div
-            style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}
-          >
-            {/* Timer */}
-            <div
-              style={{
-                background: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
-                padding: "0.75rem 2rem",
-                borderRadius: "25px",
-                fontWeight: 700,
-                fontSize: "1.1rem",
-                color: "#ffffff",
-                boxShadow: "0 4px 10px rgba(74, 222, 128, 0.3)",
-              }}
-            >
-              00:17
+        {/* Header with Timer and Controls */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
+          <div>
+            <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--accent)", margin: 0 }}>
+              Draft Room
+            </h1>
+            <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
+              {draftState.leagueName} • {draftState.draftType === "snake" ? "Snake" : "Linear"} Draft •{" "}
+              <span style={{ textTransform: "capitalize" }}>{draftState.status.replace("_", " ")}</span>
             </div>
+            {draftState.status === "in_progress" && currentPickTeam && (
+              <div
+                style={{
+                  marginTop: "0.75rem",
+                  padding: "0.75rem 1.25rem",
+                  background: isMyTurn
+                    ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
+                    : "rgba(255,255,255,0.1)",
+                  borderRadius: "8px",
+                  border: isMyTurn ? "2px solid #f2b632" : "1px solid rgba(255,255,255,0.2)",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  color: isMyTurn ? "#ffffff" : "var(--text-main)",
+                  boxShadow: isMyTurn ? "0 4px 12px rgba(242, 182, 50, 0.4)" : "none",
+                }}
+              >
+                {isMyTurn ? (
+                  <>🎯 YOUR TURN TO PICK! ({currentPickTeam.displayName})</>
+                ) : (
+                  <>On the clock: {currentPickTeam.displayName} ({currentPickTeam.ownerDisplayName})</>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
+            {/* Timer */}
+            {draftState.status === "in_progress" && (
+              <div
+                style={{
+                  background: timeRemaining <= 10
+                    ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+                    : "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
+                  padding: "0.75rem 2rem",
+                  borderRadius: "25px",
+                  fontWeight: 700,
+                  fontSize: "1.1rem",
+                  color: "#ffffff",
+                  boxShadow: "0 4px 10px rgba(74, 222, 128, 0.3)",
+                }}
+              >
+                {formatTime(timeRemaining)}
+              </div>
+            )}
 
             {/* Autodraft Button */}
             <button
@@ -283,9 +315,7 @@ export default function DraftPage() {
                 background: autodraftEnabled
                   ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
                   : "rgba(255,255,255,0.1)",
-                border: `2px solid ${
-                  autodraftEnabled ? "#f2b632" : "var(--accent)"
-                }`,
+                border: `2px solid ${autodraftEnabled ? "#f2b632" : "var(--accent)"}`,
                 padding: "0.75rem 1.5rem",
                 borderRadius: "25px",
                 fontWeight: 600,
@@ -297,16 +327,6 @@ export default function DraftPage() {
                   ? "0 4px 12px rgba(242, 182, 50, 0.4)"
                   : "0 2px 8px rgba(242, 182, 50, 0.2)",
               }}
-              onMouseEnter={(e) => {
-                if (!autodraftEnabled) {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!autodraftEnabled) {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                }
-              }}
             >
               Autodraft {autodraftEnabled ? "ON" : "OFF"}
             </button>
@@ -314,342 +334,157 @@ export default function DraftPage() {
         </div>
 
         {/* Main Content Area */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 350px",
-            gap: "1.5rem",
-          }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "1rem" }}>
           {/* Left Side - Draft Picks */}
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
-          >
-            {/* Recent Picks - Horizontal Scroll */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {/* Recent Picks */}
             <div
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(50, 50, 60, 0.6) 0%, rgba(40, 40, 50, 0.6) 100%)",
+                background: "linear-gradient(135deg, rgba(50, 50, 60, 0.6) 0%, rgba(40, 40, 50, 0.6) 100%)",
                 borderRadius: "12px",
-                padding: "1.5rem",
+                padding: "1rem",
                 border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              <h3
-                style={{
-                  fontSize: "1.1rem",
-                  fontWeight: 600,
-                  marginBottom: "1rem",
-                  color: "var(--text-main)",
-                }}
-              >
+              <h3 style={{ fontSize: "0.95rem", fontWeight: 600, marginBottom: "0.75rem", color: "var(--text-main)" }}>
                 Recent Picks
               </h3>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  overflowX: "auto",
-                  paddingBottom: "1rem",
-                }}
-              >
-                {mockDraftPicks.slice(0, 4).map((pick, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      minWidth: "200px",
-                      background: "rgba(255,255,255,0.03)",
-                      borderRadius: "8px",
-                      padding: "1rem",
-                      border: `2px solid ${
-                        pick.status === "current"
-                          ? "#4ade80"
-                          : pick.status === "picked"
-                          ? "var(--accent)"
-                          : "rgba(255,255,255,0.1)"
-                      }`,
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {/* Background Logo */}
-                    {pick.team && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "50%",
-                          left: "50%",
-                          transform: "translate(-50%, -50%)",
-                          width: "120px",
-                          height: "120px",
-                          backgroundImage: `url(${pick.team.logoPath})`,
-                          backgroundSize: "contain",
-                          backgroundRepeat: "no-repeat",
-                          backgroundPosition: "center",
-                          opacity: 0.15,
-                          pointerEvents: "none",
-                        }}
-                      />
-                    )}
-                    <div style={{ position: "relative", zIndex: 1 }}>
-                      <div
-                        style={{
-                          fontSize: "0.85rem",
-                          color: "var(--text-muted)",
-                          marginBottom: "0.5rem",
-                        }}
-                      >
-                        Pick {pick.round}.{pick.pick}
-                      </div>
-                      {pick.team ? (
-                        <>
-                          <div
-                            onClick={() => {
-                              setSelectedTeam(pick.team);
-                              setShowModal(true);
-                            }}
-                            style={{
-                              fontSize: "1rem",
-                              fontWeight: 600,
-                              color: "var(--text-main)",
-                              marginBottom: "0.25rem",
-                              cursor: "pointer",
-                              transition: "color 0.2s",
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.color = "var(--accent)")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.color = "var(--text-main)")
-                            }
-                          >
-                            {pick.team.leagueId} {pick.team.name}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "0.8rem",
-                              color: "var(--text-muted)",
-                            }}
-                          >
-                            {pick.manager}
-                          </div>
-                        </>
-                      ) : (
-                        <div
-                          style={{
-                            fontSize: "1rem",
-                            fontWeight: 600,
-                            color: "var(--accent)",
-                          }}
-                        >
-                          {pick.status === "current"
-                            ? "On the Clock"
-                            : "Upcoming"}
+              <div style={{ display: "flex", gap: "0.75rem", overflowX: "auto", paddingBottom: "0.5rem" }}>
+                {draftState.picks.slice(0, 5).map((pick) => {
+                  const status = getPickStatus(pick);
+                  const team = pick.mleTeamId ? getTeamById(pick.mleTeamId) : null;
+                  const fantasyTeam = pick.fantasyTeamId ? getFantasyTeamById(pick.fantasyTeamId) : null;
+
+                  return (
+                    <div
+                      key={pick.id}
+                      style={{
+                        minWidth: "160px",
+                        background: "rgba(255,255,255,0.03)",
+                        borderRadius: "8px",
+                        padding: "0.75rem",
+                        border: `2px solid ${
+                          status === "current" ? "#4ade80" : status === "picked" ? "var(--accent)" : "rgba(255,255,255,0.1)"
+                        }`,
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div style={{ position: "relative", zIndex: 1 }}>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.4rem" }}>
+                          Pick {pick.round}.{pick.pickNumber}
                         </div>
-                      )}
+                        {team ? (
+                          <>
+                            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "0.2rem" }}>
+                              {team.leagueId} {team.name}
+                            </div>
+                            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                              {fantasyTeam?.displayName}
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--accent)" }}>
+                            {status === "current" ? "On the Clock" : "Upcoming"}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
             {/* Draft Grid */}
             <div
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(50, 50, 60, 0.6) 0%, rgba(40, 40, 50, 0.6) 100%)",
+                background: "linear-gradient(135deg, rgba(50, 50, 60, 0.6) 0%, rgba(40, 40, 50, 0.6) 100%)",
                 borderRadius: "12px",
-                padding: "1.5rem",
+                padding: "1rem",
                 border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.5rem",
-                }}
-              >
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {/* Round Headers */}
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  {/* Empty corner cell for team names column */}
-                  <div style={{ width: "180px", flexShrink: 0 }}></div>
-                  {/* Round numbers 1-8 */}
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((round) => (
+                <div style={{ display: "flex", gap: "0.25rem", position: "sticky", top: 0, zIndex: 10, background: "rgba(40, 40, 50, 0.95)", paddingBottom: "0.5rem" }}>
+                  <div style={{ width: "150px", flexShrink: 0 }}></div>
+                  {[...new Set(draftState.picks.map((p) => p.round))].slice(0, 8).map((round) => (
                     <div
                       key={round}
                       style={{
                         flex: 1,
-                        minWidth: 0,
-                        padding: "0.75rem",
+                        minWidth: "60px",
+                        maxWidth: "80px",
+                        padding: "0.5rem 0.25rem",
                         background: "rgba(255,255,255,0.08)",
-                        borderRadius: "8px",
-                        fontSize: "0.9rem",
+                        borderRadius: "6px",
+                        fontSize: "0.75rem",
                         fontWeight: 600,
                         textAlign: "center",
                         color: "var(--accent)",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
                       }}
                     >
-                      <div>Round</div>
-                      <div>{round}</div>
+                      <div>R{round}</div>
                     </div>
                   ))}
                 </div>
 
                 {/* Team Rows */}
-                {managers.map((manager, teamIdx) => (
-                  <div key={manager} style={{ display: "flex", gap: "0.5rem" }}>
-                    {/* Team Name Cell */}
+                {draftState.fantasyTeams.map((fantasyTeam) => (
+                  <div key={fantasyTeam.id} style={{ display: "flex", gap: "0.25rem" }}>
                     <div
                       style={{
-                        width: "180px",
+                        width: "150px",
                         flexShrink: 0,
-                        padding: "0.75rem",
+                        padding: "0.5rem",
                         background: "rgba(255,255,255,0.08)",
-                        borderRadius: "8px",
-                        fontSize: "0.9rem",
+                        borderRadius: "6px",
+                        fontSize: "0.85rem",
                         fontWeight: 600,
+                        color: fantasyTeam.displayName === selectedManager ? "var(--accent)" : "var(--text-main)",
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "space-between",
-                        color:
-                          manager === selectedManager
-                            ? "var(--accent)"
-                            : "var(--text-main)",
                       }}
                     >
-                      <span>{manager}</span>
-                      {manager === selectedManager && (
-                        <span
-                          style={{
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            opacity: 0.8,
-                          }}
-                        >
-                          (You)
-                        </span>
-                      )}
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {fantasyTeam.displayName}
+                      </span>
                     </div>
 
-                    {/* Pick Cells for each round */}
-                    {[0, 1, 2, 3, 4, 5, 6, 7].map((roundIdx) => {
-                      const pickIndex = roundIdx * managers.length + teamIdx;
-                      const pick = mockDraftPicks[pickIndex];
+                    {[...new Set(draftState.picks.map((p) => p.round))].slice(0, 8).map((round) => {
+                      const pick = draftState.picks.find(
+                        (p) => p.round === round && p.fantasyTeamId === fantasyTeam.id
+                      );
+                      const status = pick ? getPickStatus(pick) : "upcoming";
+                      const team = pick?.mleTeamId ? getTeamById(pick.mleTeamId) : null;
 
                       return (
                         <div
-                          key={roundIdx}
+                          key={round}
                           style={{
                             flex: 1,
-                            minWidth: 0,
-                            padding: "1rem",
+                            minWidth: "60px",
+                            maxWidth: "80px",
+                            padding: "0.5rem 0.25rem",
                             background: "rgba(255,255,255,0.03)",
                             borderRadius: "6px",
                             border: `2px solid ${
-                              pick?.status === "current"
-                                ? "#4ade80"
-                                : pick?.status === "picked"
-                                ? "var(--accent)"
-                                : "rgba(255,255,255,0.1)"
+                              status === "current" ? "#4ade80" : status === "picked" ? "var(--accent)" : "rgba(255,255,255,0.1)"
                             }`,
-                            minHeight: "60px",
+                            minHeight: "50px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            position: "relative",
+                            textAlign: "center",
+                            fontSize: "0.65rem",
+                            fontWeight: 600,
+                            color: "var(--text-main)",
                             overflow: "hidden",
                           }}
                         >
-                          {/* Picked team */}
-                          {pick?.team && (
-                            <>
-                              {/* Background Logo */}
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  top: "50%",
-                                  left: "50%",
-                                  transform: "translate(-50%, -50%)",
-                                  width: "80px",
-                                  height: "80px",
-                                  backgroundImage: `url(${pick.team.logoPath})`,
-                                  backgroundSize: "contain",
-                                  backgroundRepeat: "no-repeat",
-                                  backgroundPosition: "center",
-                                  opacity: 0.15,
-                                  pointerEvents: "none",
-                                }}
-                              />
-                              {/* Team Name */}
-                              <div
-                                onClick={() => {
-                                  setSelectedTeam(pick.team);
-                                  setShowModal(true);
-                                }}
-                                style={{
-                                  position: "relative",
-                                  zIndex: 1,
-                                  fontSize: "0.75rem",
-                                  fontWeight: 600,
-                                  color: "var(--text-main)",
-                                  cursor: "pointer",
-                                  transition: "color 0.2s",
-                                  textAlign: "center",
-                                }}
-                                onMouseEnter={(e) =>
-                                  (e.currentTarget.style.color =
-                                    "var(--accent)")
-                                }
-                                onMouseLeave={(e) =>
-                                  (e.currentTarget.style.color =
-                                    "var(--text-main)")
-                                }
-                              >
-                                {pick.team.leagueId} {pick.team.name}
-                              </div>
-                            </>
-                          )}
-                          {/* Current pick button */}
-                          {!pick?.team && pick?.status === "current" && (
-                            <button
-                              onClick={() =>
-                                router.push(
-                                  `/leagues/${leagueId}/draft/make-pick`
-                                )
-                              }
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
-                                color: "#ffffff",
-                                padding: "0.5rem 1rem",
-                                borderRadius: "6px",
-                                fontWeight: 600,
-                                fontSize: "0.7rem",
-                                textAlign: "center",
-                                border: "none",
-                                cursor: "pointer",
-                                transition: "all 0.2s ease",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform =
-                                  "translateY(-2px)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 4px 10px rgba(74, 222, 128, 0.4)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform =
-                                  "translateY(0)";
-                                e.currentTarget.style.boxShadow = "none";
-                              }}
-                            >
-                              Pick {pick.round}.{pick.pick}
-                            </button>
-                          )}
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
+                            {team ? `${team.leagueId} ${team.name}` : status === "current" ? "Clock" : ""}
+                          </span>
                         </div>
                       );
                     })}
@@ -659,88 +494,50 @@ export default function DraftPage() {
             </div>
           </div>
 
-          {/* Right Side - Roster Panel */}
+          {/* Right Side - Roster/Teams/Queue Panel */}
           <div
             style={{
-              background:
-                "radial-gradient(circle at top left, #1d3258, #020617)",
+              background: "radial-gradient(circle at top left, #1d3258, #020617)",
               borderRadius: "12px",
-              padding: "1.5rem",
+              padding: "1rem",
               border: "1px solid rgba(255,255,255,0.1)",
               position: "sticky",
               top: "1rem",
               maxHeight: "calc(100vh - 2rem)",
+              overflowY: "auto",
             }}
           >
             {/* Tabs */}
-            <div
-              style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}
-            >
-              <button
-                onClick={() => setRightPanelTab("rosters")}
-                style={{
-                  flex: 1,
-                  padding: "0.5rem 1rem",
-                  background:
-                    rightPanelTab === "rosters"
-                      ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
-                      : "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: "6px",
-                  color: "#ffffff",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                Rosters
-              </button>
-              <button
-                onClick={() => setRightPanelTab("teams")}
-                style={{
-                  flex: 1,
-                  padding: "0.5rem 1rem",
-                  background:
-                    rightPanelTab === "teams"
-                      ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
-                      : "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: "6px",
-                  color: "#ffffff",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                Available Teams
-              </button>
-              <button
-                onClick={() => setRightPanelTab("queue")}
-                style={{
-                  flex: 1,
-                  padding: "0.5rem 1rem",
-                  background:
-                    rightPanelTab === "queue"
-                      ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
-                      : "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: "6px",
-                  color: "#ffffff",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                Queue ({draftQueue.length})
-              </button>
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+              {(["rosters", "teams", "queue"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setRightPanelTab(tab)}
+                  style={{
+                    flex: 1,
+                    padding: "0.5rem 0.75rem",
+                    background:
+                      rightPanelTab === tab
+                        ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
+                        : "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    borderRadius: "6px",
+                    color: "#ffffff",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {tab} {tab === "queue" && `(${draftQueue.length})`}
+                </button>
+              ))}
             </div>
 
-            {/* Manager Dropdown (only show for Rosters tab) */}
+            {/* Manager Dropdown */}
             {rightPanelTab === "rosters" && (
-              <div style={{ position: "relative", marginBottom: "1.5rem" }}>
+              <div style={{ position: "relative", marginBottom: "1rem" }}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   style={{
@@ -770,8 +567,7 @@ export default function DraftPage() {
                       left: 0,
                       right: 0,
                       marginTop: "0.5rem",
-                      background:
-                        "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+                      background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
                       borderRadius: "8px",
                       padding: "0.5rem 0",
                       border: "1px solid rgba(255,255,255,0.1)",
@@ -779,38 +575,25 @@ export default function DraftPage() {
                       zIndex: 1000,
                     }}
                   >
-                    {managers.map((manager) => (
+                    {draftState.fantasyTeams.map((team) => (
                       <button
-                        key={manager}
+                        key={team.id}
                         onClick={() => {
-                          setSelectedManager(manager);
+                          setSelectedManager(team.displayName);
                           setDropdownOpen(false);
                         }}
                         style={{
                           width: "100%",
                           padding: "0.75rem 1rem",
-                          background:
-                            manager === selectedManager
-                              ? "rgba(255,255,255,0.1)"
-                              : "transparent",
+                          background: team.displayName === selectedManager ? "rgba(255,255,255,0.1)" : "transparent",
                           border: "none",
                           color: "#ffffff",
                           textAlign: "left",
                           cursor: "pointer",
-                          transition: "background 0.2s ease",
                           fontWeight: 600,
                         }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "rgba(255,255,255,0.1)";
-                        }}
-                        onMouseLeave={(e) => {
-                          if (manager !== selectedManager) {
-                            e.currentTarget.style.background = "transparent";
-                          }
-                        }}
                       >
-                        {manager}
+                        {team.displayName}
                       </button>
                     ))}
                   </div>
@@ -818,193 +601,21 @@ export default function DraftPage() {
               </div>
             )}
 
-            {/* Content based on active tab */}
+            {/* Roster Tab Content */}
             {rightPanelTab === "rosters" && (
               <div>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr
-                      style={{
-                        borderBottom: "2px solid rgba(255,255,255,0.2)",
-                      }}
-                    >
-                      <th
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          textAlign: "left",
-                          fontSize: "0.85rem",
-                          color: "rgba(255,255,255,0.9)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Slot
-                      </th>
-                      <th
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          textAlign: "left",
-                          fontSize: "0.85rem",
-                          color: "rgba(255,255,255,0.9)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Team
-                      </th>
-                      <th
-                        style={{
-                          padding: "0.75rem 0.5rem",
-                          textAlign: "right",
-                          fontSize: "0.85rem",
-                          color: "rgba(255,255,255,0.9)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Pick
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1rem" }}>
+                  {currentRoster.length} teams drafted
+                </div>
+                {currentRoster.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                    No teams drafted yet
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                     {currentRoster.map((slot, idx) => (
-                      <tr
-                        key={idx}
-                        style={{
-                          borderBottom: "1px solid rgba(255,255,255,0.1)",
-                        }}
-                      >
-                        <td
-                          style={{
-                            padding: "0.75rem 0.5rem",
-                            fontSize: "0.9rem",
-                            color: "var(--text-muted)",
-                          }}
-                        >
-                          {slot.slot}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem" }}>
-                          {slot.team ? (
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.5rem",
-                              }}
-                            >
-                              <Image
-                                src={slot.team.logoPath}
-                                alt={slot.team.name}
-                                width={20}
-                                height={20}
-                                style={{ borderRadius: "4px" }}
-                              />
-                              <span
-                                onClick={() => {
-                                  setSelectedTeam(slot.team);
-                                  setShowModal(true);
-                                }}
-                                style={{
-                                  fontSize: "0.85rem",
-                                  fontWeight: 600,
-                                  color: "var(--text-main)",
-                                  cursor: "pointer",
-                                  transition: "color 0.2s",
-                                }}
-                                onMouseEnter={(e) =>
-                                  (e.currentTarget.style.color =
-                                    "var(--accent)")
-                                }
-                                onMouseLeave={(e) =>
-                                  (e.currentTarget.style.color =
-                                    "var(--text-main)")
-                                }
-                              >
-                                {slot.team.leagueId} {slot.team.name}
-                              </span>
-                            </div>
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: "0.85rem",
-                                color: "var(--text-muted)",
-                              }}
-                            >
-                              -
-                            </span>
-                          )}
-                        </td>
-                        <td
-                          style={{
-                            padding: "0.75rem 0.5rem",
-                            textAlign: "right",
-                            fontSize: "0.85rem",
-                            color: "var(--text-muted)",
-                          }}
-                        >
-                          {slot.pick || "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* MLE Teams Tab */}
-            {rightPanelTab === "teams" && (
-              <div>
-                {/* See Full Stats Button */}
-                <button
-                  onClick={() =>
-                    router.push(`/leagues/${leagueId}/draft/make-pick`)
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem",
-                    background:
-                      "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "#ffffff",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                    cursor: "pointer",
-                    marginBottom: "1rem",
-                    boxShadow: "0 4px 10px rgba(242, 182, 50, 0.3)",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 6px 15px rgba(242, 182, 50, 0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 10px rgba(242, 182, 50, 0.3)";
-                  }}
-                >
-                  See Full Stats
-                </button>
-
-                <div
-                  style={{
-                    maxHeight: "calc(100vh - 15rem)",
-                    overflowY: "auto",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    {TEAMS.map((team) => (
                       <div
-                        key={team.id}
-                        onClick={() => {
-                          setSelectedTeam(team);
-                          setShowModal(true);
-                        }}
+                        key={idx}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -1012,71 +623,91 @@ export default function DraftPage() {
                           padding: "0.75rem",
                           background: "rgba(255,255,255,0.05)",
                           borderRadius: "6px",
-                          cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          border: "1px solid transparent",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "rgba(255,255,255,0.1)";
-                          e.currentTarget.style.borderColor = "var(--accent)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background =
-                            "rgba(255,255,255,0.05)";
-                          e.currentTarget.style.borderColor = "transparent";
                         }}
                       >
-                        <Image
-                          src={team.logoPath}
-                          alt={team.name}
-                          width={24}
-                          height={24}
-                          style={{ borderRadius: "4px" }}
-                        />
-                        <span
-                          style={{
-                            fontSize: "0.9rem",
-                            fontWeight: 600,
-                            color: "var(--text-main)",
-                          }}
-                        >
-                          {team.leagueId} {team.name}
-                        </span>
+                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", minWidth: "40px" }}>
+                          {slot.position.toUpperCase()}
+                        </div>
+                        {slot.mleTeam && (
+                          <>
+                            <Image src={slot.mleTeam.logoPath} alt={slot.mleTeam.name} width={24} height={24} />
+                            <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
+                              {slot.mleTeam.leagueId} {slot.mleTeam.name}
+                            </span>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Teams Tab */}
+            {rightPanelTab === "teams" && (
+              <div>
+                <button
+                  onClick={() => isMyTurn && router.push(`/leagues/${leagueId}/draft/make-pick`)}
+                  disabled={!isMyTurn}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem 1rem",
+                    background: isMyTurn
+                      ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
+                      : "rgba(255,255,255,0.1)",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: isMyTurn ? "#ffffff" : "var(--text-muted)",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    cursor: isMyTurn ? "pointer" : "not-allowed",
+                    marginBottom: "1rem",
+                    opacity: isMyTurn ? 1 : 0.5,
+                    transition: "all 0.2s ease",
+                  }}
+                  title={isMyTurn ? "Make your pick" : "Wait for your turn"}
+                >
+                  {isMyTurn ? "Make Pick" : "Not Your Turn"}
+                </button>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {draftState.availableTeams.map((team) => (
+                    <div
+                      key={team.id}
+                      onClick={() => {
+                        setSelectedTeam(team);
+                        setShowModal(true);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        padding: "0.75rem",
+                        background: "rgba(255,255,255,0.05)",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      <Image src={team.logoPath} alt={team.name} width={24} height={24} />
+                      <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
+                        {team.leagueId} {team.name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Draft Queue Tab */}
+            {/* Queue Tab */}
             {rightPanelTab === "queue" && (
               <div>
                 {draftQueue.length === 0 ? (
-                  <div
-                    style={{
-                      padding: "2rem 1rem",
-                      textAlign: "center",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>
-                      No teams in queue
-                    </p>
-                    <p style={{ fontSize: "0.85rem" }}>
-                      Add teams to your draft queue from the Available Teams
-                      page
-                    </p>
+                  <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                    No teams in queue
                   </div>
                 ) : (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.5rem",
-                    }}
-                  >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                     {draftQueue.map((team, idx) => (
                       <div
                         key={team.id}
@@ -1087,148 +718,22 @@ export default function DraftPage() {
                           padding: "0.75rem",
                           background: "rgba(255,255,255,0.05)",
                           borderRadius: "6px",
-                          border: "1px solid rgba(255,255,255,0.1)",
                         }}
                       >
-                        <div
-                          style={{
-                            width: "24px",
-                            height: "24px",
-                            borderRadius: "50%",
-                            background: "var(--accent)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
-                            color: "#000",
-                          }}
-                        >
-                          {idx + 1}
-                        </div>
-                        <Image
-                          src={team.logoPath}
-                          alt={team.name}
-                          width={24}
-                          height={24}
-                          style={{ borderRadius: "4px" }}
-                        />
-                        <span
-                          style={{
-                            flex: 1,
-                            fontSize: "0.9rem",
-                            fontWeight: 600,
-                            color: "var(--text-main)",
-                          }}
-                        >
+                        <div style={{ fontWeight: 700, color: "var(--accent)", minWidth: "24px" }}>#{idx + 1}</div>
+                        <Image src={team.logoPath} alt={team.name} width={24} height={24} />
+                        <span style={{ flex: 1, fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
                           {team.leagueId} {team.name}
                         </span>
-
-                        {/* Reorder buttons */}
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "0.25rem",
-                          }}
-                        >
-                          <button
-                            onClick={() => {
-                              if (idx > 0) {
-                                const newQueue = [...draftQueue];
-                                [newQueue[idx - 1], newQueue[idx]] = [
-                                  newQueue[idx],
-                                  newQueue[idx - 1],
-                                ];
-                                setDraftQueue(newQueue);
-                              }
-                            }}
-                            disabled={idx === 0}
-                            style={{
-                              background: "transparent",
-                              border: "none",
-                              color:
-                                idx === 0
-                                  ? "rgba(255,255,255,0.2)"
-                                  : "var(--text-muted)",
-                              cursor: idx === 0 ? "not-allowed" : "pointer",
-                              fontSize: "0.8rem",
-                              padding: "0",
-                              lineHeight: 1,
-                            }}
-                            onMouseEnter={(e) => {
-                              if (idx !== 0)
-                                e.currentTarget.style.color = "var(--accent)";
-                            }}
-                            onMouseLeave={(e) => {
-                              if (idx !== 0)
-                                e.currentTarget.style.color =
-                                  "var(--text-muted)";
-                            }}
-                          >
-                            ▲
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (idx < draftQueue.length - 1) {
-                                const newQueue = [...draftQueue];
-                                [newQueue[idx], newQueue[idx + 1]] = [
-                                  newQueue[idx + 1],
-                                  newQueue[idx],
-                                ];
-                                setDraftQueue(newQueue);
-                              }
-                            }}
-                            disabled={idx === draftQueue.length - 1}
-                            style={{
-                              background: "transparent",
-                              border: "none",
-                              color:
-                                idx === draftQueue.length - 1
-                                  ? "rgba(255,255,255,0.2)"
-                                  : "var(--text-muted)",
-                              cursor:
-                                idx === draftQueue.length - 1
-                                  ? "not-allowed"
-                                  : "pointer",
-                              fontSize: "0.8rem",
-                              padding: "0",
-                              lineHeight: 1,
-                            }}
-                            onMouseEnter={(e) => {
-                              if (idx !== draftQueue.length - 1)
-                                e.currentTarget.style.color = "var(--accent)";
-                            }}
-                            onMouseLeave={(e) => {
-                              if (idx !== draftQueue.length - 1)
-                                e.currentTarget.style.color =
-                                  "var(--text-muted)";
-                            }}
-                          >
-                            ▼
-                          </button>
-                        </div>
-
                         <button
-                          onClick={() => {
-                            setDraftQueue((prev) =>
-                              prev.filter((_, i) => i !== idx)
-                            );
-                          }}
+                          onClick={() => setDraftQueue((prev) => prev.filter((_, i) => i !== idx))}
                           style={{
                             background: "transparent",
                             border: "none",
-                            color: "var(--text-muted)",
+                            color: "#ef4444",
                             cursor: "pointer",
                             fontSize: "1.2rem",
-                            padding: "0.25rem",
                           }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.color = "#ef4444")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.color = "var(--text-muted)")
-                          }
                         >
                           ×
                         </button>

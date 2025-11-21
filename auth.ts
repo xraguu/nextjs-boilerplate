@@ -48,8 +48,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = adminIds.includes(profile.id as string) ? 'admin' : 'user';
       }
 
-      // If we have a discordId but no user ID, fetch it from database
-      if (token.discordId && !token.id) {
+      // Always fetch the latest role from database if we have a discordId
+      // This ensures role changes take effect without requiring re-login
+      if (token.discordId) {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { discordId: token.discordId as string },
@@ -60,7 +61,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         } catch (error) {
           console.error("Error fetching user from database:", error);
-          // Continue without user ID if database error
+          // Continue with existing token data if database error
         }
       }
 

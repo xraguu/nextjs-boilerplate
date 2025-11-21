@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   const session = await auth();
 
@@ -14,24 +14,45 @@ export async function PATCH(
   }
 
   try {
-    const { status } = await req.json();
+    const { userId } = await params;
+    const body = await req.json();
+    const { status, role } = body;
 
-    // Validate status
-    if (!status || !["active", "suspended"].includes(status)) {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    // Prepare data to update
+    const updateData: { status?: string; role?: string } = {};
+
+    // Validate and add status if provided
+    if (status) {
+      if (!["active", "suspended"].includes(status)) {
+        return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+      }
+      updateData.status = status;
     }
 
-    // Update user status
+    // Validate and add role if provided
+    if (role) {
+      if (!["admin", "user"].includes(role)) {
+        return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+      }
+      updateData.role = role;
+    }
+
+    // Check if there's anything to update
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+    }
+
+    // Update user
     const updatedUser = await prisma.user.update({
-      where: { id: params.userId },
-      data: { status },
+      where: { id: userId },
+      data: updateData,
     });
 
     return NextResponse.json(updatedUser);
   } catch (error) {
-    console.error("Error updating user status:", error);
+    console.error("Error updating user:", error);
     return NextResponse.json(
-      { error: "Failed to update user status" },
+      { error: "Failed to update user" },
       { status: 500 }
     );
   }

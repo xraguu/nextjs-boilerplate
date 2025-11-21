@@ -28,7 +28,8 @@
       "Bash(ping:*)",
       "Bash(taskkill:*)",
       "Bash(AUTH_DISCORD_SECRET=q8qbz_JP5gLNejxkRb0TCgT-ZoTmvKeH npm run dev:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(npx prisma studio:*)"
     ],
     "deny": [],
     "ask": []
