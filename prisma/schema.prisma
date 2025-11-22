@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -49,28 +48,18 @@ model MLETeam {
 }
 
 model MLEPlayer {
-<<<<<<< HEAD
-  id              String                  @id
-  name            String
-  teamId          String?
-  team            MLETeam?                @relation(fields: [teamId], references: [id])
-  historicalStats PlayerHistoricalStats[]
-  matchStats      PlayerMatchStats[]
-  roleUsages      RoleUsage[]
-=======
-  id                String            @id
+  id                String                  @id
   name              String
   salary            Float?
-  memberId          String?           @unique
-  skillGroup        String?           // FL, AL, CL, ML, PL
+  memberId          String?                 @unique
+  skillGroup        String?                 // FL, AL, CL, ML, PL
   teamId            String?
-  team              MLETeam?          @relation(fields: [teamId], references: [id])
-  staffPosition     String?           // Captain, Assistant General Manager, General Manager, Franchise Manager
-  rosterSlot        String?           // A, B, C, D, E, F, G, H, NONE
+  team              MLETeam?                @relation(fields: [teamId], references: [id])
+  staffPosition     String?                 // Captain, Assistant General Manager, General Manager, Franchise Manager
+  rosterSlot        String?                 // A, B, C, D, E, F, G, H, NONE
   roleUsages        RoleUsage[]
   matchStats        PlayerMatchStats[]
-  historicalStats   PlayerHistoricalStats?
->>>>>>> origin/main
+  historicalStats   PlayerHistoricalStats[]
 }
 
 model RoleUsage {
