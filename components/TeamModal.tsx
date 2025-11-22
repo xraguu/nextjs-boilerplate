@@ -27,21 +27,71 @@ interface TeamModalProps {
   isDraftContext?: boolean;
 }
 
-export default function TeamModal({ team, onClose, isDraftContext = false }: TeamModalProps) {
+export default function TeamModal({
+  team,
+  onClose,
+  isDraftContext = false,
+}: TeamModalProps) {
   // Mock data for draft context
   const mockFranchiseManager = "Hermanos";
   const mockGeneralManager = "thecyco";
   const mockTeamCaptain = "xraguu";
   const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
   const [playerSortColumn, setPlayerSortColumn] = useState<string>("goals");
-  const [playerSortDirection, setPlayerSortDirection] = useState<"asc" | "desc">("desc");
+  const [playerSortDirection, setPlayerSortDirection] = useState<
+    "asc" | "desc"
+  >("desc");
   const [weeklyStats] = useState([
-    { week: 1, opponent: "AL Comets", fpts: 52, sprocketRating: 1250, goals: 8, saves: 89, shots: 142, assists: 12, goalsAgainst: 6, shotsAgainst: 135, demosInflicted: 18, demosTaken: 12, matchResult: "3-2" },
-    { week: 2, opponent: "AL Dodgers", fpts: 48, sprocketRating: 1230, goals: 6, saves: 95, shots: 128, assists: 10, goalsAgainst: 7, shotsAgainst: 148, demosInflicted: 15, demosTaken: 14, matchResult: "2-3" },
-    { week: 3, opponent: "AL Ducks", fpts: 55, sprocketRating: 1275, goals: 9, saves: 82, shots: 155, assists: 14, goalsAgainst: 5, shotsAgainst: 128, demosInflicted: 20, demosTaken: 10, matchResult: "3-1" },
+    {
+      week: 1,
+      opponent: "AL Comets",
+      fpts: 52,
+      sprocketRating: 1250,
+      goals: 8,
+      saves: 89,
+      shots: 142,
+      assists: 12,
+      goalsAgainst: 6,
+      shotsAgainst: 135,
+      demosInflicted: 18,
+      demosTaken: 12,
+      matchResult: "3-2",
+    },
+    {
+      week: 2,
+      opponent: "AL Dodgers",
+      fpts: 48,
+      sprocketRating: 1230,
+      goals: 6,
+      saves: 95,
+      shots: 128,
+      assists: 10,
+      goalsAgainst: 7,
+      shotsAgainst: 148,
+      demosInflicted: 15,
+      demosTaken: 14,
+      matchResult: "2-3",
+    },
+    {
+      week: 3,
+      opponent: "AL Ducks",
+      fpts: 55,
+      sprocketRating: 1275,
+      goals: 9,
+      saves: 82,
+      shots: 155,
+      assists: 14,
+      goalsAgainst: 5,
+      shotsAgainst: 128,
+      demosInflicted: 20,
+      demosTaken: 10,
+      matchResult: "3-1",
+    },
   ]);
   const [weeklySortColumn, setWeeklySortColumn] = useState<string>("week");
-  const [weeklySortDirection, setWeeklySortDirection] = useState<"asc" | "desc">("asc");
+  const [weeklySortDirection, setWeeklySortDirection] = useState<
+    "asc" | "desc"
+  >("asc");
 
   if (!team) return null;
 
@@ -75,8 +125,8 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
   });
 
   const sortedWeeklyStats = [...weeklyStats].sort((a, b) => {
-    const aVal = a[weeklySortColumn as keyof typeof weeklyStats[0]];
-    const bVal = b[weeklySortColumn as keyof typeof weeklyStats[0]];
+    const aVal = a[weeklySortColumn as keyof (typeof weeklyStats)[0]];
+    const bVal = b[weeklySortColumn as keyof (typeof weeklyStats)[0]];
     if (typeof aVal === "number" && typeof bVal === "number") {
       return weeklySortDirection === "asc" ? aVal - bVal : bVal - aVal;
     }
@@ -85,12 +135,20 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
 
   const PlayerSortIcon = ({ column }: { column: string }) => {
     if (playerSortColumn !== column) return null;
-    return <span style={{ marginLeft: "0.25rem", fontSize: "0.7rem" }}>{playerSortDirection === "asc" ? "▲" : "▼"}</span>;
+    return (
+      <span style={{ marginLeft: "0.25rem", fontSize: "0.7rem" }}>
+        {playerSortDirection === "asc" ? "▲" : "▼"}
+      </span>
+    );
   };
 
   const WeeklySortIcon = ({ column }: { column: string }) => {
     if (weeklySortColumn !== column) return null;
-    return <span style={{ marginLeft: "0.25rem", fontSize: "0.7rem" }}>{weeklySortDirection === "asc" ? "▲" : "▼"}</span>;
+    return (
+      <span style={{ marginLeft: "0.25rem", fontSize: "0.7rem" }}>
+        {weeklySortDirection === "asc" ? "▲" : "▼"}
+      </span>
+    );
   };
 
   return (
@@ -107,7 +165,7 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        padding: "1rem"
+        padding: "1rem",
       }}
     >
       <div
@@ -121,7 +179,7 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
           borderRadius: "12px",
           padding: "2rem",
           background: `linear-gradient(135deg, ${team.primaryColor} 0%, ${team.secondaryColor} 100%)`,
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
         }}
       >
         {/* Background Logo */}
@@ -139,21 +197,23 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
             backgroundPosition: "center",
             opacity: 0.1,
             pointerEvents: "none",
-            zIndex: 0
+            zIndex: 0,
           }}
         />
 
         {/* Modal Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "1.5rem",
-          marginBottom: "2rem",
-          paddingBottom: "1.5rem",
-          borderBottom: "2px solid rgba(255,255,255,0.2)",
-          position: "relative",
-          zIndex: 1
-        }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "1.5rem",
+            marginBottom: "2rem",
+            paddingBottom: "1.5rem",
+            borderBottom: "2px solid rgba(255,255,255,0.2)",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
           <Image
             src={team.logoPath}
             alt={`${team.name} logo`}
@@ -162,43 +222,78 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
             style={{ borderRadius: "8px" }}
           />
           <div style={{ flex: 1 }}>
-            <h2 style={{
-              fontSize: "1.8rem",
-              fontWeight: 700,
-              color: "#ffffff",
-              margin: "0 0 0.5rem 0",
-              textShadow: "0 2px 4px rgba(0,0,0,0.3)"
-            }}>
+            <h2
+              style={{
+                fontSize: "1.8rem",
+                fontWeight: 700,
+                color: "#ffffff",
+                margin: "0 0 0.5rem 0",
+                textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              }}
+            >
               {team.leagueId} {team.name}
             </h2>
             {!isDraftContext && team.record && (
-              <div style={{
-                fontSize: "1rem",
-                color: "rgba(255,255,255,0.9)",
-                marginBottom: "0.75rem"
-              }}>
-                {team.record} · {team.rank}{team.rank === 1 ? 'st' : team.rank === 2 ? 'nd' : team.rank === 3 ? 'rd' : 'th'}
+              <div
+                style={{
+                  fontSize: "1rem",
+                  color: "rgba(255,255,255,0.9)",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                {team.record} · {team.rank}
+                {team.rank === 1
+                  ? "st"
+                  : team.rank === 2
+                  ? "nd"
+                  : team.rank === 3
+                  ? "rd"
+                  : "th"}
               </div>
             )}
             {team.fpts && (
-              <div style={{
-                display: "flex",
-                gap: "2rem",
-                marginBottom: "0.75rem"
-              }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "2rem",
+                  marginBottom: "0.75rem",
+                }}
+              >
                 <div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#ffffff" }}>
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: 700,
+                      color: "#ffffff",
+                    }}
+                  >
                     {team.fpts}
                   </div>
-                  <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.8)",
+                    }}
+                  >
                     Fantasy Points
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#ffffff" }}>
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: 700,
+                      color: "#ffffff",
+                    }}
+                  >
                     {team.avg}
                   </div>
-                  <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.8)",
+                    }}
+                  >
                     Avg Fantasy Points
                   </div>
                 </div>
@@ -207,52 +302,103 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
             {isDraftContext ? (
               <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", marginBottom: "0.25rem" }}>
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "rgba(255,255,255,0.7)",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
                     Franchise Manager
                   </div>
-                  <div style={{ fontSize: "0.95rem", color: "#ffffff", fontWeight: 600 }}>
+                  <div
+                    style={{
+                      fontSize: "0.95rem",
+                      color: "#ffffff",
+                      fontWeight: 600,
+                    }}
+                  >
                     {mockFranchiseManager}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", marginBottom: "0.25rem" }}>
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "rgba(255,255,255,0.7)",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
                     General Manager
                   </div>
-                  <div style={{ fontSize: "0.95rem", color: "#ffffff", fontWeight: 600 }}>
+                  <div
+                    style={{
+                      fontSize: "0.95rem",
+                      color: "#ffffff",
+                      fontWeight: 600,
+                    }}
+                  >
                     {mockGeneralManager}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", marginBottom: "0.25rem" }}>
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "rgba(255,255,255,0.7)",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
                     Team Captain
                   </div>
-                  <div style={{ fontSize: "0.95rem", color: "#ffffff", fontWeight: 600 }}>
+                  <div
+                    style={{
+                      fontSize: "0.95rem",
+                      color: "#ffffff",
+                      fontWeight: 600,
+                    }}
+                  >
                     {mockTeamCaptain}
                   </div>
                 </div>
               </div>
             ) : (
               (team.status || team.rosteredBy) && (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <span style={{
-                    display: "inline-block",
-                    padding: "0.35rem 0.75rem",
-                    borderRadius: "4px",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    color: "#ffffff",
-                    backdropFilter: "blur(4px)"
-                  }}>
-                    {team.rosteredBy ? "Rostered" : team.status === "free-agent" ? "Free Agent" : "On Waivers"}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      padding: "0.35rem 0.75rem",
+                      borderRadius: "4px",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      backgroundColor: "rgba(255, 255, 255, 0.2)",
+                      color: "#ffffff",
+                      backdropFilter: "blur(4px)",
+                    }}
+                  >
+                    {team.rosteredBy
+                      ? "Rostered"
+                      : team.status === "free-agent"
+                      ? "Free Agent"
+                      : "On Waivers"}
                   </span>
                   {team.rosteredBy && (
-                    <span style={{
-                      fontSize: "0.9rem",
-                      color: "rgba(255, 255, 255, 0.9)",
-                      fontWeight: 600
-                    }}>
-                      | {team.rosteredBy.rosterName} ({team.rosteredBy.managerName})
+                    <span
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "rgba(255, 255, 255, 0.9)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      | {team.rosteredBy.rosterName} (
+                      {team.rosteredBy.managerName})
                     </span>
                   )}
                 </div>
@@ -270,7 +416,7 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
               padding: "0.25rem 0.5rem",
               lineHeight: 1,
               borderRadius: "4px",
-              backdropFilter: "blur(4px)"
+              backdropFilter: "blur(4px)",
             }}
           >
             ×
@@ -279,18 +425,35 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
 
         {/* Players Table */}
         <div style={{ position: "relative", zIndex: 1, marginBottom: "2rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h3 style={{
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "#ffffff",
-              margin: 0,
-              textShadow: "0 2px 4px rgba(0,0,0,0.3)"
-            }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "1rem",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 600,
+                color: "#ffffff",
+                margin: 0,
+                textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              }}
+            >
               Roster
             </h3>
             {/* Game Mode Toggle */}
-            <div style={{ display: "flex", gap: "0.5rem", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: "6px", padding: "0.25rem" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                backgroundColor: "rgba(255,255,255,0.15)",
+                borderRadius: "6px",
+                padding: "0.25rem",
+              }}
+            >
               <button
                 onClick={() => setGameMode("2s")}
                 style={{
@@ -300,9 +463,10 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
                   fontWeight: 600,
                   border: "none",
                   cursor: "pointer",
-                  backgroundColor: gameMode === "2s" ? "rgba(255,255,255,0.9)" : "transparent",
+                  backgroundColor:
+                    gameMode === "2s" ? "rgba(255,255,255,0.9)" : "transparent",
                   color: gameMode === "2s" ? team.primaryColor : "#ffffff",
-                  transition: "all 0.2s ease"
+                  transition: "all 0.2s ease",
                 }}
               >
                 2s
@@ -316,9 +480,10 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
                   fontWeight: 600,
                   border: "none",
                   cursor: "pointer",
-                  backgroundColor: gameMode === "3s" ? "rgba(255,255,255,0.9)" : "transparent",
+                  backgroundColor:
+                    gameMode === "3s" ? "rgba(255,255,255,0.9)" : "transparent",
                   color: gameMode === "3s" ? team.primaryColor : "#ffffff",
-                  transition: "all 0.2s ease"
+                  transition: "all 0.2s ease",
                 }}
               >
                 3s
@@ -329,27 +494,209 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Player</th>
-                  <th onClick={() => handlePlayerSort("goals")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Goals<PlayerSortIcon column="goals" /></th>
-                  <th onClick={() => handlePlayerSort("shots")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Shots<PlayerSortIcon column="shots" /></th>
-                  <th onClick={() => handlePlayerSort("saves")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Saves<PlayerSortIcon column="saves" /></th>
-                  <th onClick={() => handlePlayerSort("assists")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Assists<PlayerSortIcon column="assists" /></th>
-                  <th onClick={() => handlePlayerSort("demos")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Demos<PlayerSortIcon column="demos" /></th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Record</th>
-                  <th onClick={() => handlePlayerSort(gameMode === "2s" ? "2sU" : "3sU")} style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>{gameMode === "2s" ? "2sU" : "3sU"}<PlayerSortIcon column={gameMode === "2s" ? "2sU" : "3sU"} /></th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Player
+                  </th>
+                  <th
+                    onClick={() => handlePlayerSort("goals")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                  >
+                    Goals
+                    <PlayerSortIcon column="goals" />
+                  </th>
+                  <th
+                    onClick={() => handlePlayerSort("shots")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                  >
+                    Shots
+                    <PlayerSortIcon column="shots" />
+                  </th>
+                  <th
+                    onClick={() => handlePlayerSort("saves")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                  >
+                    Saves
+                    <PlayerSortIcon column="saves" />
+                  </th>
+                  <th
+                    onClick={() => handlePlayerSort("assists")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                  >
+                    Assists
+                    <PlayerSortIcon column="assists" />
+                  </th>
+                  <th
+                    onClick={() => handlePlayerSort("demos")}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                  >
+                    Demos
+                    <PlayerSortIcon column="demos" />
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Record
+                  </th>
+                  <th
+                    onClick={() =>
+                      handlePlayerSort(gameMode === "2s" ? "2sU" : "3sU")
+                    }
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "rgba(255,255,255,0.9)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                  >
+                    {gameMode === "2s" ? "2sU" : "3sU"}
+                    <PlayerSortIcon
+                      column={gameMode === "2s" ? "2sU" : "3sU"}
+                    />
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sortedPlayers.map((player) => (
-                  <tr key={player.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                    <td style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "#ffffff" }}>{player.name}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.goals}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.shots}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.saves}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.assists}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{player.demos}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.8)" }}>{player.record}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{gameMode === "2s" ? player["2sU"] : player["3sU"]}</td>
+                  <tr
+                    key={player.id}
+                    style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}
+                  >
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        fontWeight: 600,
+                        color: "#ffffff",
+                      }}
+                    >
+                      {player.name}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                        color: "rgba(255,255,255,0.95)",
+                      }}
+                    >
+                      {player.goals}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                        color: "rgba(255,255,255,0.95)",
+                      }}
+                    >
+                      {player.shots}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                        color: "rgba(255,255,255,0.95)",
+                      }}
+                    >
+                      {player.saves}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                        color: "rgba(255,255,255,0.95)",
+                      }}
+                    >
+                      {player.assists}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                        color: "rgba(255,255,255,0.95)",
+                      }}
+                    >
+                      {player.demos}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "center",
+                        fontSize: "0.9rem",
+                        color: "rgba(255,255,255,0.8)",
+                      }}
+                    >
+                      {player.record}
+                    </td>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "center",
+                        fontSize: "0.9rem",
+                        color: "rgba(255,255,255,0.95)",
+                      }}
+                    >
+                      {gameMode === "2s" ? player["2sU"] : player["3sU"]}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -359,57 +706,357 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
 
         {/* Weekly Stats Table - Only show in non-draft context */}
         {!isDraftContext && (
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <h3 style={{
-            fontSize: "1.1rem",
-            fontWeight: 600,
-            color: "#ffffff",
-            marginBottom: "1rem",
-            textShadow: "0 2px 4px rgba(0,0,0,0.3)"
-          }}>
-            Weekly Breakdown
-          </h3>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
-                  <th onClick={() => handleWeeklySort("week")} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Week<WeeklySortIcon column="week" /></th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Opponent</th>
-                  <th onClick={() => handleWeeklySort("fpts")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Fpts<WeeklySortIcon column="fpts" /></th>
-                  <th onClick={() => handleWeeklySort("sprocketRating")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Sprocket Rating<WeeklySortIcon column="sprocketRating" /></th>
-                  <th onClick={() => handleWeeklySort("goals")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Goals<WeeklySortIcon column="goals" /></th>
-                  <th onClick={() => handleWeeklySort("saves")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Saves<WeeklySortIcon column="saves" /></th>
-                  <th onClick={() => handleWeeklySort("shots")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Shots<WeeklySortIcon column="shots" /></th>
-                  <th onClick={() => handleWeeklySort("assists")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Assists<WeeklySortIcon column="assists" /></th>
-                  <th onClick={() => handleWeeklySort("goalsAgainst")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Goals Against<WeeklySortIcon column="goalsAgainst" /></th>
-                  <th onClick={() => handleWeeklySort("shotsAgainst")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Shots Against<WeeklySortIcon column="shotsAgainst" /></th>
-                  <th onClick={() => handleWeeklySort("demosInflicted")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Demos Inflicted<WeeklySortIcon column="demosInflicted" /></th>
-                  <th onClick={() => handleWeeklySort("demosTaken")} style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, cursor: "pointer", userSelect: "none" }}>Demos Taken<WeeklySortIcon column="demosTaken" /></th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Match Result</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedWeeklyStats.map((week) => (
-                  <tr key={week.week} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                    <td style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "#ffffff" }}>{week.week}</td>
-                    <td style={{ padding: "0.75rem 1rem", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.opponent}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem", color: "#ffffff" }}>{week.fpts}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.sprocketRating}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.goals}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.saves}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.shots}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.assists}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.goalsAgainst}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.shotsAgainst}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.demosInflicted}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem", color: "rgba(255,255,255,0.95)" }}>{week.demosTaken}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", fontWeight: 600, color: "rgba(255,255,255,0.95)" }}>{week.matchResult}</td>
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <h3
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 600,
+                color: "#ffffff",
+                marginBottom: "1rem",
+                textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              }}
+            >
+              Weekly Breakdown
+            </h3>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr
+                    style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}
+                  >
+                    <th
+                      onClick={() => handleWeeklySort("week")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "left",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Week
+                      <WeeklySortIcon column="week" />
+                    </th>
+                    <th
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "left",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Opponent
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("fpts")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Fpts
+                      <WeeklySortIcon column="fpts" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("sprocketRating")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Sprocket Rating
+                      <WeeklySortIcon column="sprocketRating" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("goals")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Goals
+                      <WeeklySortIcon column="goals" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("saves")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Saves
+                      <WeeklySortIcon column="saves" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("shots")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Shots
+                      <WeeklySortIcon column="shots" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("assists")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Assists
+                      <WeeklySortIcon column="assists" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("goalsAgainst")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Goals Against
+                      <WeeklySortIcon column="goalsAgainst" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("shotsAgainst")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Shots Against
+                      <WeeklySortIcon column="shotsAgainst" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("demosInflicted")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Demos Inflicted
+                      <WeeklySortIcon column="demosInflicted" />
+                    </th>
+                    <th
+                      onClick={() => handleWeeklySort("demosTaken")}
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Demos Taken
+                      <WeeklySortIcon column="demosTaken" />
+                    </th>
+                    <th
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "center",
+                        fontSize: "0.85rem",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Match Result
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedWeeklyStats.map((week) => (
+                    <tr
+                      key={week.week}
+                      style={{
+                        borderBottom: "1px solid rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontWeight: 600,
+                          color: "#ffffff",
+                        }}
+                      >
+                        {week.week}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.opponent}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontWeight: 600,
+                          fontSize: "0.9rem",
+                          color: "#ffffff",
+                        }}
+                      >
+                        {week.fpts}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.sprocketRating}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.goals}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.saves}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.shots}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.assists}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.goalsAgainst}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.shotsAgainst}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.demosInflicted}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontSize: "0.9rem",
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.demosTaken}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "center",
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                          color: "rgba(255,255,255,0.95)",
+                        }}
+                      >
+                        {week.matchResult}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
         )}
       </div>
     </div>
