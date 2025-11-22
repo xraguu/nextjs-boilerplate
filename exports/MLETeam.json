@@ -1,0 +1,1154 @@
+[
+  {
+    "id": "plAviators",
+    "name": "Aviators",
+    "leagueId": "PL",
+    "slug": "PL-aviators",
+    "logoPath": "/logos/PL-aviators.png",
+    "primaryColor": "#006847",
+    "secondaryColor": "#b7b7b7"
+  },
+  {
+    "id": "plBears",
+    "name": "Bears",
+    "leagueId": "PL",
+    "slug": "PL-bears",
+    "logoPath": "/logos/PL-bears.png",
+    "primaryColor": "#62b6fe",
+    "secondaryColor": "#a3bad2"
+  },
+  {
+    "id": "plBlizzard",
+    "name": "Blizzard",
+    "leagueId": "PL",
+    "slug": "PL-blizzard",
+    "logoPath": "/logos/PL-blizzard.png",
+    "primaryColor": "#385470",
+    "secondaryColor": "#a3bad2"
+  },
+  {
+    "id": "plBulls",
+    "name": "Bulls",
+    "leagueId": "PL",
+    "slug": "PL-bulls",
+    "logoPath": "/logos/PL-bulls.png",
+    "primaryColor": "#c30000",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "plExpress",
+    "name": "Express",
+    "leagueId": "PL",
+    "slug": "PL-express",
+    "logoPath": "/logos/PL-express.png",
+    "primaryColor": "#00254c",
+    "secondaryColor": "#eeb311"
+  },
+  {
+    "id": "plHive",
+    "name": "Hive",
+    "leagueId": "PL",
+    "slug": "PL-hive",
+    "logoPath": "/logos/PL-hive.png",
+    "primaryColor": "#ffa000",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "plHurricanes",
+    "name": "Hurricanes",
+    "leagueId": "PL",
+    "slug": "PL-hurricanes",
+    "logoPath": "/logos/PL-hurricanes.png",
+    "primaryColor": "#005030",
+    "secondaryColor": "#f47321"
+  },
+  {
+    "id": "plJets",
+    "name": "Jets",
+    "leagueId": "PL",
+    "slug": "PL-jets",
+    "logoPath": "/logos/PL-jets.png",
+    "primaryColor": "#0a2b58",
+    "secondaryColor": "#c7102e"
+  },
+  {
+    "id": "plKnights",
+    "name": "Knights",
+    "leagueId": "PL",
+    "slug": "PL-knights",
+    "logoPath": "/logos/PL-knights.png",
+    "primaryColor": "#b20000",
+    "secondaryColor": "#8e8e8e"
+  },
+  {
+    "id": "plLightning",
+    "name": "Lightning",
+    "leagueId": "PL",
+    "slug": "PL-lightning",
+    "logoPath": "/logos/PL-lightning.png",
+    "primaryColor": "#002868",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "plOutlaws",
+    "name": "Outlaws",
+    "leagueId": "PL",
+    "slug": "PL-outlaws",
+    "logoPath": "/logos/PL-outlaws.png",
+    "primaryColor": "#981821",
+    "secondaryColor": "#231c09"
+  },
+  {
+    "id": "plPandas",
+    "name": "Pandas",
+    "leagueId": "PL",
+    "slug": "PL-pandas",
+    "logoPath": "/logos/PL-pandas.png",
+    "primaryColor": "#006100",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "plRhinos",
+    "name": "Rhinos",
+    "leagueId": "PL",
+    "slug": "PL-rhinos",
+    "logoPath": "/logos/PL-rhinos.png",
+    "primaryColor": "#7d7d7d",
+    "secondaryColor": "#d9d9d9"
+  },
+  {
+    "id": "plShadow",
+    "name": "Shadow",
+    "leagueId": "PL",
+    "slug": "PL-shadow",
+    "logoPath": "/logos/PL-shadow.png",
+    "primaryColor": "#333739",
+    "secondaryColor": "#d3bc8d"
+  },
+  {
+    "id": "plSpartans",
+    "name": "Spartans",
+    "leagueId": "PL",
+    "slug": "PL-spartans",
+    "logoPath": "/logos/PL-spartans.png",
+    "primaryColor": "#7b1515",
+    "secondaryColor": "#ffb612"
+  },
+  {
+    "id": "plWolves",
+    "name": "Wolves",
+    "leagueId": "PL",
+    "slug": "PL-wolves",
+    "logoPath": "/logos/PL-wolves.png",
+    "primaryColor": "#8ebae3",
+    "secondaryColor": "#221c35"
+  },
+  {
+    "id": "mlAviators",
+    "name": "Aviators",
+    "leagueId": "ML",
+    "slug": "ML-aviators",
+    "logoPath": "/logos/ML-aviators.png",
+    "primaryColor": "#006847",
+    "secondaryColor": "#b7b7b7"
+  },
+  {
+    "id": "mlBears",
+    "name": "Bears",
+    "leagueId": "ML",
+    "slug": "ML-bears",
+    "logoPath": "/logos/ML-bears.png",
+    "primaryColor": "#62b6fe",
+    "secondaryColor": "#a3bad2"
+  },
+  {
+    "id": "mlBlizzard",
+    "name": "Blizzard",
+    "leagueId": "ML",
+    "slug": "ML-blizzard",
+    "logoPath": "/logos/ML-blizzard.png",
+    "primaryColor": "#385470",
+    "secondaryColor": "#a3bad2"
+  },
+  {
+    "id": "mlBulls",
+    "name": "Bulls",
+    "leagueId": "ML",
+    "slug": "ML-bulls",
+    "logoPath": "/logos/ML-bulls.png",
+    "primaryColor": "#c30000",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "mlComets",
+    "name": "Comets",
+    "leagueId": "ML",
+    "slug": "ML-comets",
+    "logoPath": "/logos/ML-comets.png",
+    "primaryColor": "#2db4e3",
+    "secondaryColor": "#f6518d"
+  },
+  {
+    "id": "mlDemolition",
+    "name": "Demolition",
+    "leagueId": "ML",
+    "slug": "ML-demolition",
+    "logoPath": "/logos/ML-demolition.png",
+    "primaryColor": "#148c32",
+    "secondaryColor": "#fdc622"
+  },
+  {
+    "id": "mlDodgers",
+    "name": "Dodgers",
+    "leagueId": "ML",
+    "slug": "ML-dodgers",
+    "logoPath": "/logos/ML-dodgers.png",
+    "primaryColor": "#041e42",
+    "secondaryColor": "#e7e9ea"
+  },
+  {
+    "id": "mlDucks",
+    "name": "Ducks",
+    "leagueId": "ML",
+    "slug": "ML-ducks",
+    "logoPath": "/logos/ML-ducks.png",
+    "primaryColor": "#00788c",
+    "secondaryColor": "#ffd100"
+  },
+  {
+    "id": "mlEclipse",
+    "name": "Eclipse",
+    "leagueId": "ML",
+    "slug": "ML-eclipse",
+    "logoPath": "/logos/ML-eclipse.png",
+    "primaryColor": "#261447",
+    "secondaryColor": "#ff6c11"
+  },
+  {
+    "id": "mlElite",
+    "name": "Elite",
+    "leagueId": "ML",
+    "slug": "ML-elite",
+    "logoPath": "/logos/ML-elite.png",
+    "primaryColor": "#572a84",
+    "secondaryColor": "#ea9300"
+  },
+  {
+    "id": "mlExpress",
+    "name": "Express",
+    "leagueId": "ML",
+    "slug": "ML-express",
+    "logoPath": "/logos/ML-express.png",
+    "primaryColor": "#00254c",
+    "secondaryColor": "#eeb311"
+  },
+  {
+    "id": "mlFlames",
+    "name": "Flames",
+    "leagueId": "ML",
+    "slug": "ML-flames",
+    "logoPath": "/logos/ML-flames.png",
+    "primaryColor": "#c92a06",
+    "secondaryColor": "#f6c432"
+  },
+  {
+    "id": "mlFoxes",
+    "name": "Foxes",
+    "leagueId": "ML",
+    "slug": "ML-foxes",
+    "logoPath": "/logos/ML-foxes.png",
+    "primaryColor": "#ea6409",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "mlHawks",
+    "name": "Hawks",
+    "leagueId": "ML",
+    "slug": "ML-hawks",
+    "logoPath": "/logos/ML-hawks.png",
+    "primaryColor": "#c30000",
+    "secondaryColor": "#0199b5"
+  },
+  {
+    "id": "mlHive",
+    "name": "Hive",
+    "leagueId": "ML",
+    "slug": "ML-hive",
+    "logoPath": "/logos/ML-hive.png",
+    "primaryColor": "#ffa000",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "mlHurricanes",
+    "name": "Hurricanes",
+    "leagueId": "ML",
+    "slug": "ML-hurricanes",
+    "logoPath": "/logos/ML-hurricanes.png",
+    "primaryColor": "#005030",
+    "secondaryColor": "#f47321"
+  },
+  {
+    "id": "mlJets",
+    "name": "Jets",
+    "leagueId": "ML",
+    "slug": "ML-jets",
+    "logoPath": "/logos/ML-jets.png",
+    "primaryColor": "#0a2b58",
+    "secondaryColor": "#c7102e"
+  },
+  {
+    "id": "mlKnights",
+    "name": "Knights",
+    "leagueId": "ML",
+    "slug": "ML-knights",
+    "logoPath": "/logos/ML-knights.png",
+    "primaryColor": "#b20000",
+    "secondaryColor": "#8e8e8e"
+  },
+  {
+    "id": "mlLightning",
+    "name": "Lightning",
+    "leagueId": "ML",
+    "slug": "ML-lightning",
+    "logoPath": "/logos/ML-lightning.png",
+    "primaryColor": "#002868",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "mlOutlaws",
+    "name": "Outlaws",
+    "leagueId": "ML",
+    "slug": "ML-outlaws",
+    "logoPath": "/logos/ML-outlaws.png",
+    "primaryColor": "#981821",
+    "secondaryColor": "#231c09"
+  },
+  {
+    "id": "mlPandas",
+    "name": "Pandas",
+    "leagueId": "ML",
+    "slug": "ML-pandas",
+    "logoPath": "/logos/ML-pandas.png",
+    "primaryColor": "#006100",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "mlPirates",
+    "name": "Pirates",
+    "leagueId": "ML",
+    "slug": "ML-pirates",
+    "logoPath": "/logos/ML-pirates.png",
+    "primaryColor": "#333739",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "mlPuffins",
+    "name": "Puffins",
+    "leagueId": "ML",
+    "slug": "ML-puffins",
+    "logoPath": "/logos/ML-puffins.png",
+    "primaryColor": "#ec2c0d",
+    "secondaryColor": "#9bf9ff"
+  },
+  {
+    "id": "mlRhinos",
+    "name": "Rhinos",
+    "leagueId": "ML",
+    "slug": "ML-rhinos",
+    "logoPath": "/logos/ML-rhinos.png",
+    "primaryColor": "#7d7d7d",
+    "secondaryColor": "#d9d9d9"
+  },
+  {
+    "id": "mlSabres",
+    "name": "Sabres",
+    "leagueId": "ML",
+    "slug": "ML-sabres",
+    "logoPath": "/logos/ML-sabres.png",
+    "primaryColor": "#f36a22",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "mlShadow",
+    "name": "Shadow",
+    "leagueId": "ML",
+    "slug": "ML-shadow",
+    "logoPath": "/logos/ML-shadow.png",
+    "primaryColor": "#333739",
+    "secondaryColor": "#d3bc8d"
+  },
+  {
+    "id": "mlSharks",
+    "name": "Sharks",
+    "leagueId": "ML",
+    "slug": "ML-sharks",
+    "logoPath": "/logos/ML-sharks.png",
+    "primaryColor": "#329393",
+    "secondaryColor": "#f36a24"
+  },
+  {
+    "id": "mlSpartans",
+    "name": "Spartans",
+    "leagueId": "ML",
+    "slug": "ML-spartans",
+    "logoPath": "/logos/ML-spartans.png",
+    "primaryColor": "#7b1515",
+    "secondaryColor": "#ffb612"
+  },
+  {
+    "id": "mlSpectre",
+    "name": "Spectre",
+    "leagueId": "ML",
+    "slug": "ML-spectre",
+    "logoPath": "/logos/ML-spectre.png",
+    "primaryColor": "#58427c",
+    "secondaryColor": "#4dcf74"
+  },
+  {
+    "id": "mlTyrants",
+    "name": "Tyrants",
+    "leagueId": "ML",
+    "slug": "ML-tyrants",
+    "logoPath": "/logos/ML-tyrants.png",
+    "primaryColor": "#98012e",
+    "secondaryColor": "#c4a87d"
+  },
+  {
+    "id": "mlWizards",
+    "name": "Wizards",
+    "leagueId": "ML",
+    "slug": "ML-wizards",
+    "logoPath": "/logos/ML-wizards.png",
+    "primaryColor": "#0066b2",
+    "secondaryColor": "#fdb927"
+  },
+  {
+    "id": "mlWolves",
+    "name": "Wolves",
+    "leagueId": "ML",
+    "slug": "ML-wolves",
+    "logoPath": "/logos/ML-wolves.png",
+    "primaryColor": "#8ebae3",
+    "secondaryColor": "#221c35"
+  },
+  {
+    "id": "clAviators",
+    "name": "Aviators",
+    "leagueId": "CL",
+    "slug": "CL-aviators",
+    "logoPath": "/logos/CL-aviators.png",
+    "primaryColor": "#006847",
+    "secondaryColor": "#b7b7b7"
+  },
+  {
+    "id": "clBears",
+    "name": "Bears",
+    "leagueId": "CL",
+    "slug": "CL-bears",
+    "logoPath": "/logos/CL-bears.png",
+    "primaryColor": "#62b6fe",
+    "secondaryColor": "#a3bad2"
+  },
+  {
+    "id": "clBlizzard",
+    "name": "Blizzard",
+    "leagueId": "CL",
+    "slug": "CL-blizzard",
+    "logoPath": "/logos/CL-blizzard.png",
+    "primaryColor": "#385470",
+    "secondaryColor": "#a3bad2"
+  },
+  {
+    "id": "clBulls",
+    "name": "Bulls",
+    "leagueId": "CL",
+    "slug": "CL-bulls",
+    "logoPath": "/logos/CL-bulls.png",
+    "primaryColor": "#c30000",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "clComets",
+    "name": "Comets",
+    "leagueId": "CL",
+    "slug": "CL-comets",
+    "logoPath": "/logos/CL-comets.png",
+    "primaryColor": "#2db4e3",
+    "secondaryColor": "#f6518d"
+  },
+  {
+    "id": "clDemolition",
+    "name": "Demolition",
+    "leagueId": "CL",
+    "slug": "CL-demolition",
+    "logoPath": "/logos/CL-demolition.png",
+    "primaryColor": "#148c32",
+    "secondaryColor": "#fdc622"
+  },
+  {
+    "id": "clDodgers",
+    "name": "Dodgers",
+    "leagueId": "CL",
+    "slug": "CL-dodgers",
+    "logoPath": "/logos/CL-dodgers.png",
+    "primaryColor": "#041e42",
+    "secondaryColor": "#e7e9ea"
+  },
+  {
+    "id": "clDucks",
+    "name": "Ducks",
+    "leagueId": "CL",
+    "slug": "CL-ducks",
+    "logoPath": "/logos/CL-ducks.png",
+    "primaryColor": "#00788c",
+    "secondaryColor": "#ffd100"
+  },
+  {
+    "id": "clEclipse",
+    "name": "Eclipse",
+    "leagueId": "CL",
+    "slug": "CL-eclipse",
+    "logoPath": "/logos/CL-eclipse.png",
+    "primaryColor": "#261447",
+    "secondaryColor": "#ff6c11"
+  },
+  {
+    "id": "clElite",
+    "name": "Elite",
+    "leagueId": "CL",
+    "slug": "CL-elite",
+    "logoPath": "/logos/CL-elite.png",
+    "primaryColor": "#572a84",
+    "secondaryColor": "#ea9300"
+  },
+  {
+    "id": "clExpress",
+    "name": "Express",
+    "leagueId": "CL",
+    "slug": "CL-express",
+    "logoPath": "/logos/CL-express.png",
+    "primaryColor": "#00254c",
+    "secondaryColor": "#eeb311"
+  },
+  {
+    "id": "clFlames",
+    "name": "Flames",
+    "leagueId": "CL",
+    "slug": "CL-flames",
+    "logoPath": "/logos/CL-flames.png",
+    "primaryColor": "#c92a06",
+    "secondaryColor": "#f6c432"
+  },
+  {
+    "id": "clFoxes",
+    "name": "Foxes",
+    "leagueId": "CL",
+    "slug": "CL-foxes",
+    "logoPath": "/logos/CL-foxes.png",
+    "primaryColor": "#ea6409",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "clHawks",
+    "name": "Hawks",
+    "leagueId": "CL",
+    "slug": "CL-hawks",
+    "logoPath": "/logos/CL-hawks.png",
+    "primaryColor": "#c30000",
+    "secondaryColor": "#0199b5"
+  },
+  {
+    "id": "clHive",
+    "name": "Hive",
+    "leagueId": "CL",
+    "slug": "CL-hive",
+    "logoPath": "/logos/CL-hive.png",
+    "primaryColor": "#ffa000",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "clHurricanes",
+    "name": "Hurricanes",
+    "leagueId": "CL",
+    "slug": "CL-hurricanes",
+    "logoPath": "/logos/CL-hurricanes.png",
+    "primaryColor": "#005030",
+    "secondaryColor": "#f47321"
+  },
+  {
+    "id": "clJets",
+    "name": "Jets",
+    "leagueId": "CL",
+    "slug": "CL-jets",
+    "logoPath": "/logos/CL-jets.png",
+    "primaryColor": "#0a2b58",
+    "secondaryColor": "#c7102e"
+  },
+  {
+    "id": "clKnights",
+    "name": "Knights",
+    "leagueId": "CL",
+    "slug": "CL-knights",
+    "logoPath": "/logos/CL-knights.png",
+    "primaryColor": "#b20000",
+    "secondaryColor": "#8e8e8e"
+  },
+  {
+    "id": "clLightning",
+    "name": "Lightning",
+    "leagueId": "CL",
+    "slug": "CL-lightning",
+    "logoPath": "/logos/CL-lightning.png",
+    "primaryColor": "#002868",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "clOutlaws",
+    "name": "Outlaws",
+    "leagueId": "CL",
+    "slug": "CL-outlaws",
+    "logoPath": "/logos/CL-outlaws.png",
+    "primaryColor": "#981821",
+    "secondaryColor": "#231c09"
+  },
+  {
+    "id": "clPandas",
+    "name": "Pandas",
+    "leagueId": "CL",
+    "slug": "CL-pandas",
+    "logoPath": "/logos/CL-pandas.png",
+    "primaryColor": "#006100",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "clPirates",
+    "name": "Pirates",
+    "leagueId": "CL",
+    "slug": "CL-pirates",
+    "logoPath": "/logos/CL-pirates.png",
+    "primaryColor": "#333739",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "clPuffins",
+    "name": "Puffins",
+    "leagueId": "CL",
+    "slug": "CL-puffins",
+    "logoPath": "/logos/CL-puffins.png",
+    "primaryColor": "#ec2c0d",
+    "secondaryColor": "#9bf9ff"
+  },
+  {
+    "id": "clRhinos",
+    "name": "Rhinos",
+    "leagueId": "CL",
+    "slug": "CL-rhinos",
+    "logoPath": "/logos/CL-rhinos.png",
+    "primaryColor": "#7d7d7d",
+    "secondaryColor": "#d9d9d9"
+  },
+  {
+    "id": "clSabres",
+    "name": "Sabres",
+    "leagueId": "CL",
+    "slug": "CL-sabres",
+    "logoPath": "/logos/CL-sabres.png",
+    "primaryColor": "#f36a22",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "clShadow",
+    "name": "Shadow",
+    "leagueId": "CL",
+    "slug": "CL-shadow",
+    "logoPath": "/logos/CL-shadow.png",
+    "primaryColor": "#333739",
+    "secondaryColor": "#d3bc8d"
+  },
+  {
+    "id": "clSharks",
+    "name": "Sharks",
+    "leagueId": "CL",
+    "slug": "CL-sharks",
+    "logoPath": "/logos/CL-sharks.png",
+    "primaryColor": "#329393",
+    "secondaryColor": "#f36a24"
+  },
+  {
+    "id": "clSpartans",
+    "name": "Spartans",
+    "leagueId": "CL",
+    "slug": "CL-spartans",
+    "logoPath": "/logos/CL-spartans.png",
+    "primaryColor": "#7b1515",
+    "secondaryColor": "#ffb612"
+  },
+  {
+    "id": "clSpectre",
+    "name": "Spectre",
+    "leagueId": "CL",
+    "slug": "CL-spectre",
+    "logoPath": "/logos/CL-spectre.png",
+    "primaryColor": "#58427c",
+    "secondaryColor": "#4dcf74"
+  },
+  {
+    "id": "clTyrants",
+    "name": "Tyrants",
+    "leagueId": "CL",
+    "slug": "CL-tyrants",
+    "logoPath": "/logos/CL-tyrants.png",
+    "primaryColor": "#98012e",
+    "secondaryColor": "#c4a87d"
+  },
+  {
+    "id": "clWizards",
+    "name": "Wizards",
+    "leagueId": "CL",
+    "slug": "CL-wizards",
+    "logoPath": "/logos/CL-wizards.png",
+    "primaryColor": "#0066b2",
+    "secondaryColor": "#fdb927"
+  },
+  {
+    "id": "clWolves",
+    "name": "Wolves",
+    "leagueId": "CL",
+    "slug": "CL-wolves",
+    "logoPath": "/logos/CL-wolves.png",
+    "primaryColor": "#8ebae3",
+    "secondaryColor": "#221c35"
+  },
+  {
+    "id": "alAviators",
+    "name": "Aviators",
+    "leagueId": "AL",
+    "slug": "AL-aviators",
+    "logoPath": "/logos/AL-aviators.png",
+    "primaryColor": "#006847",
+    "secondaryColor": "#b7b7b7"
+  },
+  {
+    "id": "alBears",
+    "name": "Bears",
+    "leagueId": "AL",
+    "slug": "AL-bears",
+    "logoPath": "/logos/AL-bears.png",
+    "primaryColor": "#62b6fe",
+    "secondaryColor": "#a3bad2"
+  },
+  {
+    "id": "alBlizzard",
+    "name": "Blizzard",
+    "leagueId": "AL",
+    "slug": "AL-blizzard",
+    "logoPath": "/logos/AL-blizzard.png",
+    "primaryColor": "#385470",
+    "secondaryColor": "#a3bad2"
+  },
+  {
+    "id": "alBulls",
+    "name": "Bulls",
+    "leagueId": "AL",
+    "slug": "AL-bulls",
+    "logoPath": "/logos/AL-bulls.png",
+    "primaryColor": "#c30000",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "alComets",
+    "name": "Comets",
+    "leagueId": "AL",
+    "slug": "AL-comets",
+    "logoPath": "/logos/AL-comets.png",
+    "primaryColor": "#2db4e3",
+    "secondaryColor": "#f6518d"
+  },
+  {
+    "id": "alDemolition",
+    "name": "Demolition",
+    "leagueId": "AL",
+    "slug": "AL-demolition",
+    "logoPath": "/logos/AL-demolition.png",
+    "primaryColor": "#148c32",
+    "secondaryColor": "#fdc622"
+  },
+  {
+    "id": "alDodgers",
+    "name": "Dodgers",
+    "leagueId": "AL",
+    "slug": "AL-dodgers",
+    "logoPath": "/logos/AL-dodgers.png",
+    "primaryColor": "#041e42",
+    "secondaryColor": "#e7e9ea"
+  },
+  {
+    "id": "alDucks",
+    "name": "Ducks",
+    "leagueId": "AL",
+    "slug": "AL-ducks",
+    "logoPath": "/logos/AL-ducks.png",
+    "primaryColor": "#00788c",
+    "secondaryColor": "#ffd100"
+  },
+  {
+    "id": "alEclipse",
+    "name": "Eclipse",
+    "leagueId": "AL",
+    "slug": "AL-eclipse",
+    "logoPath": "/logos/AL-eclipse.png",
+    "primaryColor": "#261447",
+    "secondaryColor": "#ff6c11"
+  },
+  {
+    "id": "alElite",
+    "name": "Elite",
+    "leagueId": "AL",
+    "slug": "AL-elite",
+    "logoPath": "/logos/AL-elite.png",
+    "primaryColor": "#572a84",
+    "secondaryColor": "#ea9300"
+  },
+  {
+    "id": "alExpress",
+    "name": "Express",
+    "leagueId": "AL",
+    "slug": "AL-express",
+    "logoPath": "/logos/AL-express.png",
+    "primaryColor": "#00254c",
+    "secondaryColor": "#eeb311"
+  },
+  {
+    "id": "alFlames",
+    "name": "Flames",
+    "leagueId": "AL",
+    "slug": "AL-flames",
+    "logoPath": "/logos/AL-flames.png",
+    "primaryColor": "#c92a06",
+    "secondaryColor": "#f6c432"
+  },
+  {
+    "id": "alFoxes",
+    "name": "Foxes",
+    "leagueId": "AL",
+    "slug": "AL-foxes",
+    "logoPath": "/logos/AL-foxes.png",
+    "primaryColor": "#ea6409",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "alHawks",
+    "name": "Hawks",
+    "leagueId": "AL",
+    "slug": "AL-hawks",
+    "logoPath": "/logos/AL-hawks.png",
+    "primaryColor": "#c30000",
+    "secondaryColor": "#0199b5"
+  },
+  {
+    "id": "alHive",
+    "name": "Hive",
+    "leagueId": "AL",
+    "slug": "AL-hive",
+    "logoPath": "/logos/AL-hive.png",
+    "primaryColor": "#ffa000",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "alHurricanes",
+    "name": "Hurricanes",
+    "leagueId": "AL",
+    "slug": "AL-hurricanes",
+    "logoPath": "/logos/AL-hurricanes.png",
+    "primaryColor": "#005030",
+    "secondaryColor": "#f47321"
+  },
+  {
+    "id": "alJets",
+    "name": "Jets",
+    "leagueId": "AL",
+    "slug": "AL-jets",
+    "logoPath": "/logos/AL-jets.png",
+    "primaryColor": "#0a2b58",
+    "secondaryColor": "#c7102e"
+  },
+  {
+    "id": "alKnights",
+    "name": "Knights",
+    "leagueId": "AL",
+    "slug": "AL-knights",
+    "logoPath": "/logos/AL-knights.png",
+    "primaryColor": "#b20000",
+    "secondaryColor": "#8e8e8e"
+  },
+  {
+    "id": "alLightning",
+    "name": "Lightning",
+    "leagueId": "AL",
+    "slug": "AL-lightning",
+    "logoPath": "/logos/AL-lightning.png",
+    "primaryColor": "#002868",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "alOutlaws",
+    "name": "Outlaws",
+    "leagueId": "AL",
+    "slug": "AL-outlaws",
+    "logoPath": "/logos/AL-outlaws.png",
+    "primaryColor": "#981821",
+    "secondaryColor": "#231c09"
+  },
+  {
+    "id": "alPandas",
+    "name": "Pandas",
+    "leagueId": "AL",
+    "slug": "AL-pandas",
+    "logoPath": "/logos/AL-pandas.png",
+    "primaryColor": "#006100",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "alPirates",
+    "name": "Pirates",
+    "leagueId": "AL",
+    "slug": "AL-pirates",
+    "logoPath": "/logos/AL-pirates.png",
+    "primaryColor": "#333739",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "alPuffins",
+    "name": "Puffins",
+    "leagueId": "AL",
+    "slug": "AL-puffins",
+    "logoPath": "/logos/AL-puffins.png",
+    "primaryColor": "#ec2c0d",
+    "secondaryColor": "#9bf9ff"
+  },
+  {
+    "id": "alRhinos",
+    "name": "Rhinos",
+    "leagueId": "AL",
+    "slug": "AL-rhinos",
+    "logoPath": "/logos/AL-rhinos.png",
+    "primaryColor": "#7d7d7d",
+    "secondaryColor": "#d9d9d9"
+  },
+  {
+    "id": "alSabres",
+    "name": "Sabres",
+    "leagueId": "AL",
+    "slug": "AL-sabres",
+    "logoPath": "/logos/AL-sabres.png",
+    "primaryColor": "#f36a22",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "alShadow",
+    "name": "Shadow",
+    "leagueId": "AL",
+    "slug": "AL-shadow",
+    "logoPath": "/logos/AL-shadow.png",
+    "primaryColor": "#333739",
+    "secondaryColor": "#d3bc8d"
+  },
+  {
+    "id": "alSharks",
+    "name": "Sharks",
+    "leagueId": "AL",
+    "slug": "AL-sharks",
+    "logoPath": "/logos/AL-sharks.png",
+    "primaryColor": "#329393",
+    "secondaryColor": "#f36a24"
+  },
+  {
+    "id": "alSpartans",
+    "name": "Spartans",
+    "leagueId": "AL",
+    "slug": "AL-spartans",
+    "logoPath": "/logos/AL-spartans.png",
+    "primaryColor": "#7b1515",
+    "secondaryColor": "#ffb612"
+  },
+  {
+    "id": "alSpectre",
+    "name": "Spectre",
+    "leagueId": "AL",
+    "slug": "AL-spectre",
+    "logoPath": "/logos/AL-spectre.png",
+    "primaryColor": "#58427c",
+    "secondaryColor": "#4dcf74"
+  },
+  {
+    "id": "alTyrants",
+    "name": "Tyrants",
+    "leagueId": "AL",
+    "slug": "AL-tyrants",
+    "logoPath": "/logos/AL-tyrants.png",
+    "primaryColor": "#98012e",
+    "secondaryColor": "#c4a87d"
+  },
+  {
+    "id": "alWizards",
+    "name": "Wizards",
+    "leagueId": "AL",
+    "slug": "AL-wizards",
+    "logoPath": "/logos/AL-wizards.png",
+    "primaryColor": "#0066b2",
+    "secondaryColor": "#fdb927"
+  },
+  {
+    "id": "alWolves",
+    "name": "Wolves",
+    "leagueId": "AL",
+    "slug": "AL-wolves",
+    "logoPath": "/logos/AL-wolves.png",
+    "primaryColor": "#8ebae3",
+    "secondaryColor": "#221c35"
+  },
+  {
+    "id": "flComets",
+    "name": "Comets",
+    "leagueId": "FL",
+    "slug": "FL-comets",
+    "logoPath": "/logos/FL-comets.png",
+    "primaryColor": "#2db4e3",
+    "secondaryColor": "#f6518d"
+  },
+  {
+    "id": "flDemolition",
+    "name": "Demolition",
+    "leagueId": "FL",
+    "slug": "FL-demolition",
+    "logoPath": "/logos/FL-demolition.png",
+    "primaryColor": "#148c32",
+    "secondaryColor": "#fdc622"
+  },
+  {
+    "id": "flDodgers",
+    "name": "Dodgers",
+    "leagueId": "FL",
+    "slug": "FL-dodgers",
+    "logoPath": "/logos/FL-dodgers.png",
+    "primaryColor": "#041e42",
+    "secondaryColor": "#e7e9ea"
+  },
+  {
+    "id": "flDucks",
+    "name": "Ducks",
+    "leagueId": "FL",
+    "slug": "FL-ducks",
+    "logoPath": "/logos/FL-ducks.png",
+    "primaryColor": "#00788c",
+    "secondaryColor": "#ffd100"
+  },
+  {
+    "id": "flEclipse",
+    "name": "Eclipse",
+    "leagueId": "FL",
+    "slug": "FL-eclipse",
+    "logoPath": "/logos/FL-eclipse.png",
+    "primaryColor": "#261447",
+    "secondaryColor": "#ff6c11"
+  },
+  {
+    "id": "flElite",
+    "name": "Elite",
+    "leagueId": "FL",
+    "slug": "FL-elite",
+    "logoPath": "/logos/FL-elite.png",
+    "primaryColor": "#572a84",
+    "secondaryColor": "#ea9300"
+  },
+  {
+    "id": "flFlames",
+    "name": "Flames",
+    "leagueId": "FL",
+    "slug": "FL-flames",
+    "logoPath": "/logos/FL-flames.png",
+    "primaryColor": "#c92a06",
+    "secondaryColor": "#f6c432"
+  },
+  {
+    "id": "flFoxes",
+    "name": "Foxes",
+    "leagueId": "FL",
+    "slug": "FL-foxes",
+    "logoPath": "/logos/FL-foxes.png",
+    "primaryColor": "#ea6409",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "flHawks",
+    "name": "Hawks",
+    "leagueId": "FL",
+    "slug": "FL-hawks",
+    "logoPath": "/logos/FL-hawks.png",
+    "primaryColor": "#c30000",
+    "secondaryColor": "#0199b5"
+  },
+  {
+    "id": "flPirates",
+    "name": "Pirates",
+    "leagueId": "FL",
+    "slug": "FL-pirates",
+    "logoPath": "/logos/FL-pirates.png",
+    "primaryColor": "#333739",
+    "secondaryColor": "#ffffff"
+  },
+  {
+    "id": "flPuffins",
+    "name": "Puffins",
+    "leagueId": "FL",
+    "slug": "FL-puffins",
+    "logoPath": "/logos/FL-puffins.png",
+    "primaryColor": "#ec2c0d",
+    "secondaryColor": "#9bf9ff"
+  },
+  {
+    "id": "flSabres",
+    "name": "Sabres",
+    "leagueId": "FL",
+    "slug": "FL-sabres",
+    "logoPath": "/logos/FL-sabres.png",
+    "primaryColor": "#f36a22",
+    "secondaryColor": "#111111"
+  },
+  {
+    "id": "flSharks",
+    "name": "Sharks",
+    "leagueId": "FL",
+    "slug": "FL-sharks",
+    "logoPath": "/logos/FL-sharks.png",
+    "primaryColor": "#329393",
+    "secondaryColor": "#f36a24"
+  },
+  {
+    "id": "flSpectre",
+    "name": "Spectre",
+    "leagueId": "FL",
+    "slug": "FL-spectre",
+    "logoPath": "/logos/FL-spectre.png",
+    "primaryColor": "#58427c",
+    "secondaryColor": "#4dcf74"
+  },
+  {
+    "id": "flTyrants",
+    "name": "Tyrants",
+    "leagueId": "FL",
+    "slug": "FL-tyrants",
+    "logoPath": "/logos/FL-tyrants.png",
+    "primaryColor": "#98012e",
+    "secondaryColor": "#c4a87d"
+  },
+  {
+    "id": "flWizards",
+    "name": "Wizards",
+    "leagueId": "FL",
+    "slug": "FL-wizards",
+    "logoPath": "/logos/FL-wizards.png",
+    "primaryColor": "#0066b2",
+    "secondaryColor": "#fdb927"
+  }
+]
