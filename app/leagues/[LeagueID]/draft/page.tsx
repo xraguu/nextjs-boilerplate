@@ -647,8 +647,7 @@ export default function DraftPage() {
             {rightPanelTab === "teams" && (
               <div>
                 <button
-                  onClick={() => isMyTurn && router.push(`/leagues/${leagueId}/draft/make-pick`)}
-                  disabled={!isMyTurn}
+                  onClick={() => router.push(`/leagues/${leagueId}/draft/make-pick`)}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem",
@@ -657,17 +656,17 @@ export default function DraftPage() {
                       : "rgba(255,255,255,0.1)",
                     border: "none",
                     borderRadius: "8px",
-                    color: isMyTurn ? "#ffffff" : "var(--text-muted)",
+                    color: isMyTurn ? "#ffffff" : "var(--accent)",
                     fontWeight: 600,
                     fontSize: "0.9rem",
-                    cursor: isMyTurn ? "pointer" : "not-allowed",
+                    cursor: "pointer",
                     marginBottom: "1rem",
-                    opacity: isMyTurn ? 1 : 0.5,
+                    opacity: 1,
                     transition: "all 0.2s ease",
                   }}
-                  title={isMyTurn ? "Make your pick" : "Wait for your turn"}
+                  title={isMyTurn ? "Make your pick" : "View full team stats"}
                 >
-                  {isMyTurn ? "Make Pick" : "Not Your Turn"}
+                  {isMyTurn ? "Make Pick" : "See Full Stats"}
                 </button>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>

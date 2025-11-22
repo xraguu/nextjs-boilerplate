@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { TEAMS, LEAGUE_COLORS } from "@/lib/teams";
@@ -232,13 +232,15 @@ export default function ScoreboardPage() {
 
   // Derive userRoster from selectedMatch - we need state because it can be edited
   const [userRoster, setUserRoster] = useState<RosterTeam[]>([]);
-  const [lastMatchId, setLastMatchId] = useState<number | null>(null);
 
-  // Only update userRoster when selectedMatch changes
-  if (selectedMatch?.id !== lastMatchId) {
-    setLastMatchId(selectedMatch?.id ?? null);
-    setUserRoster(selectedMatch ? [...selectedMatch.team1.roster] : []);
-  }
+  // Update userRoster when selectedMatch changes
+  useEffect(() => {
+    if (selectedMatch) {
+      setUserRoster([...selectedMatch.team1.roster]);
+    } else {
+      setUserRoster([]);
+    }
+  }, [selectedMatch?.id]); // Only re-run when the match ID changes
 
   const handleManagerClick = (managerName: string) => {
     // Navigate to opponents page - you'll need to map manager name to manager ID
