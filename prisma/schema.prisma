@@ -66,8 +66,13 @@ model MLETeam {
 model MLEPlayer {
   id                String            @id
   name              String
+  salary            Float?
+  memberId          String?           @unique
+  skillGroup        String?           // FL, AL, CL, ML, PL
   teamId            String?
   team              MLETeam?          @relation(fields: [teamId], references: [id])
+  staffPosition     String?           // Captain, Assistant General Manager, General Manager, Franchise Manager
+  rosterSlot        String?           // A, B, C, D, E, F, G, H, NONE
   roleUsages        RoleUsage[]
   matchStats        PlayerMatchStats[]
   historicalStats   PlayerHistoricalStats?

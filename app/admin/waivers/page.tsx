@@ -496,6 +496,23 @@ export default function TransactionsPage() {
         </>
       )}
 
+      {/* Page Header */}
+      <div style={{ marginBottom: "2rem" }}>
+        <h1
+          style={{
+            fontSize: "2.5rem",
+            color: "var(--accent)",
+            fontWeight: 700,
+            marginBottom: "0.5rem",
+          }}
+        >
+          Transactions
+        </h1>
+        <p style={{ fontSize: "1rem", color: "var(--text-muted)" }}>
+          Manage waivers, trades, and view transaction history
+        </p>
+      </div>
+
       {/* Filter Bar */}
       <div
         style={{
@@ -543,7 +560,7 @@ export default function TransactionsPage() {
                   top: "calc(100% + 0.5rem)",
                   left: 0,
                   right: 0,
-                  background: "rgba(20, 20, 30, 0.98)",
+                  background: "var(--bg-elevated)",
                   border: "1px solid rgba(255,255,255,0.2)",
                   borderRadius: "8px",
                   padding: "1rem",

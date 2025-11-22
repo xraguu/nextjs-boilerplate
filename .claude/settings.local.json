@@ -29,7 +29,9 @@
       "Bash(taskkill:*)",
       "Bash(AUTH_DISCORD_SECRET=q8qbz_JP5gLNejxkRb0TCgT-ZoTmvKeH npm run dev:*)",
       "Bash(npx tsx:*)",
-      "Bash(npx prisma studio:*)"
+      "Bash(npx prisma studio:*)",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(timeout /t 10 /nobreak)"
     ],
     "deny": [],
     "ask": []
