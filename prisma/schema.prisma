@@ -32,6 +32,7 @@ model User {
   proposedTrades   Trade[]        @relation("TradeProposer")
   receivedTrades   Trade[]        @relation("TradeReceiver")
   waiverClaims     WaiverClaim[]
+  transactions     Transaction[]
 }
 
 // ============================================================================
@@ -142,13 +143,13 @@ model PlayerHistoricalStats {
   playerId        String    @unique
   player          MLEPlayer @relation(fields: [playerId], references: [id])
 
-  totalGoals      Int
-  totalShots      Int
-  totalSaves      Int
-  totalAssists    Int
-  totalDemos      Int
-  avgSR           Float
-  gamesPlayed     Int
+  totalGoals      Int       @default(0)
+  totalShots      Int       @default(0)
+  totalSaves      Int       @default(0)
+  totalAssists    Int       @default(0)
+  totalDemos      Int       @default(0)
+  avgSR           Float     @default(0)
+  gamesPlayed     Int       @default(0)
 }
 
 model TeamWeeklyStats {
@@ -201,6 +202,7 @@ model FantasyLeague {
   trades          Trade[]
   waivers         WaiverClaim[]
   matchups        Matchup[]
+  transactions    Transaction[]
 }
 
 model FantasyTeam {
@@ -222,6 +224,7 @@ model FantasyTeam {
   proposedTrades    Trade[]        @relation("TradeProposerTeam")
   receivedTrades    Trade[]        @relation("TradeReceiverTeam")
   waiverClaims      WaiverClaim[]
+  transactions      Transaction[]
 
   @@unique([fantasyLeagueId, ownerUserId])
 }
@@ -313,6 +316,45 @@ model WaiverClaim {
   user            User          @relation(fields: [userId], references: [id])
 
   createdAt       DateTime      @default(now())
+}
+
+// ============================================================================
+// TRANSACTION HISTORY
+// ============================================================================
+
+model Transaction {
+  id              String        @id @default(cuid())
+  fantasyLeagueId String
+  fantasyTeamId   String
+  userId          String
+
+  type            String        // "waiver", "trade", "pickup", "drop"
+
+  // MLE Teams involved
+  addTeamId       String?       // MLE team added to roster
+  dropTeamId      String?       // MLE team dropped from roster
+
+  // Trade-specific fields
+  tradeId         String?       // Reference to Trade if applicable
+  tradePartnerTeamId String?    // Other fantasy team in trade
+  tradePartnerGave String[]     @default([]) // MLE teams received from trade partner
+
+  // Waiver-specific fields
+  waiverClaimId   String?       // Reference to WaiverClaim if applicable
+  faabBid         Int?          // FAAB amount spent
+
+  // Status and metadata
+  status          String        // "approved", "denied", "failed", "vetoed"
+  reason          String?       // Reason for denial/failure
+  processedAt     DateTime      @default(now())
+
+  league          FantasyLeague @relation(fields: [fantasyLeagueId], references: [id])
+  fantasyTeam     FantasyTeam   @relation(fields: [fantasyTeamId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
+
+  @@index([fantasyLeagueId])
+  @@index([fantasyTeamId])
+  @@index([processedAt])
 }
 
 // ============================================================================

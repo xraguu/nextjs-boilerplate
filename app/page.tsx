@@ -597,21 +597,28 @@ export default function HomePage() {
                   justifyContent: "flex-end",
                 }}
               >
-                {userLeagues.map((league) => (
-                  <Link
-                    key={league.id}
-                    href={`/leagues/${league.id}`}
-                    className="btn btn-ghost"
-                    style={{
-                      textDecoration: "none",
-                      padding: "0.75rem 1.25rem",
-                      fontSize: "0.95rem",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {league.name}
-                  </Link>
-                ))}
+                {userLeagues.map((league) => {
+                  const userTeam = league.fantasyTeams?.[0];
+                  const href = userTeam
+                    ? `/leagues/${league.id}/my-roster/${userTeam.id}`
+                    : `/leagues/${league.id}`;
+
+                  return (
+                    <Link
+                      key={league.id}
+                      href={href}
+                      className="btn btn-ghost"
+                      style={{
+                        textDecoration: "none",
+                        padding: "0.75rem 1.25rem",
+                        fontSize: "0.95rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {league.name}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>

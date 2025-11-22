@@ -1,16 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TEAMS } from "@/lib/teams";
 import Image from "next/image";
-
-// Mock fantasy leagues for filter
-const mockFantasyLeagues = [
-  { id: "2025-alpha", name: "2025 RL Fantasy Alpha" },
-  { id: "2025-beta", name: "2025 RL Fantasy Beta" },
-  { id: "2025-gamma", name: "2025 RL Fantasy Gamma" },
-  { id: "2024-championship", name: "2024 Championship League" },
-];
 
 // Mock waiver claims data
 const mockWaiverClaims = [
@@ -252,19 +244,46 @@ const mockTransactionHistory = [
 ];
 
 export default function TransactionsPage() {
-  const [claims, setClaims] = useState(mockWaiverClaims);
-  const [pendingTrades, setPendingTrades] = useState(mockPendingTrades);
-  const [transactionHistory, setTransactionHistory] = useState(
-    mockTransactionHistory
-  );
+  const [claims, setClaims] = useState<any[]>([]);
+  const [pendingTrades, setPendingTrades] = useState<any[]>([]);
+  const [transactionHistory, setTransactionHistory] = useState<any[]>([]);
+  const [leagues, setLeagues] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [selectedLeagues, setSelectedLeagues] = useState<string[]>(
-    mockFantasyLeagues.map((l) => l.id)
-  );
+  const [selectedLeagues, setSelectedLeagues] = useState<string[]>([]);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<"waivers" | "trades" | "history">(
     "waivers"
   );
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/admin/transactions");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch transactions");
+        }
+
+        const data = await response.json();
+        setLeagues(data.leagues || []);
+        setClaims(data.pendingWaivers || []);
+        setPendingTrades(data.pendingTrades || []);
+        setTransactionHistory(data.transactionHistory || []);
+        setSelectedLeagues((data.leagues || []).map((l: any) => l.id));
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Filter handling
   const toggleLeagueFilter = (leagueId: string) => {
@@ -276,11 +295,15 @@ export default function TransactionsPage() {
   };
 
   const selectAllLeagues = () => {
-    setSelectedLeagues(mockFantasyLeagues.map((l) => l.id));
+    setSelectedLeagues(leagues.map((l) => l.id));
   };
 
   const deselectAllLeagues = () => {
     setSelectedLeagues([]);
+  };
+
+  const getTeamByMLEId = (mleTeamId: string) => {
+    return TEAMS.find(t => t.id === mleTeamId);
   };
 
   // Filtered data based on selected leagues
@@ -430,6 +453,24 @@ export default function TransactionsPage() {
       alert("Trade vetoed!");
     }
   };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>Loading transactions...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#ef4444", fontSize: "1.1rem" }}>
+          Error: {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -590,7 +631,7 @@ export default function TransactionsPage() {
                     Deselect All
                   </button>
                 </div>
-                {mockFantasyLeagues.map((league) => (
+                {leagues.map((league) => (
                   <label
                     key={league.id}
                     style={{

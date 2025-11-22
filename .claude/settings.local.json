@@ -31,7 +31,10 @@
       "Bash(npx tsx:*)",
       "Bash(npx prisma studio:*)",
       "Bash(timeout /t 3 /nobreak)",
-      "Bash(timeout /t 10 /nobreak)"
+      "Bash(timeout /t 10 /nobreak)",
+      "Bash(dir:*)",
+      "Bash(npx prisma db execute:*)",
+      "Bash(timeout /t 2 /nobreak)"
     ],
     "deny": [],
     "ask": []

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
+import TeamModal from "@/components/TeamModal";
 
 // Types
 interface MLETeam {
@@ -88,6 +89,10 @@ export default function MyRosterPage() {
   // Drop modal state
   const [showDropModal, setShowDropModal] = useState(false);
   const [selectedDropSlot, setSelectedDropSlot] = useState<RosterSlot | null>(null);
+
+  // Team modal state
+  const [showModal, setShowModal] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<MLETeam | null>(null);
 
   // Generate full roster with empty slots
   const fullRoster = useMemo(() => {
@@ -637,6 +642,13 @@ export default function MyRosterPage() {
                             />
                             <div>
                               <div
+                                onClick={(e) => {
+                                  if (!moveMode) {
+                                    e.stopPropagation();
+                                    setSelectedTeam(slot.mleTeam);
+                                    setShowModal(true);
+                                  }
+                                }}
                                 style={{
                                   fontWeight: 600,
                                   fontSize: "0.95rem",
@@ -906,6 +918,10 @@ export default function MyRosterPage() {
                         />
                         <div>
                           <div
+                            onClick={() => {
+                              setSelectedTeam(team);
+                              setShowModal(true);
+                            }}
                             style={{
                               fontWeight: 600,
                               fontSize: "0.95rem",
@@ -1191,6 +1207,18 @@ export default function MyRosterPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Team Modal */}
+      {showModal && selectedTeam && (
+        <TeamModal
+          team={selectedTeam}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedTeam(null);
+          }}
+          isDraftContext={false}
+        />
       )}
     </>
   );
