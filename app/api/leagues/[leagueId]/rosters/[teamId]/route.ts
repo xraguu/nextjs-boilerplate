@@ -80,11 +80,14 @@ export async function GET(
         displayName: fantasyTeam.displayName,
         shortCode: fantasyTeam.shortCode,
         ownerDisplayName: fantasyTeam.owner.displayName,
+        faabRemaining: fantasyTeam.faabRemaining,
+        waiverPriority: fantasyTeam.waiverPriority,
       },
       league: {
         id: fantasyTeam.league.id,
         currentWeek: fantasyTeam.league.currentWeek,
         rosterConfig: fantasyTeam.league.rosterConfig,
+        waiverSystem: fantasyTeam.league.waiverSystem,
       },
       week,
       rosterSlots: rosterSlots.map((slot) => ({

@@ -3,14 +3,46 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 export default function LeagueNavbar() {
   const pathname = usePathname();
   const params = useParams();
   const leagueId = params?.LeagueID as string;
+  const { data: session } = useSession();
+  const [myTeamId, setMyTeamId] = useState<string | null>(null);
+
+  // Fetch the user's fantasy team ID for this league
+  useEffect(() => {
+    const fetchMyTeam = async () => {
+      if (!session?.user?.id || !leagueId) return;
+
+      try {
+        const response = await fetch(`/api/leagues/${leagueId}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Find the user's team from all fantasy teams in the league
+          const myTeam = data.league?.fantasyTeams?.find(
+            (team: any) => team.ownerUserId === session.user.id
+          );
+          if (myTeam) {
+            setMyTeamId(myTeam.id);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user's team:", error);
+      }
+    };
+
+    fetchMyTeam();
+  }, [session?.user?.id, leagueId]);
 
   const links = [
-    { href: `/leagues/${leagueId}`, label: "My Roster" },
+    {
+      href: myTeamId ? `/leagues/${leagueId}/my-roster/${myTeamId}` : `/leagues/${leagueId}`,
+      label: "My Roster"
+    },
     { href: `/leagues/${leagueId}/team-portal`, label: "MLE Teams" },
     { href: `/leagues/${leagueId}/scoreboard`, label: "Scoreboard" },
     { href: `/leagues/${leagueId}/standings`, label: "Standings" },

@@ -1,51 +1,72 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
-// Mock team stats and availability
-// Static values to prevent hydration errors (no Math.random())
-const mockTeamData = TEAMS.map((team, index) => ({
-  ...team,
-  rank: index + 1,
-  fpts: 480 - index * 2,
-  avg: 50 - index * 0.15,
-  last: 48 - index * 0.18,
-  goals: 140 - index * 0.4,
-  shots: 750 - index * 1.5,
-  saves: 230 - index * 0.8,
-  assists: 95 - index * 0.35,
-  demos: 55 - index * 0.25,
-  record: `${9 - Math.floor(index / 10)}-${4 + Math.floor(index / 10)}`,
-  status: index % 2 === 0 ? "rostered" : (index % 10 < 3 ? "waiver" : "free-agent"),
-}));
+interface MLETeam {
+  id: string;
+  name: string;
+  leagueId: string;
+  slug: string;
+  logoPath: string;
+  primaryColor: string;
+  secondaryColor: string;
+}
+
+interface TeamWithStats extends MLETeam {
+  rank: number;
+  fpts: number;
+  avg: number;
+  last: number;
+  goals: number;
+  shots: number;
+  saves: number;
+  assists: number;
+  demos: number;
+  record: string;
+  status: "free-agent" | "waiver" | "rostered";
+}
 
 type SortColumn = "rank" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos";
 type SortDirection = "asc" | "desc";
 
-// Mock roster data for the waiver modal
-// Static values to prevent hydration errors (no Math.random())
-const mockRoster = {
-  managerName: "xenn",
-  teamName: "Fantastic Ballers",
-  record: { wins: 2, losses: 1, place: "3rd" },
-  teams: TEAMS.slice(0, 8).map((team, index) => ({
-    ...team,
-    slot: index < 2 ? "2s" : index < 4 ? "3s" : index === 4 ? "FLX" : "BE",
-    fprk: index + 1,
-    fpts: 380 - index * 10,
-    avg: 50 - index * 2,
-    last: 48 - index * 2.5,
-    goals: 140 - index * 5,
-    shots: 750 - index * 20,
-    saves: 220 - index * 10,
-    assists: 95 - index * 5,
-    demos: 55 - index * 3,
-    teamRecord: `${6 - Math.floor(index / 2)}-${2 + Math.floor(index / 2)}`,
-  }))
-};
+interface RosterData {
+  fantasyTeam: {
+    id: string;
+    displayName: string;
+    shortCode: string;
+    ownerDisplayName: string;
+  };
+  league: {
+    currentWeek: number;
+    rosterConfig: {
+      "2s": number;
+      "3s": number;
+      flx: number;
+      be: number;
+    };
+  };
+  rosterSlots: Array<{
+    id: string;
+    position: string;
+    slotIndex: number;
+    fantasyPoints: number | null;
+    mleTeam: {
+      id: string;
+      name: string;
+      leagueId: string;
+      logoPath: string;
+    } | null;
+  }>;
+  record?: {
+    wins: number;
+    losses: number;
+  };
+  rank?: number;
+}
 
 // SortIcon component defined outside to avoid recreation during render
 const SortIcon = ({ column, sortColumn, sortDirection }: { column: SortColumn; sortColumn: SortColumn; sortDirection: SortDirection }) => {
@@ -58,15 +79,19 @@ const SortIcon = ({ column, sortColumn, sortDirection }: { column: SortColumn; s
 };
 
 export default function TeamPortalPage() {
+  const params = useParams();
+  const { data: session } = useSession();
+  const leagueId = params?.LeagueID as string;
+
   const [sortColumn, setSortColumn] = useState<SortColumn>("fpts");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [selectedTeam, setSelectedTeam] = useState<typeof mockTeamData[0] | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<TeamWithStats | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showWaiverModal, setShowWaiverModal] = useState(false);
-  const [selectedWaiverTeam, setSelectedWaiverTeam] = useState<typeof mockTeamData[0] | null>(null);
+  const [selectedWaiverTeam, setSelectedWaiverTeam] = useState<TeamWithStats | null>(null);
   const [selectedDropTeam, setSelectedDropTeam] = useState<string | null>(null);
   const [showFAConfirmModal, setShowFAConfirmModal] = useState(false);
-  const [selectedFATeam, setSelectedFATeam] = useState<typeof mockTeamData[0] | null>(null);
+  const [selectedFATeam, setSelectedFATeam] = useState<TeamWithStats | null>(null);
   const [leagueFilter, setLeagueFilter] = useState<"All" | "Foundation" | "Academy" | "Champion" | "Master" | "Premier">("All");
   const [modeFilter, setModeFilter] = useState<"2s" | "3s">("3s");
   const [leagueFilterOpen, setLeagueFilterOpen] = useState(false);
@@ -77,6 +102,147 @@ export default function TeamPortalPage() {
     waivers: true
   });
   const [availabilityFilterOpen, setAvailabilityFilterOpen] = useState(false);
+
+  // Real roster data
+  const [rosterData, setRosterData] = useState<RosterData | null>(null);
+  const [myTeamId, setMyTeamId] = useState<string | null>(null);
+  const [loadingRoster, setLoadingRoster] = useState(true);
+
+  // MLE teams data
+  const [mleTeams, setMleTeams] = useState<TeamWithStats[]>([]);
+  const [loadingTeams, setLoadingTeams] = useState(true);
+
+  // Fetch user's team ID for this league
+  useEffect(() => {
+    const fetchMyTeam = async () => {
+      if (!session?.user?.id || !leagueId) return;
+
+      try {
+        const response = await fetch(`/api/leagues/${leagueId}`);
+        if (response.ok) {
+          const data = await response.json();
+          const myTeam = data.league?.fantasyTeams?.find(
+            (team: any) => team.ownerUserId === session.user.id
+          );
+          if (myTeam) {
+            setMyTeamId(myTeam.id);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user's team:", error);
+      }
+    };
+
+    fetchMyTeam();
+  }, [session?.user?.id, leagueId]);
+
+  // Fetch roster data when we have myTeamId
+  useEffect(() => {
+    const fetchRoster = async () => {
+      if (!myTeamId || !leagueId) {
+        setLoadingRoster(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/leagues/${leagueId}/rosters/${myTeamId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setRosterData(data);
+        }
+      } catch (error) {
+        console.error("Error fetching roster:", error);
+      } finally {
+        setLoadingRoster(false);
+      }
+    };
+
+    fetchRoster();
+  }, [myTeamId, leagueId]);
+
+  // Fetch all MLE teams and check roster status
+  useEffect(() => {
+    const fetchTeams = async () => {
+      if (!session?.user?.id || !leagueId) {
+        setLoadingTeams(false);
+        return;
+      }
+
+      try {
+        // Fetch all MLE teams
+        const teamsResponse = await fetch("/api/mle-teams");
+        if (!teamsResponse.ok) {
+          throw new Error("Failed to fetch teams");
+        }
+        const teamsData = await teamsResponse.json();
+
+        // Fetch league data to get all fantasy teams and their rosters
+        const leagueResponse = await fetch(`/api/leagues/${leagueId}`);
+        const leagueData = leagueResponse.ok ? await leagueResponse.json() : null;
+
+        // Build a set of rostered team IDs
+        const rosteredTeamIds = new Set<string>();
+        if (leagueData?.league?.fantasyTeams) {
+          for (const fantasyTeam of leagueData.league.fantasyTeams) {
+            try {
+              const rosterResponse = await fetch(`/api/leagues/${leagueId}/rosters/${fantasyTeam.id}`);
+              if (rosterResponse.ok) {
+                const rosterData = await rosterResponse.json();
+                rosterData.rosterSlots.forEach((slot: any) => {
+                  if (slot.mleTeam) {
+                    rosteredTeamIds.add(slot.mleTeam.id);
+                  }
+                });
+              }
+            } catch (err) {
+              console.error(`Error fetching roster for team ${fantasyTeam.id}:`, err);
+            }
+          }
+        }
+
+        // Fetch pending waiver claims to determine waiver status
+        const waiverResponse = await fetch(`/api/leagues/${leagueId}/waivers`);
+        const waiverTeamIds = new Set<string>();
+        if (waiverResponse.ok) {
+          const waiverData = await waiverResponse.json();
+          if (waiverData.waiverClaims) {
+            waiverData.waiverClaims.forEach((claim: any) => {
+              if (claim.status === "pending") {
+                waiverTeamIds.add(claim.addTeamId);
+              }
+            });
+          }
+        }
+
+        // Transform teams with status based on roster check and waiver claims
+        const teamsWithStats: TeamWithStats[] = teamsData.teams.map((team: MLETeam, index: number) => ({
+          ...team,
+          rank: index + 1,
+          fpts: 0,
+          avg: 0,
+          last: 0,
+          goals: 0,
+          shots: 0,
+          saves: 0,
+          assists: 0,
+          demos: 0,
+          record: "0-0",
+          status: rosteredTeamIds.has(team.id)
+            ? "rostered" as const
+            : waiverTeamIds.has(team.id)
+            ? "waiver" as const
+            : "free-agent" as const,
+        }));
+        setMleTeams(teamsWithStats);
+      } catch (error) {
+        console.error("Error fetching MLE teams:", error);
+      } finally {
+        setLoadingTeams(false);
+      }
+    };
+
+    fetchTeams();
+  }, [session?.user?.id, leagueId]);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -91,7 +257,7 @@ export default function TeamPortalPage() {
 
   const sortedData = useMemo(() => {
     // First filter the data
-    let filteredData = [...mockTeamData];
+    let filteredData = [...mleTeams];
 
     // Filter by league
     if (leagueFilter !== "All") {
@@ -131,7 +297,7 @@ export default function TeamPortalPage() {
         return aValue < bValue ? 1 : -1;
       }
     });
-  }, [sortColumn, sortDirection, leagueFilter, availabilityFilter]);
+  }, [sortColumn, sortDirection, leagueFilter, availabilityFilter, mleTeams]);
 
   return (
     <>
@@ -224,11 +390,88 @@ export default function TeamPortalPage() {
                 No, Go Back
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   setShowFAConfirmModal(false);
-                  setSelectedWaiverTeam(selectedFATeam);
-                  setShowWaiverModal(true);
-                  setSelectedFATeam(null);
+
+                  // Check if roster has empty slots
+                  if (rosterData && selectedFATeam) {
+                    const config = rosterData.league.rosterConfig;
+                    const totalSlots = config["2s"] + config["3s"] + config.flx + config.be;
+                    const filledSlots = rosterData.rosterSlots.filter(slot => slot.mleTeam !== null).length;
+
+                    if (filledSlots < totalSlots) {
+                      // Has empty slots - add directly
+                      try {
+                        // Find first empty slot
+                        const allSlots = [];
+
+                        // Generate all possible slots based on config
+                        for (let i = 0; i < config["2s"]; i++) {
+                          allSlots.push({ position: "2s", slotIndex: i });
+                        }
+                        for (let i = 0; i < config["3s"]; i++) {
+                          allSlots.push({ position: "3s", slotIndex: i });
+                        }
+                        for (let i = 0; i < config.flx; i++) {
+                          allSlots.push({ position: "flx", slotIndex: i });
+                        }
+                        for (let i = 0; i < config.be; i++) {
+                          allSlots.push({ position: "be", slotIndex: i });
+                        }
+
+                        // Find first empty slot
+                        const emptySlot = allSlots.find(slot => {
+                          return !rosterData.rosterSlots.some(
+                            rs => rs.position === slot.position && rs.slotIndex === slot.slotIndex
+                          );
+                        });
+
+                        if (!emptySlot) {
+                          alert("No empty slots found");
+                          return;
+                        }
+
+                        // Make API call to add team
+                        const response = await fetch(`/api/leagues/${leagueId}/rosters/${myTeamId}`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            week: rosterData.league.currentWeek,
+                            position: emptySlot.position,
+                            slotIndex: emptySlot.slotIndex,
+                            mleTeamId: selectedFATeam.id,
+                          }),
+                        });
+
+                        if (response.ok) {
+                          alert(`${selectedFATeam.name} successfully added to your roster!`);
+                          // Refetch roster to update UI
+                          const rosterResponse = await fetch(`/api/leagues/${leagueId}/rosters/${myTeamId}`);
+                          if (rosterResponse.ok) {
+                            const updatedRoster = await rosterResponse.json();
+                            setRosterData(updatedRoster);
+                          }
+                        } else {
+                          const error = await response.json();
+                          alert(`Failed to add team: ${error.error || "Unknown error"}`);
+                        }
+                      } catch (error) {
+                        console.error("Error adding team:", error);
+                        alert("Failed to add team. Please try again.");
+                      }
+                      setSelectedFATeam(null);
+                    } else {
+                      // Roster full - show drop modal
+                      setSelectedWaiverTeam(selectedFATeam);
+                      setShowWaiverModal(true);
+                      setSelectedFATeam(null);
+                    }
+                  } else {
+                    // No roster data, show drop modal
+                    setSelectedWaiverTeam(selectedFATeam);
+                    setShowWaiverModal(true);
+                    setSelectedFATeam(null);
+                  }
                 }}
                 style={{
                   background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
@@ -344,14 +587,16 @@ export default function TeamPortalPage() {
             {/* Header - Team Info */}
             <div style={{ padding: "3.5rem 2rem 1.5rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
               <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)" }}>
-                {mockRoster.teamName}
+                {rosterData?.fantasyTeam.displayName || "Your Team"}
               </div>
               <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                {mockRoster.managerName}
+                {rosterData?.fantasyTeam.ownerDisplayName || session?.user?.name || "Manager"}
               </div>
-              <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                {mockRoster.record.wins} - {mockRoster.record.losses}  {mockRoster.record.place}
-              </div>
+              {rosterData?.record && (
+                <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                  {rosterData.record.wins} - {rosterData.record.losses} {rosterData.rank && `• ${rosterData.rank}th`}
+                </div>
+              )}
             </div>
 
             {/* Selected Waiver Team */}
@@ -379,103 +624,83 @@ export default function TeamPortalPage() {
 
             {/* Roster Table with Checkboxes */}
             <div style={{ padding: "1.5rem 2rem" }}>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid rgba(255, 255, 255, 0.2)" }}>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Rank</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fpts</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Avg</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Last</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Goals</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Shots</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Saves</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Assists</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Demos</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mockRoster.teams.map((team, index) => (
-                      <tr
-                        key={index}
-                        style={{
-                          borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                          backgroundColor: selectedDropTeam === team.name ? "rgba(242, 182, 50, 0.1)" : "transparent",
-                        }}
-                      >
-                        <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--accent)" }}>
-                          {team.slot}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <Image
-                              src={team.logoPath}
-                              alt={`${team.name} logo`}
-                              width={24}
-                              height={24}
-                              style={{ borderRadius: "4px" }}
-                            />
-                            <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>
-                              {team.leagueId} {team.name}
-                            </span>
-                          </div>
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
-                          {team.fpts.toFixed(1)}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                          {team.avg.toFixed(1)}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                          {team.last.toFixed(1)}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.goals}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.shots}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.saves}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.assists}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.9rem" }}>
-                          {team.demos}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                          {team.teamRecord}
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                          <button
-                            onClick={() => setSelectedDropTeam(selectedDropTeam === team.name ? null : team.name)}
+              {loadingRoster ? (
+                <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                  Loading roster...
+                </div>
+              ) : !rosterData ? (
+                <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                  No roster found
+                </div>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid rgba(255, 255, 255, 0.2)" }}>
+                        <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Slot</th>
+                        <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
+                        <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
+                        <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rosterData.rosterSlots
+                        .filter(slot => slot.mleTeam !== null)
+                        .map((slot) => (
+                          <tr
+                            key={slot.id}
                             style={{
-                              width: "24px",
-                              height: "24px",
-                              border: "2px solid var(--accent)",
-                              borderRadius: "4px",
-                              background: selectedDropTeam === team.name ? "var(--accent)" : "transparent",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: selectedDropTeam === team.name ? "#1a1a2e" : "transparent",
-                              fontWeight: 700,
-                              fontSize: "1rem",
+                              borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                              backgroundColor: selectedDropTeam === slot.id ? "rgba(242, 182, 50, 0.1)" : "transparent",
                             }}
                           >
-                            ✓
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                            <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--accent)", fontWeight: 700 }}>
+                              {slot.position.toUpperCase()}
+                            </td>
+                            <td style={{ padding: "0.75rem 0.5rem" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                <Image
+                                  src={slot.mleTeam!.logoPath}
+                                  alt={slot.mleTeam!.name}
+                                  width={24}
+                                  height={24}
+                                  style={{ borderRadius: "4px" }}
+                                />
+                                <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>
+                                  {slot.mleTeam!.leagueId} {slot.mleTeam!.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontWeight: 600, fontSize: "0.9rem", color: "var(--accent)" }}>
+                              {slot.fantasyPoints?.toFixed(1) || "-"}
+                            </td>
+                            <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                              <button
+                                onClick={() => setSelectedDropTeam(selectedDropTeam === slot.id ? null : slot.id)}
+                                style={{
+                                  width: "24px",
+                                  height: "24px",
+                                  border: "2px solid var(--accent)",
+                                  borderRadius: "4px",
+                                  background: selectedDropTeam === slot.id ? "var(--accent)" : "transparent",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: selectedDropTeam === slot.id ? "#1a1a2e" : "transparent",
+                                  fontWeight: 700,
+                                  fontSize: "1rem",
+                                }}
+                              >
+                                ✓
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -9,8 +9,8 @@ interface TeamModalProps {
     leagueId: string;
     name: string;
     logoPath: string;
-    teamPrimaryColor: string;
-    teamSecondaryColor: string;
+    primaryColor: string;
+    secondaryColor: string;
     id: string;
     fpts?: number;
     avg?: number;
@@ -120,7 +120,7 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
           position: "relative",
           borderRadius: "12px",
           padding: "2rem",
-          background: `linear-gradient(135deg, ${team.teamPrimaryColor} 0%, ${team.teamSecondaryColor} 100%)`,
+          background: `linear-gradient(135deg, ${team.primaryColor} 0%, ${team.secondaryColor} 100%)`,
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
         }}
       >
@@ -301,7 +301,7 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
                   border: "none",
                   cursor: "pointer",
                   backgroundColor: gameMode === "2s" ? "rgba(255,255,255,0.9)" : "transparent",
-                  color: gameMode === "2s" ? team.teamPrimaryColor : "#ffffff",
+                  color: gameMode === "2s" ? team.primaryColor : "#ffffff",
                   transition: "all 0.2s ease"
                 }}
               >
@@ -317,7 +317,7 @@ export default function TeamModal({ team, onClose, isDraftContext = false }: Tea
                   border: "none",
                   cursor: "pointer",
                   backgroundColor: gameMode === "3s" ? "rgba(255,255,255,0.9)" : "transparent",
-                  color: gameMode === "3s" ? team.teamPrimaryColor : "#ffffff",
+                  color: gameMode === "3s" ? team.primaryColor : "#ffffff",
                   transition: "all 0.2s ease"
                 }}
               >

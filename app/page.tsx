@@ -7,54 +7,7 @@ import Image from "next/image";
 import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
-// Mock data - replace with actual API calls when ready
-const mockLeagues = [
-  {
-    id: "2025-gamma",
-    name: "2025 RL Fantasy Alpha",
-    season: 2025,
-    currentWeek: 3,
-    yourTeam: "Nick's Bumps",
-    record: { wins: 2, losses: 1 },
-    rank: 3,
-    totalPoints: 425.5,
-    lastMatchup: {
-      opponent: "Rover's Rotators",
-      score: "152.5 - 148.0",
-      result: "W",
-    },
-  },
-  {
-    id: "2025-beta",
-    name: "2025 RL Fantasy Beta",
-    season: 2025,
-    currentWeek: 3,
-    yourTeam: "Air Dribble Demons",
-    record: { wins: 1, losses: 2 },
-    rank: 8,
-    totalPoints: 380.0,
-    lastMatchup: {
-      opponent: "Flip Reset Kings",
-      score: "135.0 - 145.5",
-      result: "L",
-    },
-  },
-  {
-    id: "2024-championship",
-    name: "2024 Championship League",
-    season: 2024,
-    currentWeek: 8,
-    yourTeam: "Ceiling Shot Squad",
-    record: { wins: 5, losses: 3 },
-    rank: 4,
-    totalPoints: 1150.0,
-    lastMatchup: {
-      opponent: "Musty Flick Masters",
-      score: "165.5 - 152.0",
-      result: "W",
-    },
-  },
-];
+// Mock leagues data removed - now fetched from /api/leagues based on user session
 
 // Mock global leaderboard - top performers across all leagues
 const mockGlobalLeaderboard = [
@@ -297,6 +250,8 @@ export default function HomePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [topTeams, setTopTeams] = useState<any[]>(mockTopTeams);
   const [loading, setLoading] = useState(true);
+  const [userLeagues, setUserLeagues] = useState<any[]>([]);
+  const [loadingLeagues, setLoadingLeagues] = useState(true);
 
   // Fetch top teams from API
   useEffect(() => {
@@ -337,6 +292,34 @@ export default function HomePage() {
 
     checkAdmin();
   }, [session]);
+
+  // Fetch user's leagues from API
+  useEffect(() => {
+    const fetchUserLeagues = async () => {
+      if (!session?.user?.id) {
+        setLoadingLeagues(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/leagues`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserLeagues(data.leagues || []);
+        } else {
+          console.warn("Failed to fetch user leagues");
+          setUserLeagues([]);
+        }
+      } catch (error) {
+        console.error("Error fetching user leagues:", error);
+        setUserLeagues([]);
+      } finally {
+        setLoadingLeagues(false);
+      }
+    };
+
+    fetchUserLeagues();
+  }, [session?.user?.id]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -584,7 +567,17 @@ export default function HomePage() {
               <h2 className="card-title">Your Leagues</h2>
             </div>
 
-            {mockLeagues.length === 0 ? (
+            {loadingLeagues ? (
+              <p
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: "0.85rem",
+                  margin: 0,
+                }}
+              >
+                Loading leagues...
+              </p>
+            ) : userLeagues.length === 0 ? (
               <p
                 style={{
                   color: "var(--text-muted)",
@@ -604,7 +597,7 @@ export default function HomePage() {
                   justifyContent: "flex-end",
                 }}
               >
-                {mockLeagues.map((league) => (
+                {userLeagues.map((league) => (
                   <Link
                     key={league.id}
                     href={`/leagues/${league.id}`}
