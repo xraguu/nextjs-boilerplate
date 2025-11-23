@@ -116,7 +116,7 @@ export default function TransactionsPage() {
       </div>
 
       <section style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+        background: "radial-gradient(circle at top left, #1d3258, #020617)",
         borderRadius: "12px",
         padding: "2rem",
         border: "1px solid rgba(255,255,255,0.1)"

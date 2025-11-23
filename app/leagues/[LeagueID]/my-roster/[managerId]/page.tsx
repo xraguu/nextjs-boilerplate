@@ -74,21 +74,39 @@ export default function MyRosterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentWeek, setCurrentWeek] = useState(1);
-  const [activeTab, setActiveTab] = useState<"lineup" | "stats" | "waivers" | "trades">("lineup");
+  const [activeTab, setActiveTab] = useState<
+    "lineup" | "stats" | "waivers" | "trades"
+  >("lineup");
   const [moveMode, setMoveMode] = useState(false);
-  const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(null);
+  const [selectedTeamIndex, setSelectedTeamIndex] = useState<number | null>(
+    null
+  );
   const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
 
   // Track game modes for each slot
   const [slotModes, setSlotModes] = useState<string[]>([]);
 
   // Stats tab sorting state
-  const [statsSortColumn, setStatsSortColumn] = useState<"fprk" | "fpts" | "avg" | "last" | "goals" | "shots" | "saves" | "assists" | "demos">("fprk");
-  const [statsSortDirection, setStatsSortDirection] = useState<"asc" | "desc">("asc");
+  const [statsSortColumn, setStatsSortColumn] = useState<
+    | "fprk"
+    | "fpts"
+    | "avg"
+    | "last"
+    | "goals"
+    | "shots"
+    | "saves"
+    | "assists"
+    | "demos"
+  >("fprk");
+  const [statsSortDirection, setStatsSortDirection] = useState<"asc" | "desc">(
+    "asc"
+  );
 
   // Drop modal state
   const [showDropModal, setShowDropModal] = useState(false);
-  const [selectedDropSlot, setSelectedDropSlot] = useState<RosterSlot | null>(null);
+  const [selectedDropSlot, setSelectedDropSlot] = useState<RosterSlot | null>(
+    null
+  );
 
   // Team modal state
   const [showModal, setShowModal] = useState(false);
@@ -102,7 +120,10 @@ export default function MyRosterPage() {
     const existingSlots = rosterData.rosterSlots;
     const slots: RosterSlot[] = [];
 
-    const createEmptySlot = (position: string, slotIndex: number): RosterSlot => ({
+    const createEmptySlot = (
+      position: string,
+      slotIndex: number
+    ): RosterSlot => ({
       id: `empty-${position}-${slotIndex}`,
       position,
       slotIndex,
@@ -112,22 +133,30 @@ export default function MyRosterPage() {
     });
 
     for (let i = 0; i < config["2s"]; i++) {
-      const existing = existingSlots.find(s => s.position === "2s" && s.slotIndex === i);
+      const existing = existingSlots.find(
+        (s) => s.position === "2s" && s.slotIndex === i
+      );
       slots.push(existing || createEmptySlot("2s", i));
     }
 
     for (let i = 0; i < config["3s"]; i++) {
-      const existing = existingSlots.find(s => s.position === "3s" && s.slotIndex === i);
+      const existing = existingSlots.find(
+        (s) => s.position === "3s" && s.slotIndex === i
+      );
       slots.push(existing || createEmptySlot("3s", i));
     }
 
     for (let i = 0; i < config.flx; i++) {
-      const existing = existingSlots.find(s => s.position === "flx" && s.slotIndex === i);
+      const existing = existingSlots.find(
+        (s) => s.position === "flx" && s.slotIndex === i
+      );
       slots.push(existing || createEmptySlot("flx", i));
     }
 
     for (let i = 0; i < config.be; i++) {
-      const existing = existingSlots.find(s => s.position === "be" && s.slotIndex === i);
+      const existing = existingSlots.find(
+        (s) => s.position === "be" && s.slotIndex === i
+      );
       slots.push(existing || createEmptySlot("be", i));
     }
 
@@ -217,49 +246,68 @@ export default function MyRosterPage() {
 
   // Sorted roster teams for stats tab
   const sortedRosterTeams = useMemo(() => {
-    return fullRoster.filter(slot => slot.mleTeam).map((slot, index) => {
-      const stats = slot.mleTeam!.weeklyStats || {};
+    return fullRoster
+      .filter((slot) => slot.mleTeam)
+      .map((slot, index) => {
+        const stats = slot.mleTeam!.weeklyStats || {};
 
-      return {
-        ...slot.mleTeam,
-        displayStats: {
-          score: slot.fantasyPoints || 0,
-          fprk: index + 1,
-          fpts: stats.fantasyPoints || 0,
-          avg: stats.avgFantasyPoints || 0,
-          last: stats.lastWeekPoints || 0,
-          goals: stats.goals || 0,
-          shots: stats.shots || 0,
-          saves: stats.saves || 0,
-          assists: stats.assists || 0,
-          demos: stats.demos || 0,
-          teamRecord: stats.record || "-"
+        return {
+          ...slot.mleTeam,
+          displayStats: {
+            score: slot.fantasyPoints || 0,
+            fprk: index + 1,
+            fpts: stats.fantasyPoints || 0,
+            avg: stats.avgFantasyPoints || 0,
+            last: stats.lastWeekPoints || 0,
+            goals: stats.goals || 0,
+            shots: stats.shots || 0,
+            saves: stats.saves || 0,
+            assists: stats.assists || 0,
+            demos: stats.demos || 0,
+            teamRecord: stats.record || "-",
+          },
+        };
+      })
+      .sort((a, b) => {
+        const aValue = a.displayStats[statsSortColumn] as number;
+        const bValue = b.displayStats[statsSortColumn] as number;
+
+        if (aValue === bValue) return 0;
+        if (statsSortDirection === "asc") {
+          return aValue > bValue ? 1 : -1;
+        } else {
+          return aValue < bValue ? 1 : -1;
         }
-      };
-    }).sort((a, b) => {
-      const aValue = a.displayStats[statsSortColumn] as number;
-      const bValue = b.displayStats[statsSortColumn] as number;
-
-      if (aValue === bValue) return 0;
-      if (statsSortDirection === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
+      });
   }, [fullRoster, statsSortColumn, statsSortDirection]);
 
   if (loading) {
     return (
-      <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>Loading roster...</div>
+      <div
+        style={{
+          minHeight: "50vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>
+          Loading roster...
+        </div>
       </div>
     );
   }
 
   if (error || !rosterData) {
     return (
-      <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div
+        style={{
+          minHeight: "50vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <div style={{ color: "#ef4444", fontSize: "1.1rem" }}>
           Error: {error || "Failed to load roster"}
         </div>
@@ -270,8 +318,25 @@ export default function MyRosterPage() {
   return (
     <>
       {/* Page Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-        <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>Roster</h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <h1
+          className="page-heading"
+          style={{
+            fontSize: "2.5rem",
+            color: "var(--accent)",
+            fontWeight: 700,
+            margin: 0,
+          }}
+        >
+          Roster
+        </h1>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <button
             onClick={handleScheduleClick}
@@ -283,7 +348,7 @@ export default function MyRosterPage() {
               fontWeight: 700,
               fontSize: "1rem",
               border: "none",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
           >
             Schedule
@@ -298,7 +363,7 @@ export default function MyRosterPage() {
               fontWeight: 700,
               fontSize: "1rem",
               border: "none",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
           >
             Transactions
@@ -307,39 +372,90 @@ export default function MyRosterPage() {
       </div>
 
       {/* Team Overview Card */}
-      <section className="card" style={{ marginBottom: "1.5rem", padding: "1.5rem 2rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <section
+        className="card"
+        style={{ marginBottom: "1.5rem", padding: "1.5rem 2rem" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           {/* Team Info */}
           <div>
-            <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "0.5rem", marginTop: 0 }}>
+            <h2
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: 700,
+                color: "var(--text-main)",
+                marginBottom: "0.5rem",
+                marginTop: 0,
+              }}
+            >
               {rosterData.fantasyTeam.displayName}{" "}
               {rosterData.record && (
                 <>
-                  <span style={{ color: "var(--accent)", marginLeft: "0.75rem" }}>
+                  <span
+                    style={{ color: "var(--accent)", marginLeft: "0.75rem" }}
+                  >
                     {rosterData.record.wins}-{rosterData.record.losses}
                   </span>{" "}
                   {rosterData.rank && rosterData.totalTeams && (
-                    <span style={{ color: "var(--text-muted)", fontSize: "1.2rem", marginLeft: "0.5rem" }}>
+                    <span
+                      style={{
+                        color: "var(--text-muted)",
+                        fontSize: "1.2rem",
+                        marginLeft: "0.5rem",
+                      }}
+                    >
                       {rosterData.rank}
-                      {rosterData.rank === 1 ? "st" : rosterData.rank === 2 ? "nd" : rosterData.rank === 3 ? "rd" : "th"}
+                      {rosterData.rank === 1
+                        ? "st"
+                        : rosterData.rank === 2
+                        ? "nd"
+                        : rosterData.rank === 3
+                        ? "rd"
+                        : "th"}
                     </span>
                   )}
                 </>
               )}
             </h2>
-            <div style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>{rosterData.fantasyTeam.ownerDisplayName}</div>
-            <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
-              <span style={{ fontWeight: 600, color: "var(--text-main)" }}>0 Fantasy Points</span>
-              <span style={{ color: "var(--text-muted)", marginLeft: "1.5rem" }}>0 Avg Fantasy Points</span>
+            <div style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+              {rosterData.fantasyTeam.ownerDisplayName}
             </div>
-            <div style={{ marginTop: "0.75rem", fontSize: "0.95rem", color: "var(--text-muted)" }}>
+            <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
+              <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                0 Fantasy Points
+              </span>
+              <span
+                style={{ color: "var(--text-muted)", marginLeft: "1.5rem" }}
+              >
+                0 Avg Fantasy Points
+              </span>
+            </div>
+            <div
+              style={{
+                marginTop: "0.75rem",
+                fontSize: "0.95rem",
+                color: "var(--text-muted)",
+              }}
+            >
               {rosterData.league.waiverSystem === "faab" ? (
                 <>
-                  FAAB: <span style={{ fontWeight: 600, color: "var(--text-main)" }}>${rosterData.fantasyTeam.faabRemaining ?? 100}</span>
+                  FAAB:{" "}
+                  <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                    ${rosterData.fantasyTeam.faabRemaining ?? 100}
+                  </span>
                 </>
               ) : (
                 <>
-                  Waiver Priority: <span style={{ fontWeight: 600, color: "var(--text-main)" }}>#{rosterData.fantasyTeam.waiverPriority ?? "-"}</span>
+                  Waiver Priority:{" "}
+                  <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                    #{rosterData.fantasyTeam.waiverPriority ?? "-"}
+                  </span>
                 </>
               )}
             </div>
@@ -355,10 +471,11 @@ export default function MyRosterPage() {
                 padding: "0.75rem 1rem",
                 borderRadius: "8px",
                 transition: "all 0.2s",
-                backgroundColor: "transparent"
+                backgroundColor: "transparent",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(242, 182, 50, 0.1)";
+                e.currentTarget.style.backgroundColor =
+                  "rgba(242, 182, 50, 0.1)";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
@@ -366,24 +483,45 @@ export default function MyRosterPage() {
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
-              <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", fontStyle: "italic", marginBottom: "0.5rem" }}>
+              <div
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: "0.85rem",
+                  fontStyle: "italic",
+                  marginBottom: "0.5rem",
+                }}
+              >
                 Last Matchup
               </div>
               <div style={{ fontSize: "0.95rem", marginBottom: "0.25rem" }}>
                 <span style={{ color: "var(--text-main)" }}>-</span>{" "}
-                <span style={{ color: "var(--accent)", fontWeight: 700, marginLeft: "0.5rem" }}>
+                <span
+                  style={{
+                    color: "var(--accent)",
+                    fontWeight: 700,
+                    marginLeft: "0.5rem",
+                  }}
+                >
                   -
                 </span>
               </div>
               <div style={{ fontSize: "0.95rem" }}>
                 <span style={{ color: "var(--text-muted)" }}>-</span>{" "}
-                <span style={{ color: "var(--text-muted)", marginLeft: "0.5rem" }}>
+                <span
+                  style={{ color: "var(--text-muted)", marginLeft: "0.5rem" }}
+                >
                   -
                 </span>
               </div>
             </div>
 
-            <div style={{ width: "1px", height: "60px", backgroundColor: "rgba(255,255,255,0.1)" }}></div>
+            <div
+              style={{
+                width: "1px",
+                height: "60px",
+                backgroundColor: "rgba(255,255,255,0.1)",
+              }}
+            ></div>
 
             {/* Current Matchup */}
             <div
@@ -393,10 +531,11 @@ export default function MyRosterPage() {
                 padding: "0.75rem 1rem",
                 borderRadius: "8px",
                 transition: "all 0.2s",
-                backgroundColor: "transparent"
+                backgroundColor: "transparent",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(242, 182, 50, 0.1)";
+                e.currentTarget.style.backgroundColor =
+                  "rgba(242, 182, 50, 0.1)";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
@@ -404,18 +543,33 @@ export default function MyRosterPage() {
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
-              <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", fontStyle: "italic", marginBottom: "0.5rem" }}>
+              <div
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: "0.85rem",
+                  fontStyle: "italic",
+                  marginBottom: "0.5rem",
+                }}
+              >
                 Current Matchup
               </div>
               <div style={{ fontSize: "0.95rem", marginBottom: "0.25rem" }}>
                 <span style={{ color: "var(--text-main)" }}>-</span>{" "}
-                <span style={{ color: "var(--accent)", fontWeight: 700, marginLeft: "0.5rem" }}>
+                <span
+                  style={{
+                    color: "var(--accent)",
+                    fontWeight: 700,
+                    marginLeft: "0.5rem",
+                  }}
+                >
                   -
                 </span>
               </div>
               <div style={{ fontSize: "0.95rem" }}>
                 <span style={{ color: "var(--text-muted)" }}>-</span>{" "}
-                <span style={{ color: "var(--text-muted)", marginLeft: "0.5rem" }}>
+                <span
+                  style={{ color: "var(--text-muted)", marginLeft: "0.5rem" }}
+                >
                   -
                 </span>
               </div>
@@ -428,28 +582,36 @@ export default function MyRosterPage() {
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
         <button
           onClick={() => setActiveTab("lineup")}
-          className={activeTab === "lineup" ? "btn btn-primary" : "btn btn-ghost"}
+          className={
+            activeTab === "lineup" ? "btn btn-primary" : "btn btn-ghost"
+          }
           style={{ fontSize: "1rem" }}
         >
           Lineup
         </button>
         <button
           onClick={() => setActiveTab("stats")}
-          className={activeTab === "stats" ? "btn btn-primary" : "btn btn-ghost"}
+          className={
+            activeTab === "stats" ? "btn btn-primary" : "btn btn-ghost"
+          }
           style={{ fontSize: "1rem" }}
         >
           Stats
         </button>
         <button
           onClick={() => setActiveTab("waivers")}
-          className={activeTab === "waivers" ? "btn btn-primary" : "btn btn-ghost"}
+          className={
+            activeTab === "waivers" ? "btn btn-primary" : "btn btn-ghost"
+          }
           style={{ fontSize: "1rem" }}
         >
           Waivers
         </button>
         <button
           onClick={() => setActiveTab("trades")}
-          className={activeTab === "trades" ? "btn btn-primary" : "btn btn-ghost"}
+          className={
+            activeTab === "trades" ? "btn btn-primary" : "btn btn-ghost"
+          }
           style={{ fontSize: "1rem" }}
         >
           Trades
@@ -460,27 +622,35 @@ export default function MyRosterPage() {
       {activeTab === "lineup" && (
         <section className="card">
           {/* Week Navigation and Actions */}
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "1rem 1.5rem",
-            borderBottom: "1px solid rgba(255,255,255,0.1)"
-          }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "1rem 1.5rem",
+              borderBottom: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
-                onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
+                onClick={() => setCurrentWeek((prev) => getPrevWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
                 disabled={currentWeek === 1}
               >
                 ◄ Week {getPrevWeek(currentWeek)}
               </button>
-              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
+              <span
+                style={{
+                  fontSize: "1.1rem",
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                }}
+              >
                 Week {currentWeek}
               </span>
               <button
-                onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
+                onClick={() => setCurrentWeek((prev) => getNextWeek(prev))}
                 className="btn btn-ghost"
                 style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
                 disabled={currentWeek === 10}
@@ -509,7 +679,9 @@ export default function MyRosterPage() {
                 style={{
                   fontSize: "0.9rem",
                   border: "2px solid var(--accent)",
-                  boxShadow: moveMode ? "0 0 12px rgba(242, 182, 50, 0.4)" : "0 0 8px rgba(242, 182, 50, 0.3)"
+                  boxShadow: moveMode
+                    ? "0 0 12px rgba(242, 182, 50, 0.4)"
+                    : "0 0 8px rgba(242, 182, 50, 0.3)",
                 }}
               >
                 {moveMode ? "✓ Done Editing" : "Edit Lineup"}
@@ -519,15 +691,17 @@ export default function MyRosterPage() {
 
           {/* Move Mode Instructions */}
           {moveMode && (
-            <div style={{
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "rgba(242, 182, 50, 0.1)",
-              borderBottom: "1px solid rgba(242, 182, 50, 0.3)",
-              color: "var(--accent)",
-              fontSize: "0.9rem",
-              fontWeight: 600,
-              textAlign: "center"
-            }}>
+            <div
+              style={{
+                padding: "0.75rem 1.5rem",
+                backgroundColor: "rgba(242, 182, 50, 0.1)",
+                borderBottom: "1px solid rgba(242, 182, 50, 0.3)",
+                color: "var(--accent)",
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                textAlign: "center",
+              }}
+            >
               {selectedTeamIndex === null
                 ? "Click on a team to select it, then click on another team to swap positions"
                 : "Click on another team to swap positions, or click the selected team to deselect"}
@@ -540,15 +714,105 @@ export default function MyRosterPage() {
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
                   <th style={{ padding: "0.75rem 0.5rem", width: "50px" }}></th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Slot</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Opp</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Oprk</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fprk</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fpts</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Avg</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Last</th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Slot
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Team
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Score
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Opp
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Oprk
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Fprk
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Fpts
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Avg
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "right",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Last
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -563,36 +827,65 @@ export default function MyRosterPage() {
                       onClick={() => handleTeamClick(index)}
                       style={{
                         borderBottom: "1px solid rgba(255,255,255,0.05)",
-                        backgroundColor: selectedTeamIndex === index
-                          ? "rgba(242, 182, 50, 0.2)"
-                          : isBench
-                          ? "rgba(255,255,255,0.02)"
-                          : "transparent",
-                        borderTop: isBench && index === fullRoster.findIndex(s => s.position === "be") ? "2px solid rgba(255,255,255,0.15)" : "none",
+                        backgroundColor:
+                          selectedTeamIndex === index
+                            ? "rgba(242, 182, 50, 0.2)"
+                            : isBench
+                            ? "rgba(255,255,255,0.02)"
+                            : "transparent",
+                        borderTop:
+                          isBench &&
+                          index ===
+                            fullRoster.findIndex((s) => s.position === "be")
+                            ? "2px solid rgba(255,255,255,0.15)"
+                            : "none",
                         cursor: moveMode && !isEmpty ? "pointer" : "default",
                         transition: "background-color 0.2s",
-                        borderLeft: selectedTeamIndex === index ? "3px solid var(--accent)" : "3px solid transparent"
+                        borderLeft:
+                          selectedTeamIndex === index
+                            ? "3px solid var(--accent)"
+                            : "3px solid transparent",
                       }}
                       onMouseEnter={(e) => {
-                        if (moveMode && selectedTeamIndex !== index && !isEmpty) {
-                          e.currentTarget.style.backgroundColor = "rgba(242, 182, 50, 0.1)";
+                        if (
+                          moveMode &&
+                          selectedTeamIndex !== index &&
+                          !isEmpty
+                        ) {
+                          e.currentTarget.style.backgroundColor =
+                            "rgba(242, 182, 50, 0.1)";
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (moveMode && selectedTeamIndex !== index) {
-                          e.currentTarget.style.backgroundColor = isBench ? "rgba(255,255,255,0.02)" : "transparent";
+                          e.currentTarget.style.backgroundColor = isBench
+                            ? "rgba(255,255,255,0.02)"
+                            : "transparent";
                         }
                       }}
                     >
-                      <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", justifyContent: "center" }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 0.5rem",
+                          textAlign: "center",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.25rem",
+                            justifyContent: "center",
+                          }}
+                        >
                           {!isEmpty && (
                             <>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const newModes = [...slotModes];
-                                  newModes[index] = slotModes[index] === "2s" ? "3s" : "2s";
+                                  newModes[index] =
+                                    slotModes[index] === "2s" ? "3s" : "2s";
                                   setSlotModes(newModes);
                                 }}
                                 style={{
@@ -604,40 +897,68 @@ export default function MyRosterPage() {
                                   fontWeight: 600,
                                   color: "var(--accent)",
                                   cursor: "pointer",
-                                  transition: "all 0.2s ease"
+                                  transition: "all 0.2s ease",
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(242, 182, 50, 0.2)"}
-                                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.background =
+                                    "rgba(242, 182, 50, 0.2)")
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.background =
+                                    "rgba(255,255,255,0.1)")
+                                }
                               >
                                 ⇄
                               </button>
-                              <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--accent)" }}>
+                              <span
+                                style={{
+                                  fontSize: "0.7rem",
+                                  fontWeight: 600,
+                                  color: "var(--accent)",
+                                }}
+                              >
                                 {currentMode}
                               </span>
                             </>
                           )}
                         </div>
                       </td>
-                      <td style={{
-                        padding: "0.75rem 1rem",
-                        fontWeight: 700,
-                        fontSize: "0.9rem",
-                        color: isBench ? "var(--text-muted)" : "var(--accent)"
-                      }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontWeight: 700,
+                          fontSize: "0.9rem",
+                          color: isBench
+                            ? "var(--text-muted)"
+                            : "var(--accent)",
+                        }}
+                      >
                         {slot.position.toUpperCase()}
                       </td>
                       <td style={{ padding: "0.75rem 1rem" }}>
                         {isEmpty ? (
-                          <span style={{ color: "var(--text-muted)", fontSize: "0.95rem", fontStyle: "italic" }}>
+                          <span
+                            style={{
+                              color: "var(--text-muted)",
+                              fontSize: "0.95rem",
+                              fontStyle: "italic",
+                            }}
+                          >
                             Empty
                           </span>
                         ) : (
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.5rem",
+                            }}
+                          >
                             <Image
                               src={slot.mleTeam.logoPath}
                               alt={slot.mleTeam.name}
-                              width={24}
-                              height={24}
+                              width={32}
+                              height={32}
                               style={{ borderRadius: "4px" }}
                             />
                             <div>
@@ -651,52 +972,108 @@ export default function MyRosterPage() {
                                 }}
                                 style={{
                                   fontWeight: 600,
-                                  fontSize: "0.95rem",
+                                  fontSize: "1rem",
                                   cursor: moveMode ? "default" : "pointer",
                                   color: "var(--text-main)",
-                                  transition: "color 0.2s"
+                                  transition: "color 0.2s",
                                 }}
                                 onMouseEnter={(e) => {
                                   if (!moveMode) {
-                                    e.currentTarget.style.color = "var(--accent)";
+                                    e.currentTarget.style.color =
+                                      "var(--accent)";
                                   }
                                 }}
-                                onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.color =
+                                    "var(--text-main)")
+                                }
                               >
                                 {slot.mleTeam.leagueId} {slot.mleTeam.name}
                               </div>
-                              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                              <div
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "var(--text-muted)",
+                                  marginTop: "0.15rem",
+                                }}
+                              >
                                 vs. - -
                               </div>
                             </div>
                           </div>
                         )}
                       </td>
-                      <td style={{
-                        padding: "0.75rem 1rem",
-                        textAlign: "center",
-                        fontWeight: 700,
-                        fontSize: "1rem",
-                        color: slot.fantasyPoints ? "var(--accent)" : "var(--text-muted)"
-                      }}>
-                        {slot.fantasyPoints ? slot.fantasyPoints.toFixed(1) : "-"}
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "center",
+                          fontWeight: 700,
+                          fontSize: "1rem",
+                          color: slot.fantasyPoints
+                            ? "var(--accent)"
+                            : "var(--text-muted)",
+                        }}
+                      >
+                        {slot.fantasyPoints
+                          ? slot.fantasyPoints.toFixed(1)
+                          : "-"}
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontSize: "0.9rem",
+                          color: "var(--text-muted)",
+                        }}
+                      >
                         -
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem" }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "center",
+                          fontSize: "0.9rem",
+                        }}
+                      >
                         -
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", fontWeight: 600 }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "center",
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                        }}
+                      >
                         -
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.95rem" }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          fontWeight: 600,
+                          fontSize: "0.95rem",
+                        }}
+                      >
                         -
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          color: "var(--text-muted)",
+                          fontSize: "0.9rem",
+                        }}
+                      >
                         -
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          textAlign: "right",
+                          color: "var(--text-muted)",
+                          fontSize: "0.9rem",
+                        }}
+                      >
                         -
                       </td>
                     </tr>
@@ -712,19 +1089,23 @@ export default function MyRosterPage() {
       {activeTab === "stats" && (
         <section className="card">
           {/* Game Mode Toggle */}
-          <div style={{
-            padding: "1rem 1.5rem",
-            borderBottom: "1px solid rgba(255,255,255,0.1)",
-            display: "flex",
-            justifyContent: "flex-end"
-          }}>
-            <div style={{
+          <div
+            style={{
+              padding: "1rem 1.5rem",
+              borderBottom: "1px solid rgba(255,255,255,0.1)",
               display: "flex",
-              gap: "0.5rem",
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderRadius: "6px",
-              padding: "0.25rem"
-            }}>
+              justifyContent: "flex-end",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                backgroundColor: "rgba(255,255,255,0.05)",
+                borderRadius: "6px",
+                padding: "0.25rem",
+              }}
+            >
               <button
                 onClick={() => setGameMode("2s")}
                 style={{
@@ -734,9 +1115,10 @@ export default function MyRosterPage() {
                   fontWeight: 600,
                   border: "none",
                   cursor: "pointer",
-                  backgroundColor: gameMode === "2s" ? "var(--accent)" : "transparent",
+                  backgroundColor:
+                    gameMode === "2s" ? "var(--accent)" : "transparent",
                   color: gameMode === "2s" ? "#1a1a2e" : "var(--text-main)",
-                  transition: "all 0.2s ease"
+                  transition: "all 0.2s ease",
                 }}
               >
                 2s
@@ -750,9 +1132,10 @@ export default function MyRosterPage() {
                   fontWeight: 600,
                   border: "none",
                   cursor: "pointer",
-                  backgroundColor: gameMode === "3s" ? "var(--accent)" : "transparent",
+                  backgroundColor:
+                    gameMode === "3s" ? "var(--accent)" : "transparent",
                   color: gameMode === "3s" ? "#1a1a2e" : "var(--text-main)",
-                  transition: "all 0.2s ease"
+                  transition: "all 0.2s ease",
                 }}
               >
                 3s
@@ -764,9 +1147,39 @@ export default function MyRosterPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Rank</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Score</th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Rank
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "left",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Team
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Score
+                  </th>
                   <th
                     onClick={() => handleStatsSort("fprk")}
                     style={{
@@ -776,10 +1189,12 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Fprk {statsSortColumn === "fprk" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Fprk{" "}
+                    {statsSortColumn === "fprk" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleStatsSort("fpts")}
@@ -790,10 +1205,12 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Fpts {statsSortColumn === "fpts" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Fpts{" "}
+                    {statsSortColumn === "fpts" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleStatsSort("avg")}
@@ -804,10 +1221,12 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Avg {statsSortColumn === "avg" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Avg{" "}
+                    {statsSortColumn === "avg" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleStatsSort("last")}
@@ -818,10 +1237,12 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Last {statsSortColumn === "last" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Last{" "}
+                    {statsSortColumn === "last" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleStatsSort("goals")}
@@ -832,10 +1253,12 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Goals {statsSortColumn === "goals" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Goals{" "}
+                    {statsSortColumn === "goals" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleStatsSort("shots")}
@@ -846,10 +1269,12 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Shots {statsSortColumn === "shots" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Shots{" "}
+                    {statsSortColumn === "shots" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleStatsSort("saves")}
@@ -860,10 +1285,12 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Saves {statsSortColumn === "saves" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Saves{" "}
+                    {statsSortColumn === "saves" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleStatsSort("assists")}
@@ -874,10 +1301,12 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Assists {statsSortColumn === "assists" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Assists{" "}
+                    {statsSortColumn === "assists" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
                   <th
                     onClick={() => handleStatsSort("demos")}
@@ -888,12 +1317,24 @@ export default function MyRosterPage() {
                       color: "var(--text-muted)",
                       fontWeight: 600,
                       cursor: "pointer",
-                      userSelect: "none"
+                      userSelect: "none",
                     }}
                   >
-                    Demos {statsSortColumn === "demos" && (statsSortDirection === "asc" ? "▲" : "▼")}
+                    Demos{" "}
+                    {statsSortColumn === "demos" &&
+                      (statsSortDirection === "asc" ? "▲" : "▼")}
                   </th>
-                  <th style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
+                  <th
+                    style={{
+                      padding: "0.75rem 1rem",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Record
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -901,14 +1342,27 @@ export default function MyRosterPage() {
                   <tr
                     key={team.id}
                     style={{
-                      borderBottom: "1px solid rgba(255,255,255,0.05)"
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
                     }}
                   >
-                    <td style={{ padding: "0.75rem 1rem", fontWeight: 700, fontSize: "0.9rem", color: "var(--accent)" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        fontWeight: 700,
+                        fontSize: "0.9rem",
+                        color: "var(--accent)",
+                      }}
+                    >
                       {index + 1}
                     </td>
                     <td style={{ padding: "0.75rem 1rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                        }}
+                      >
                         <Image
                           src={team.logoPath}
                           alt={team.name}
@@ -927,56 +1381,135 @@ export default function MyRosterPage() {
                               fontSize: "0.95rem",
                               cursor: "pointer",
                               color: "var(--text-main)",
-                              transition: "color 0.2s"
+                              transition: "color 0.2s",
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
-                            onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.color = "var(--accent)")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.color = "var(--text-main)")
+                            }
                           >
                             {team.leagueId} {team.name}
                           </div>
-                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                          <div
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--text-muted)",
+                              marginTop: "0.15rem",
+                            }}
+                          >
                             vs. - -
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td style={{
-                      padding: "0.75rem 1rem",
-                      textAlign: "center",
-                      fontWeight: 700,
-                      fontSize: "1rem",
-                      color: "var(--accent)"
-                    }}>
-                      {team.displayStats.score > 0 ? team.displayStats.score.toFixed(1) : "-"}
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "center",
+                        fontWeight: 700,
+                        fontSize: "1rem",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {team.displayStats.score > 0
+                        ? team.displayStats.score.toFixed(1)
+                        : "-"}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", fontWeight: 600 }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "center",
+                        fontSize: "0.9rem",
+                        fontWeight: 600,
+                      }}
+                    >
                       {team.displayStats.fprk}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontWeight: 600, fontSize: "0.95rem" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontWeight: 600,
+                        fontSize: "0.95rem",
+                      }}
+                    >
                       {team.displayStats.fpts.toFixed(1)}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        color: "var(--text-muted)",
+                        fontSize: "0.9rem",
+                      }}
+                    >
                       {team.displayStats.avg.toFixed(1)}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        color: "var(--text-muted)",
+                        fontSize: "0.9rem",
+                      }}
+                    >
                       {team.displayStats.last.toFixed(1)}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                      }}
+                    >
                       {team.displayStats.goals}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                      }}
+                    >
                       {team.displayStats.shots}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                      }}
+                    >
                       {team.displayStats.saves}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                      }}
+                    >
                       {team.displayStats.assists}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right", fontSize: "0.9rem" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "right",
+                        fontSize: "0.9rem",
+                      }}
+                    >
                       {team.displayStats.demos}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                    <td
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "center",
+                        fontSize: "0.9rem",
+                        color: "var(--text-muted)",
+                      }}
+                    >
                       {team.displayStats.teamRecord}
                     </td>
                   </tr>
@@ -991,7 +1524,13 @@ export default function MyRosterPage() {
       {activeTab === "waivers" && (
         <section className="card">
           <div style={{ padding: "1.5rem", minHeight: "300px" }}>
-            <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem" }}>
+            <div
+              style={{
+                textAlign: "center",
+                color: "var(--text-muted)",
+                padding: "3rem",
+              }}
+            >
               No pending waiver claims
             </div>
           </div>
@@ -1002,7 +1541,13 @@ export default function MyRosterPage() {
       {activeTab === "trades" && (
         <section className="card">
           <div style={{ padding: "1.5rem", minHeight: "300px" }}>
-            <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem" }}>
+            <div
+              style={{
+                textAlign: "center",
+                color: "var(--text-muted)",
+                padding: "3rem",
+              }}
+            >
               No pending trades
             </div>
           </div>
@@ -1069,79 +1614,151 @@ export default function MyRosterPage() {
             </button>
 
             {/* Header */}
-            <div style={{ padding: "2rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-              <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)", margin: 0 }}>
+            <div
+              style={{
+                padding: "2rem",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: 700,
+                  color: "var(--text-main)",
+                  margin: 0,
+                }}
+              >
                 Drop a Team
               </h2>
-              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.5rem", marginBottom: 0 }}>
+              <p
+                style={{
+                  fontSize: "0.9rem",
+                  color: "var(--text-muted)",
+                  marginTop: "0.5rem",
+                  marginBottom: 0,
+                }}
+              >
                 Select a team from your roster to drop
               </p>
             </div>
 
             {/* Roster List */}
             <div style={{ padding: "1.5rem 2rem" }}>
-              {fullRoster.filter(slot => slot.mleTeam !== null).length === 0 ? (
-                <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
+              {fullRoster.filter((slot) => slot.mleTeam !== null).length ===
+              0 ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "3rem",
+                    color: "var(--text-muted)",
+                  }}
+                >
                   No teams to drop
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  {fullRoster.filter(slot => slot.mleTeam !== null).map((slot) => (
-                    <div
-                      key={slot.id}
-                      onClick={() => setSelectedDropSlot(selectedDropSlot?.id === slot.id ? null : slot)}
-                      style={{
-                        padding: "1rem",
-                        background: selectedDropSlot?.id === slot.id
-                          ? "rgba(242, 182, 50, 0.1)"
-                          : "rgba(255, 255, 255, 0.05)",
-                        border: `2px solid ${selectedDropSlot?.id === slot.id ? "var(--accent)" : "rgba(255, 255, 255, 0.1)"}`,
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "1rem",
-                      }}
-                    >
-                      <Image
-                        src={slot.mleTeam!.logoPath}
-                        alt={slot.mleTeam!.name}
-                        width={48}
-                        height={48}
-                        style={{ borderRadius: "6px" }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-main)" }}>
-                          {slot.mleTeam!.leagueId} {slot.mleTeam!.name}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.75rem",
+                  }}
+                >
+                  {fullRoster
+                    .filter((slot) => slot.mleTeam !== null)
+                    .map((slot) => (
+                      <div
+                        key={slot.id}
+                        onClick={() =>
+                          setSelectedDropSlot(
+                            selectedDropSlot?.id === slot.id ? null : slot
+                          )
+                        }
+                        style={{
+                          padding: "1rem",
+                          background:
+                            selectedDropSlot?.id === slot.id
+                              ? "rgba(242, 182, 50, 0.1)"
+                              : "rgba(255, 255, 255, 0.05)",
+                          border: `2px solid ${
+                            selectedDropSlot?.id === slot.id
+                              ? "var(--accent)"
+                              : "rgba(255, 255, 255, 0.1)"
+                          }`,
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "1rem",
+                        }}
+                      >
+                        <Image
+                          src={slot.mleTeam!.logoPath}
+                          alt={slot.mleTeam!.name}
+                          width={48}
+                          height={48}
+                          style={{ borderRadius: "6px" }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div
+                            style={{
+                              fontSize: "1rem",
+                              fontWeight: 700,
+                              color: "var(--text-main)",
+                            }}
+                          >
+                            {slot.mleTeam!.leagueId} {slot.mleTeam!.name}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.85rem",
+                              color: "var(--text-muted)",
+                              marginTop: "0.25rem",
+                            }}
+                          >
+                            {slot.position.toUpperCase()} ·{" "}
+                            {slot.fantasyPoints?.toFixed(1) || 0} pts
+                          </div>
                         </div>
-                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                          {slot.position.toUpperCase()} · {slot.fantasyPoints?.toFixed(1) || 0} pts
+                        <div
+                          style={{
+                            width: "24px",
+                            height: "24px",
+                            border: "2px solid var(--accent)",
+                            borderRadius: "4px",
+                            background:
+                              selectedDropSlot?.id === slot.id
+                                ? "var(--accent)"
+                                : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color:
+                              selectedDropSlot?.id === slot.id
+                                ? "#1a1a2e"
+                                : "transparent",
+                            fontWeight: 700,
+                            fontSize: "1rem",
+                          }}
+                        >
+                          ✓
                         </div>
                       </div>
-                      <div style={{
-                        width: "24px",
-                        height: "24px",
-                        border: "2px solid var(--accent)",
-                        borderRadius: "4px",
-                        background: selectedDropSlot?.id === slot.id ? "var(--accent)" : "transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: selectedDropSlot?.id === slot.id ? "#1a1a2e" : "transparent",
-                        fontWeight: 700,
-                        fontSize: "1rem",
-                      }}>
-                        ✓
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>
 
             {/* Action Buttons */}
-            <div style={{ padding: "1.5rem 2rem", borderTop: "1px solid rgba(255, 255, 255, 0.1)", display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                padding: "1.5rem 2rem",
+                borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+                display: "flex",
+                gap: "1rem",
+                justifyContent: "flex-end",
+              }}
+            >
               <button
                 onClick={() => {
                   setShowDropModal(false);
@@ -1160,27 +1777,38 @@ export default function MyRosterPage() {
                   }
 
                   try {
-                    const response = await fetch(`/api/leagues/${leagueId}/rosters/${teamId}`, {
-                      method: "DELETE",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        rosterSlotId: selectedDropSlot.id,
-                      }),
-                    });
+                    const response = await fetch(
+                      `/api/leagues/${leagueId}/rosters/${teamId}`,
+                      {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          rosterSlotId: selectedDropSlot.id,
+                        }),
+                      }
+                    );
 
                     if (response.ok) {
-                      alert(`${selectedDropSlot.mleTeam!.name} has been dropped from your roster`);
+                      alert(
+                        `${
+                          selectedDropSlot.mleTeam!.name
+                        } has been dropped from your roster`
+                      );
                       setShowDropModal(false);
                       setSelectedDropSlot(null);
                       // Refetch roster
-                      const rosterResponse = await fetch(`/api/leagues/${leagueId}/rosters/${teamId}?week=${currentWeek}`);
+                      const rosterResponse = await fetch(
+                        `/api/leagues/${leagueId}/rosters/${teamId}?week=${currentWeek}`
+                      );
                       if (rosterResponse.ok) {
                         const updatedRoster = await rosterResponse.json();
                         setRosterData(updatedRoster);
                       }
                     } else {
                       const error = await response.json();
-                      alert(`Failed to drop team: ${error.error || "Unknown error"}`);
+                      alert(
+                        `Failed to drop team: ${error.error || "Unknown error"}`
+                      );
                     }
                   } catch (error) {
                     console.error("Error dropping team:", error);
@@ -1192,14 +1820,18 @@ export default function MyRosterPage() {
                   background: selectedDropSlot
                     ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
                     : "rgba(128, 128, 128, 0.3)",
-                  color: selectedDropSlot ? "white" : "rgba(255, 255, 255, 0.5)",
+                  color: selectedDropSlot
+                    ? "white"
+                    : "rgba(255, 255, 255, 0.5)",
                   fontWeight: 700,
                   padding: "0.75rem 2rem",
                   borderRadius: "8px",
                   border: "none",
                   cursor: selectedDropSlot ? "pointer" : "not-allowed",
                   fontSize: "1rem",
-                  boxShadow: selectedDropSlot ? "0 4px 12px rgba(239, 68, 68, 0.3)" : "none",
+                  boxShadow: selectedDropSlot
+                    ? "0 4px 12px rgba(239, 68, 68, 0.3)"
+                    : "none",
                 }}
               >
                 Drop Team

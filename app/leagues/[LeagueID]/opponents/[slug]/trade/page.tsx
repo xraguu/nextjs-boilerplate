@@ -1,72 +1,83 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { TEAMS } from "@/lib/teams";
 
-// Mock managers data
-const otherManagers = [
-  { id: "manager-1", name: "Mike", teamName: "Thunder Strikers", record: "3-0", place: "1st", totalPoints: 612, avgPoints: 204 },
-  { id: "manager-2", name: "Sarah", teamName: "Ice Warriors", record: "1-2", place: "7th", totalPoints: 543, avgPoints: 181 },
-  { id: "manager-3", name: "Jake", teamName: "Fire Dragons", record: "2-1", place: "4th", totalPoints: 576, avgPoints: 192 },
-  { id: "manager-4", name: "Emma", teamName: "Sky Hunters", record: "2-1", place: "5th", totalPoints: 567, avgPoints: 189 },
-  { id: "manager-5", name: "Crazy", teamName: "Pixies", record: "0-3", place: "9th", totalPoints: 543, avgPoints: 181 },
-  { id: "manager-6", name: "Alex", teamName: "Storm Chasers", record: "2-1", place: "6th", totalPoints: 603, avgPoints: 201 },
-  { id: "manager-7", name: "Jordan", teamName: "Lightning Bolts", record: "1-2", place: "8th", totalPoints: 585, avgPoints: 195 },
-  { id: "manager-8", name: "Taylor", teamName: "Phoenix Rising", record: "3-0", place: "2nd", totalPoints: 630, avgPoints: 210 },
-  { id: "manager-9", name: "Casey", teamName: "Thunder Wolves", record: "0-3", place: "11th", totalPoints: 534, avgPoints: 178 },
-  { id: "manager-10", name: "Morgan", teamName: "Ice Breakers", record: "1-2", place: "10th", totalPoints: 555, avgPoints: 185 },
-  { id: "manager-11", name: "Riley", teamName: "Fire Hawks", record: "2-1", place: "12th", totalPoints: 549, avgPoints: 183 },
-];
+interface RosterTeam {
+  id: string;
+  slot: string;
+  name: string;
+  fpts: number;
+  record: string;
+  rk: number;
+  logo: string;
+  mleTeamId: string;
+}
 
-// My roster (xenn)
-const myRoster = {
-  managerName: "xenn",
-  teamName: "Fantastic Ballers",
-  record: "2-1",
-  place: "3rd",
-  totalPoints: 543,
-  avgPoints: 181,
-  teams: [
-    { slot: "2s", name: "AL Blizzard", fpts: 679, record: "7-3", rk: 3, logo: TEAMS.find(t => t.name === "Blizzard")?.logoPath || "" },
-    { slot: "2s", name: "AL Comets", fpts: 652, record: "6-4", rk: 5, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "3s", name: "AL Blizzard", fpts: 679, record: "7-3", rk: 3, logo: TEAMS.find(t => t.name === "Blizzard")?.logoPath || "" },
-    { slot: "3s", name: "AL Comets", fpts: 652, record: "6-4", rk: 4, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "FLX", name: "AL Comets", fpts: 652, record: "6-4", rk: 5, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "BE", name: "AL Comets", fpts: 652, record: "6-4", rk: 6, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "BE", name: "AL Comets", fpts: 652, record: "6-4", rk: 7, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "BE", name: "AL Comets", fpts: 652, record: "6-4", rk: 8, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-  ]
-};
-
-// Generate opponent roster
-const generateOpponentRoster = () => {
-  return [
-    { slot: "2s", name: "AL Blizzard", fpts: 679, record: "7-3", rk: 3, logo: TEAMS.find(t => t.name === "Blizzard")?.logoPath || "" },
-    { slot: "2s", name: "AL Comets", fpts: 652, record: "6-4", rk: 5, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "3s", name: "AL Blizzard", fpts: 679, record: "7-3", rk: 3, logo: TEAMS.find(t => t.name === "Blizzard")?.logoPath || "" },
-    { slot: "3s", name: "AL Comets", fpts: 652, record: "6-4", rk: 4, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "FLX", name: "AL Comets", fpts: 652, record: "6-4", rk: 5, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "BE", name: "AL Comets", fpts: 652, record: "6-4", rk: 6, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "BE", name: "AL Comets", fpts: 652, record: "6-4", rk: 7, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-    { slot: "BE", name: "AL Comets", fpts: 652, record: "6-4", rk: 8, logo: TEAMS.find(t => t.name === "Comets")?.logoPath || "" },
-  ];
-};
+interface RosterData {
+  fantasyTeam: {
+    id: string;
+    displayName: string;
+    ownerDisplayName: string;
+  };
+  rosterSlots: any[];
+}
 
 export default function TradePage() {
   const params = useParams();
-  const managerId = params.slug as string;
+  const router = useRouter();
+  const leagueId = params.LeagueID as string;
+  const opponentTeamId = params.slug as string;
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [myRoster, setMyRoster] = useState<RosterData | null>(null);
+  const [opponentRoster, setOpponentRoster] = useState<RosterData | null>(null);
   const [selectedMyTeams, setSelectedMyTeams] = useState<number[]>([]);
   const [selectedOpponentTeams, setSelectedOpponentTeams] = useState<number[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showDropModal, setShowDropModal] = useState(false);
-  const [selectedDropTeam, setSelectedDropTeam] = useState<string | null>(null);
+  const [selectedDropTeamIndex, setSelectedDropTeamIndex] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const opponent = otherManagers.find(m => m.id === managerId) || otherManagers[0];
-  const opponentRoster = generateOpponentRoster();
+  // Fetch roster data
+  useEffect(() => {
+    const fetchRosters = async () => {
+      try {
+        setLoading(true);
+
+        // First, get the current user's team ID
+        const userResponse = await fetch(`/api/leagues/${leagueId}/user`);
+        if (!userResponse.ok) throw new Error("Failed to fetch user team");
+        const userData = await userResponse.json();
+        const myTeamId = userData.fantasyTeam.id;
+
+        // Fetch my roster
+        const myRosterResponse = await fetch(`/api/leagues/${leagueId}/rosters/${myTeamId}?week=1`);
+        if (!myRosterResponse.ok) throw new Error("Failed to fetch your roster");
+        const myRosterData = await myRosterResponse.json();
+
+        // Fetch opponent roster
+        const opponentRosterResponse = await fetch(`/api/leagues/${leagueId}/rosters/${opponentTeamId}?week=1`);
+        if (!opponentRosterResponse.ok) throw new Error("Failed to fetch opponent roster");
+        const opponentRosterData = await opponentRosterResponse.json();
+
+        setMyRoster(myRosterData);
+        setOpponentRoster(opponentRosterData);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load rosters");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (leagueId && opponentTeamId) {
+      fetchRosters();
+    }
+  }, [leagueId, opponentTeamId]);
 
   const isNonEqualTrade = selectedMyTeams.length < selectedOpponentTeams.length;
 
@@ -81,6 +92,93 @@ export default function TradePage() {
       prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
     );
   };
+
+  const handleProposeTrade = async () => {
+    if (!myRoster || !opponentRoster) return;
+
+    setSubmitting(true);
+
+    try {
+      // Build arrays of MLE team IDs
+      const proposerGives = selectedMyTeams.map(idx => myRoster.rosterSlots[idx].mleTeamId);
+      const receiverGives = selectedOpponentTeams.map(idx => opponentRoster.rosterSlots[idx].mleTeamId);
+
+      const response = await fetch(`/api/leagues/${leagueId}/trades/propose`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          proposerTeamId: myRoster.fantasyTeam.id,
+          receiverTeamId: opponentRoster.fantasyTeam.id,
+          proposerGives,
+          receiverGives,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to propose trade");
+      }
+
+      // Success! Redirect to My Roster page
+      alert("Trade proposed successfully!");
+      router.push(`/leagues/${leagueId}/my-roster/${myRoster.fantasyTeam.id}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to propose trade");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>Loading...</div>
+      </div>
+    );
+  }
+
+  if (error || !myRoster || !opponentRoster) {
+    return (
+      <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#ef4444", fontSize: "1.1rem" }}>
+          Error: {error || "Failed to load rosters"}
+        </div>
+      </div>
+    );
+  }
+
+  // Transform roster slots for display
+  const getSlotDisplay = (position: string) => {
+    if (position === "twos") return "2s";
+    if (position === "threes") return "3s";
+    if (position === "flex") return "FLX";
+    if (position === "bench") return "BE";
+    return position.toUpperCase();
+  };
+
+  const myTeams = myRoster.rosterSlots.map(slot => ({
+    id: slot.id,
+    slot: getSlotDisplay(slot.position),
+    name: `${slot.mleTeam.leagueId} ${slot.mleTeam.name}`,
+    fpts: slot.mleTeam.fpts || 0,
+    record: slot.mleTeam.record || "0-0",
+    rk: 0,
+    logo: slot.mleTeam.logoPath,
+    mleTeamId: slot.mleTeamId,
+  }));
+
+  const opponentTeams = opponentRoster.rosterSlots.map(slot => ({
+    id: slot.id,
+    slot: getSlotDisplay(slot.position),
+    name: `${slot.mleTeam.leagueId} ${slot.mleTeam.name}`,
+    fpts: slot.mleTeam.fpts || 0,
+    record: slot.mleTeam.record || "0-0",
+    rk: 0,
+    logo: slot.mleTeam.logoPath,
+    mleTeamId: slot.mleTeamId,
+  }));
 
   return (
     <>
@@ -123,6 +221,7 @@ export default function TradePage() {
             <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
               <button
                 onClick={() => setShowConfirmModal(false)}
+                disabled={submitting}
                 style={{
                   background: "rgba(255,255,255,0.1)",
                   border: "1px solid rgba(255,255,255,0.2)",
@@ -130,8 +229,9 @@ export default function TradePage() {
                   fontWeight: 600,
                   padding: "0.75rem 2rem",
                   borderRadius: "8px",
-                  cursor: "pointer",
+                  cursor: submitting ? "not-allowed" : "pointer",
                   fontSize: "1rem",
+                  opacity: submitting ? 0.5 : 1,
                 }}
               >
                 No, Go Back
@@ -142,9 +242,10 @@ export default function TradePage() {
                   if (isNonEqualTrade) {
                     setShowDropModal(true);
                   } else {
-                    alert("Trade proposed!");
+                    handleProposeTrade();
                   }
                 }}
+                disabled={submitting}
                 style={{
                   background: "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
                   color: "#1a1a2e",
@@ -152,12 +253,13 @@ export default function TradePage() {
                   padding: "0.75rem 2rem",
                   borderRadius: "8px",
                   border: "none",
-                  cursor: "pointer",
+                  cursor: submitting ? "not-allowed" : "pointer",
                   fontSize: "1rem",
                   boxShadow: "0 4px 12px rgba(242, 182, 50, 0.4)",
+                  opacity: submitting ? 0.5 : 1,
                 }}
               >
-                Yes, Propose Trade
+                {submitting ? "Submitting..." : "Yes, Propose Trade"}
               </button>
             </div>
           </div>
@@ -176,7 +278,10 @@ export default function TradePage() {
             justifyContent: "center",
             zIndex: 95,
           }}
-          onClick={() => setShowDropModal(false)}
+          onClick={() => {
+            setShowDropModal(false);
+            setSelectedDropTeamIndex(null);
+          }}
         >
           <div
             style={{
@@ -196,7 +301,7 @@ export default function TradePage() {
             <button
               onClick={() => {
                 setShowDropModal(false);
-                setSelectedDropTeam(null);
+                setSelectedDropTeamIndex(null);
               }}
               style={{
                 position: "absolute",
@@ -223,14 +328,14 @@ export default function TradePage() {
             {/* Confirm button */}
             <button
               onClick={() => {
-                if (selectedDropTeam) {
-                  alert(`Trade proposed! You will drop ${selectedDropTeam}`);
+                if (selectedDropTeamIndex !== null) {
                   setShowDropModal(false);
-                  setSelectedDropTeam(null);
+                  handleProposeTrade();
                 } else {
                   alert("Please select a team to drop");
                 }
               }}
+              disabled={submitting}
               style={{
                 position: "absolute",
                 top: "1rem",
@@ -241,25 +346,23 @@ export default function TradePage() {
                 padding: "0.65rem 2rem",
                 borderRadius: "8px",
                 border: "none",
-                cursor: "pointer",
+                cursor: submitting ? "not-allowed" : "pointer",
                 fontSize: "1rem",
                 boxShadow: "0 4px 12px rgba(242, 182, 50, 0.4)",
                 zIndex: 10,
+                opacity: submitting ? 0.5 : 1,
               }}
             >
-              Confirm
+              {submitting ? "Submitting..." : "Confirm"}
             </button>
 
             {/* Header - Team Info */}
             <div style={{ padding: "3.5rem 2rem 1.5rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
               <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-main)" }}>
-                {myRoster.teamName}
+                {myRoster.fantasyTeam.displayName}
               </div>
               <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                {myRoster.managerName}
-              </div>
-              <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                {myRoster.record}  {myRoster.place}
+                {myRoster.fantasyTeam.ownerDisplayName}
               </div>
               <div style={{ fontSize: "0.9rem", color: "var(--accent)", marginTop: "1rem", fontWeight: 600 }}>
                 Select a team to drop (You&apos;re receiving more teams than you&apos;re sending)
@@ -276,17 +379,16 @@ export default function TradePage() {
                       <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Team</th>
                       <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Fpts</th>
                       <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Record</th>
-                      <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Rk</th>
                       <th style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {myRoster.teams.map((team, index) => (
+                    {myTeams.map((team, index) => (
                       <tr
                         key={index}
                         style={{
                           borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                          backgroundColor: selectedDropTeam === team.name ? "rgba(242, 182, 50, 0.1)" : "transparent",
+                          backgroundColor: selectedDropTeamIndex === index ? "rgba(242, 182, 50, 0.1)" : "transparent",
                         }}
                       >
                         <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--accent)" }}>
@@ -307,28 +409,25 @@ export default function TradePage() {
                           </div>
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontWeight: 600, fontSize: "0.9rem" }}>
-                          {team.fpts}
+                          {team.fpts.toFixed(1)}
                         </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
                           {team.record}
                         </td>
-                        <td style={{ padding: "0.75rem 0.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                          {team.rk}
-                        </td>
                         <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
                           <button
-                            onClick={() => setSelectedDropTeam(team.name)}
+                            onClick={() => setSelectedDropTeamIndex(index)}
                             style={{
                               width: "24px",
                               height: "24px",
                               border: "2px solid var(--accent)",
                               borderRadius: "4px",
-                              background: selectedDropTeam === team.name ? "var(--accent)" : "transparent",
+                              background: selectedDropTeamIndex === index ? "var(--accent)" : "transparent",
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              color: selectedDropTeam === team.name ? "#1a1a2e" : "transparent",
+                              color: selectedDropTeamIndex === index ? "#1a1a2e" : "transparent",
                               fontWeight: 700,
                               fontSize: "1rem",
                             }}
@@ -348,7 +447,7 @@ export default function TradePage() {
 
       <div style={{ marginBottom: "2rem" }}>
         <Link
-          href="/leagues/2025-alpha/opponents"
+          href={`/leagues/${leagueId}/opponents`}
           style={{
             display: "inline-block",
             background: "rgba(255,255,255,0.1)",
@@ -390,47 +489,43 @@ export default function TradePage() {
               color: "#ffffff",
               marginBottom: "0.25rem"
             }}>
-              {myRoster.teamName}
+              {myRoster.fantasyTeam.displayName}
             </h2>
             <p style={{
               color: "rgba(255,255,255,0.6)",
               fontSize: "0.9rem",
               margin: "0 0 0.5rem 0"
             }}>
-              {myRoster.managerName}
+              {myRoster.fantasyTeam.ownerDisplayName}
             </p>
-            <p style={{
-              color: "rgba(255,255,255,0.5)",
-              fontSize: "0.85rem",
-              margin: 0
-            }}>
-              {myRoster.record}  {myRoster.place}
-            </p>
-            <div style={{
-              marginTop: "0.75rem",
-              fontSize: "0.9rem",
-              color: "rgba(255,255,255,0.7)"
-            }}>
-              <span style={{ fontWeight: 600 }}>{myRoster.totalPoints} Fantasy Points</span>
-              <span style={{ marginLeft: "1rem" }}>{myRoster.avgPoints} Avg Fantasy Points</span>
-            </div>
           </div>
 
           {/* Propose Trade Button */}
           <button
             style={{
-              background: "#d4af37",
+              background: selectedMyTeams.length === 0 || selectedOpponentTeams.length === 0
+                ? "rgba(255,255,255,0.2)"
+                : "#d4af37",
               border: "none",
-              color: "#1a1a2e",
+              color: selectedMyTeams.length === 0 || selectedOpponentTeams.length === 0
+                ? "rgba(255,255,255,0.5)"
+                : "#1a1a2e",
               padding: "0.75rem 2rem",
               borderRadius: "8px",
-              cursor: "pointer",
+              cursor: selectedMyTeams.length === 0 || selectedOpponentTeams.length === 0
+                ? "not-allowed"
+                : "pointer",
               fontSize: "1rem",
               fontWeight: 600,
               whiteSpace: "nowrap",
               marginTop: "1rem"
             }}
-            onClick={() => setShowConfirmModal(true)}
+            onClick={() => {
+              if (selectedMyTeams.length > 0 && selectedOpponentTeams.length > 0) {
+                setShowConfirmModal(true);
+              }
+            }}
+            disabled={selectedMyTeams.length === 0 || selectedOpponentTeams.length === 0}
           >
             Propose Trade
           </button>
@@ -443,30 +538,15 @@ export default function TradePage() {
               color: "#ffffff",
               marginBottom: "0.25rem"
             }}>
-              {opponent.teamName}
+              {opponentRoster.fantasyTeam.displayName}
             </h2>
             <p style={{
               color: "rgba(255,255,255,0.6)",
               fontSize: "0.9rem",
               margin: "0 0 0.5rem 0"
             }}>
-              {opponent.name}
+              {opponentRoster.fantasyTeam.ownerDisplayName}
             </p>
-            <p style={{
-              color: "rgba(255,255,255,0.5)",
-              fontSize: "0.85rem",
-              margin: 0
-            }}>
-              {opponent.record}  {opponent.place}
-            </p>
-            <div style={{
-              marginTop: "0.75rem",
-              fontSize: "0.9rem",
-              color: "rgba(255,255,255,0.7)"
-            }}>
-              <span style={{ fontWeight: 600 }}>{opponent.totalPoints} Fantasy Points</span>
-              <span style={{ marginLeft: "1rem" }}>{opponent.avgPoints} Avg Fantasy Points</span>
-            </div>
           </div>
         </div>
 
@@ -481,7 +561,7 @@ export default function TradePage() {
           <div>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "auto 1fr auto auto auto auto",
+              gridTemplateColumns: "auto 1fr auto auto auto",
               gap: "1rem",
               marginBottom: "0.5rem",
               paddingBottom: "0.5rem",
@@ -494,16 +574,15 @@ export default function TradePage() {
               <div>Team</div>
               <div style={{ textAlign: "right" }}>Fpts</div>
               <div style={{ textAlign: "center" }}>Record</div>
-              <div style={{ textAlign: "center" }}>Rk</div>
               <div></div>
             </div>
 
-            {myRoster.teams.map((team, idx) => (
+            {myTeams.map((team, idx) => (
               <div
                 key={idx}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "auto 1fr auto auto auto auto",
+                  gridTemplateColumns: "auto 1fr auto auto auto",
                   gap: "1rem",
                   padding: "0.75rem 0",
                   alignItems: "center",
@@ -512,9 +591,8 @@ export default function TradePage() {
               >
                 <Image src={team.logo} alt={team.name} width={24} height={24} style={{ borderRadius: "4px" }} />
                 <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#ffffff" }}>{team.name}</div>
-                <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.8)", textAlign: "right" }}>{team.fpts}</div>
+                <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.8)", textAlign: "right" }}>{team.fpts.toFixed(1)}</div>
                 <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", textAlign: "center" }}>{team.record}</div>
-                <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", textAlign: "center" }}>{team.rk}</div>
                 <input
                   type="checkbox"
                   checked={selectedMyTeams.includes(idx)}
@@ -541,7 +619,7 @@ export default function TradePage() {
             }}>
               Position
             </div>
-            {myRoster.teams.map((team, idx) => (
+            {myTeams.map((team, idx) => (
               <div
                 key={idx}
                 style={{
@@ -565,7 +643,7 @@ export default function TradePage() {
           <div>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "auto auto auto auto 1fr auto",
+              gridTemplateColumns: "auto auto auto 1fr auto",
               gap: "1rem",
               marginBottom: "0.5rem",
               paddingBottom: "0.5rem",
@@ -575,19 +653,18 @@ export default function TradePage() {
               fontWeight: 600
             }}>
               <div></div>
-              <div style={{ textAlign: "center" }}>Rk</div>
               <div style={{ textAlign: "center" }}>Record</div>
               <div style={{ textAlign: "right" }}>Fpts</div>
               <div>Team</div>
               <div></div>
             </div>
 
-            {opponentRoster.map((team, idx) => (
+            {opponentTeams.map((team, idx) => (
               <div
                 key={idx}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "auto auto auto auto 1fr auto",
+                  gridTemplateColumns: "auto auto auto 1fr auto",
                   gap: "1rem",
                   padding: "0.75rem 0",
                   alignItems: "center",
@@ -605,9 +682,8 @@ export default function TradePage() {
                     accentColor: "#d4af37"
                   }}
                 />
-                <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", textAlign: "center" }}>{team.rk}</div>
                 <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", textAlign: "center" }}>{team.record}</div>
-                <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.8)", textAlign: "right" }}>{team.fpts}</div>
+                <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.8)", textAlign: "right" }}>{team.fpts.toFixed(1)}</div>
                 <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#ffffff" }}>{team.name}</div>
                 <Image src={team.logo} alt={team.name} width={24} height={24} style={{ borderRadius: "4px" }} />
               </div>

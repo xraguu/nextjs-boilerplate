@@ -37,7 +37,8 @@
       "Bash(timeout /t 2 /nobreak)",
       "Bash(docker build:*)",
       "Bash(set:*)",
-      "Bash(powershell -Command \"(Get-Content exports\\MLETeam.json | Measure-Object -Line).Lines\")"
+      "Bash(powershell -Command \"(Get-Content exports\\MLETeam.json | Measure-Object -Line).Lines\")",
+      "Bash(xargs ls:*)"
     ],
     "deny": [],
     "ask": []
