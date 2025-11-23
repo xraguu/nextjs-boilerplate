@@ -7,7 +7,10 @@ import { TEAMS } from "@/lib/teams";
 
 interface Transaction {
   id: string;
-  type: "trade" | "waiver" | "fa-pickup";
+  type: "trade" | "waiver" | "pickup" | "drop";
+  // Team info
+  teamName?: string;
+  username?: string;
   // Trade fields
   fromTeam?: string;
   fromManager?: string;
@@ -29,7 +32,7 @@ export default function TransactionsPage() {
   const teamId = params.managerId as string;
 
   const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(["Waiver", "Trade", "Pick Up/Drop"]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,27 +64,28 @@ export default function TransactionsPage() {
     }
   }, [leagueId, teamId]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+  const getTeamByMLEId = (mleTeamId: string) => {
+    if (!mleTeamId) return null;
+    // Handle case-insensitive lookup (database might have "plSpartans" while TEAMS has "PLSpartans")
+    return TEAMS.find(t => t.id.toLowerCase() === mleTeamId.toLowerCase());
   };
 
-  const getTeamByMLEId = (mleTeamId: string) => {
-    return TEAMS.find(t => t.id === mleTeamId);
+  const toggleFilter = (filter: string) => {
+    setSelectedFilters((prev) =>
+      prev.includes(filter)
+        ? prev.filter((f) => f !== filter)
+        : [...prev, filter]
+    );
   };
 
   const filteredTransactions = transactions.filter((transaction) => {
-    if (selectedFilter === "All") return true;
-    if (selectedFilter === "Trade") return transaction.type === "trade";
-    if (selectedFilter === "Waiver Claim") return transaction.type === "waiver";
-    if (selectedFilter === "FA Pick up") return transaction.type === "fa-pickup";
-    return true;
+    if (selectedFilters.length === 0) return true;
+
+    if (selectedFilters.includes("Trade") && transaction.type === "trade") return true;
+    if (selectedFilters.includes("Waiver") && transaction.type === "waiver") return true;
+    if (selectedFilters.includes("Pick Up/Drop") && (transaction.type === "pickup" || transaction.type === "drop")) return true;
+
+    return false;
   });
 
   if (loading) {
@@ -106,24 +110,29 @@ export default function TransactionsPage() {
     <>
       {/* Page Header */}
       <div style={{ marginBottom: "1.5rem" }}>
-        <h1 className="page-heading" style={{ fontSize: "2.5rem", color: "var(--accent)", fontWeight: 700, margin: 0 }}>
+        <h1 style={{ fontSize: "2.5rem", color: "#f59e0b", fontWeight: 700, margin: 0 }}>
           Transactions
         </h1>
       </div>
 
-      <section className="card" style={{ padding: "1.5rem" }}>
+      <section style={{
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+        borderRadius: "12px",
+        padding: "2rem",
+        border: "1px solid rgba(255,255,255,0.1)"
+      }}>
         {/* Filter Dropdown */}
-        <div style={{ position: "relative", marginBottom: "1.5rem", width: "150px" }}>
+        <div style={{ position: "relative", marginBottom: "1.5rem", width: "200px" }}>
           <button
             onClick={() => setFilterOpen(!filterOpen)}
             style={{
-              background: "rgba(255,255,255,0.1)",
+              background: "rgba(255,255,255,0.15)",
               border: "1px solid rgba(255,255,255,0.2)",
-              color: "var(--text-main)",
-              padding: "0.5rem 1rem",
-              borderRadius: "6px",
+              color: "white",
+              padding: "0.6rem 1.2rem",
+              borderRadius: "8px",
               cursor: "pointer",
-              fontSize: "0.9rem",
+              fontSize: "0.95rem",
               fontWeight: 600,
               display: "flex",
               alignItems: "center",
@@ -131,228 +140,239 @@ export default function TransactionsPage() {
               width: "100%",
             }}
           >
-            <span>Filter {selectedFilter !== "All" ? `• ${selectedFilter}` : ""}</span>
-            <span style={{ marginLeft: "0.5rem" }}>{filterOpen ? "▲" : "▼"}</span>
+            <span>Filter ({selectedFilters.length}) ▼</span>
           </button>
 
           {filterOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                marginTop: "0.5rem",
-                background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
-                borderRadius: "6px",
-                padding: "0.5rem 0",
-                border: "1px solid rgba(255,255,255,0.1)",
-                boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-                zIndex: 1000,
-                minWidth: "150px",
-              }}
-            >
-              {["All", "Trade", "Waiver Claim", "FA Pick up"].map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => {
-                    setSelectedFilter(filter);
-                    setFilterOpen(false);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "0.5rem 1rem",
-                    background: filter === selectedFilter ? "rgba(255,255,255,0.1)" : "transparent",
-                    border: "none",
-                    color: "var(--text-main)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    transition: "background 0.2s ease",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (filter !== selectedFilter) {
-                      e.currentTarget.style.background = "transparent";
+            <>
+              <div
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 998,
+                }}
+                onClick={() => setFilterOpen(false)}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  marginTop: "0.5rem",
+                  background: "#1e293b",
+                  borderRadius: "8px",
+                  padding: "0.75rem",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                  zIndex: 999,
+                  minWidth: "200px",
+                }}
+              >
+                {["Waiver", "Trade", "Pick Up/Drop"].map((filter) => (
+                  <label
+                    key={filter}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                      padding: "0.6rem 0.5rem",
+                      cursor: "pointer",
+                      borderRadius: "6px",
+                      transition: "background 0.2s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "rgba(255,255,255,0.05)")
                     }
-                  }}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedFilters.includes(filter)}
+                      onChange={() => toggleFilter(filter)}
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        cursor: "pointer",
+                        accentColor: "#f59e0b",
+                      }}
+                    />
+                    <span style={{ color: "white", fontWeight: 600, fontSize: "0.9rem" }}>
+                      {filter}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
         {/* Transactions List */}
         {filteredTransactions.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
+          <div style={{ textAlign: "center", padding: "3rem", color: "rgba(255,255,255,0.5)" }}>
             No transactions yet
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {filteredTransactions.map((transaction) => (
               <div
                 key={transaction.id}
                 style={{
-                  background: "rgba(19, 31, 58, 0.8)",
+                  background: "rgba(15, 23, 42, 0.6)",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
+                  borderRadius: "0",
                   padding: "1.25rem 1.5rem",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
                   gap: "1.5rem",
                 }}
               >
-                {/* Transaction Content */}
                 {transaction.type === "trade" ? (
+                  // TRADE TRANSACTION
                   <>
-                    {/* Team From */}
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "0.25rem" }}>
+                      <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>
                         {transaction.fromTeam}
                       </div>
-                      <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                      <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)" }}>
                         {transaction.fromManager}
                       </div>
-                      {transaction.givingTeams && transaction.givingTeams.length > 0 && (
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
-                          Gave: {transaction.givingTeams.map(id => {
-                            const team = getTeamByMLEId(id);
-                            return team ? `${team.leagueId} ${team.name}` : id;
-                          }).join(", ")}
-                        </div>
-                      )}
                     </div>
 
-                    {/* Arrow */}
-                    <div style={{ fontSize: "1.5rem", color: "var(--accent)", fontWeight: 700 }}>
-                      ⇄
+                    <div style={{ fontSize: "2rem", color: "#f59e0b" }}>
+                      →
                     </div>
 
-                    {/* Team To */}
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "0.25rem" }}>
+                      <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>
                         {transaction.toTeam}
                       </div>
-                      <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                      <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)" }}>
                         {transaction.toManager}
                       </div>
-                      {transaction.receivingTeams && transaction.receivingTeams.length > 0 && (
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
-                          Received: {transaction.receivingTeams.map(id => {
-                            const team = getTeamByMLEId(id);
-                            return team ? `${team.leagueId} ${team.name}` : id;
-                          }).join(", ")}
+                    </div>
+
+                    <button
+                      style={{
+                        background: "rgba(255,255,255,0.2)",
+                        border: "none",
+                        color: "white",
+                        padding: "0.6rem 1.5rem",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "0.95rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      View
+                    </button>
+                  </>
+                ) : transaction.type === "waiver" ? (
+                  // WAIVER CLAIM TRANSACTION
+                  <>
+                    <div style={{ flex: "0 0 200px" }}>
+                      <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>
+                        {transaction.teamName}
+                      </div>
+                      <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)" }}>
+                        {transaction.username}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      {transaction.addTeamId && (() => {
+                        const teamAdded = getTeamByMLEId(transaction.addTeamId);
+                        return teamAdded ? (
+                          <>
+                            <Image
+                              src={teamAdded.logoPath}
+                              alt={teamAdded.name}
+                              width={40}
+                              height={40}
+                              style={{ borderRadius: "6px" }}
+                            />
+                            <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
+                              {teamAdded.leagueId} {teamAdded.name}
+                            </div>
+                          </>
+                        ) : null;
+                      })()}
+
+                      {transaction.addTeamId && transaction.dropTeamId && (
+                        <div style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.3)", marginLeft: "0.5rem", marginRight: "0.5rem" }}>
+                          →
                         </div>
                       )}
+
+                      {transaction.dropTeamId && (() => {
+                        const teamDropped = getTeamByMLEId(transaction.dropTeamId);
+                        return teamDropped ? (
+                          <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.5)" }}>
+                            {teamDropped.leagueId} {teamDropped.name}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   </>
                 ) : (
+                  // PICKUP OR DROP TRANSACTION
                   <>
-                    {/* Team Added */}
+                    <div style={{ flex: "0 0 200px" }}>
+                      <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>
+                        {transaction.teamName}
+                      </div>
+                      <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)" }}>
+                        {transaction.username}
+                      </div>
+                    </div>
+
                     {transaction.addTeamId && (() => {
                       const teamAdded = getTeamByMLEId(transaction.addTeamId);
                       return teamAdded ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div style={{ fontSize: "1.5rem", color: "#22c55e", fontWeight: 700 }}>
+                            +
+                          </div>
                           <Image
                             src={teamAdded.logoPath}
                             alt={teamAdded.name}
-                            width={48}
-                            height={48}
+                            width={40}
+                            height={40}
                             style={{ borderRadius: "6px" }}
                           />
-                          <div>
-                            <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main)" }}>
-                              {teamAdded.leagueId} {teamAdded.name}
-                            </div>
-                            <div style={{ fontSize: "0.85rem", color: "#22c55e" }}>
-                              Added
-                            </div>
+                          <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
+                            {teamAdded.leagueId} {teamAdded.name}
                           </div>
                         </div>
                       ) : null;
                     })()}
 
-                    {/* Arrow */}
-                    {transaction.addTeamId && transaction.dropTeamId && (
-                      <div style={{ fontSize: "1.5rem", color: "var(--accent)", fontWeight: 700 }}>
-                        →
-                      </div>
-                    )}
-
-                    {/* Team Dropped */}
                     {transaction.dropTeamId && (() => {
                       const teamDropped = getTeamByMLEId(transaction.dropTeamId);
                       return teamDropped ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div style={{ fontSize: "1.5rem", color: "#ef4444", fontWeight: 700 }}>
+                            −
+                          </div>
                           <Image
                             src={teamDropped.logoPath}
                             alt={teamDropped.name}
-                            width={48}
-                            height={48}
+                            width={40}
+                            height={40}
                             style={{ borderRadius: "6px" }}
                           />
-                          <div>
-                            <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main)" }}>
-                              {teamDropped.leagueId} {teamDropped.name}
-                            </div>
-                            <div style={{ fontSize: "0.85rem", color: "#ef4444" }}>
-                              Dropped
-                            </div>
+                          <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
+                            {teamDropped.leagueId} {teamDropped.name}
                           </div>
                         </div>
                       ) : null;
                     })()}
-
-                    {transaction.faabBid !== undefined && transaction.faabBid !== null && (
-                      <div style={{ fontSize: "0.9rem", color: "var(--accent)", fontWeight: 600 }}>
-                        ${transaction.faabBid}
-                      </div>
-                    )}
                   </>
                 )}
-
-                {/* Timestamp */}
-                <div
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "var(--text-muted)",
-                    fontWeight: 500,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatDate(transaction.timestamp)}
-                </div>
-
-                {/* Status Badge */}
-                <div
-                  style={{
-                    background:
-                      transaction.status === "Accepted" || transaction.status === "Successful"
-                        ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
-                        : transaction.status === "Pending"
-                        ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                        : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                    color: "white",
-                    padding: "0.5rem 1.25rem",
-                    borderRadius: "20px",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    whiteSpace: "nowrap",
-                    boxShadow:
-                      transaction.status === "Accepted" || transaction.status === "Successful"
-                        ? "0 4px 12px rgba(34, 197, 94, 0.3)"
-                        : transaction.status === "Pending"
-                        ? "0 4px 12px rgba(245, 158, 11, 0.3)"
-                        : "0 4px 12px rgba(239, 68, 68, 0.3)",
-                  }}
-                >
-                  {transaction.status}
-                </div>
               </div>
             ))}
           </div>

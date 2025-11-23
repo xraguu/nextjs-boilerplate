@@ -1,0 +1,32 @@
+[
+  {
+    "id": "PL",
+    "name": "Premier League",
+    "colorHex": "#e2b22d",
+    "colorHexTwo": "#e3cd8f"
+  },
+  {
+    "id": "ML",
+    "name": "Master League",
+    "colorHex": "#d10057",
+    "colorHexTwo": "#c97799"
+  },
+  {
+    "id": "CL",
+    "name": "Champion League",
+    "colorHex": "#7e55ce",
+    "colorHexTwo": "#a999c9"
+  },
+  {
+    "id": "AL",
+    "name": "Academy League",
+    "colorHex": "#0085fa",
+    "colorHexTwo": "#73bdff"
+  },
+  {
+    "id": "FL",
+    "name": "Foundation League",
+    "colorHex": "#4ebfecff",
+    "colorHexTwo": "#b0e1f5"
+  }
+]

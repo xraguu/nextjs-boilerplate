@@ -35,7 +35,9 @@
       "Bash(dir:*)",
       "Bash(npx prisma db execute:*)",
       "Bash(timeout /t 2 /nobreak)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(set:*)",
+      "Bash(powershell -Command \"(Get-Content exports\\MLETeam.json | Measure-Object -Line).Lines\")"
     ],
     "deny": [],
     "ask": []

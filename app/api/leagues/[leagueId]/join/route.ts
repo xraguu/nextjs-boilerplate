@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { generateFantasyTeamId } from "@/lib/id-generator";
 
 // POST /api/leagues/[leagueId]/join - Join a fantasy league
 export async function POST(
@@ -17,13 +18,20 @@ export async function POST(
     // Check if user is suspended
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { status: true, displayName: true },
+      select: { id: true, status: true, displayName: true },
     });
 
     if (user?.status === "suspended") {
       return NextResponse.json(
         { error: "Suspended users cannot join leagues" },
         { status: 403 }
+      );
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 400 }
       );
     }
 
@@ -90,9 +98,13 @@ export async function POST(
       );
     }
 
+    // Generate custom team ID
+    const teamId = generateFantasyTeamId(leagueId, user.id);
+
     // Create the fantasy team
     const fantasyTeam = await prisma.fantasyTeam.create({
       data: {
+        id: teamId,
         fantasyLeagueId: leagueId,
         ownerUserId: session.user.id,
         displayName: teamName,

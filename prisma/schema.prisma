@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id             String        @id @default(cuid())
+  id             Int           @id @default(autoincrement()) // Auto-incrementing integer ID (1, 2, 3, etc.)
   discordId      String        @unique
   displayName    String
   avatarUrl      String?
@@ -160,7 +160,7 @@ model TeamWeeklyStats {
 }
 
 model FantasyLeague {
-  id                   String        @id @default(cuid())
+  id                   String        @id // Format: [Season][LeagueName]-[3Letters][2Numbers] (e.g., "2025Alpha-ABC12")
   name                 String
   season               Int
   maxTeams             Int           @default(12)
@@ -171,7 +171,7 @@ model FantasyLeague {
   faabBudget           Int?
   rosterConfig         Json
   createdAt            DateTime      @default(now())
-  createdByUserId      String
+  createdByUserId      Int
   draftPickDeadline    DateTime?
   draftPickTimeSeconds Int?          @default(90)
   draftStatus          String?       @default("not_started")
@@ -184,9 +184,9 @@ model FantasyLeague {
 }
 
 model FantasyTeam {
-  id              String        @id @default(cuid())
+  id              String        @id // Format: [FantasyLeagueID]-[UserID] (e.g., "2025Alpha-ABC12-1")
   fantasyLeagueId String
-  ownerUserId     String
+  ownerUserId     Int
   displayName     String
   shortCode       String
   draftPosition   Int?
@@ -206,7 +206,7 @@ model FantasyTeam {
 }
 
 model RosterSlot {
-  id            String      @id @default(cuid())
+  id            String      @id // Format: [FantasyTeamID]-W[Week]-[Position]-[SlotIndex] (e.g., "2025Alpha-ABC12-1-W1-starter-0")
   fantasyTeamId String
   mleTeamId     String
   week          Int
@@ -241,8 +241,8 @@ model Trade {
   fantasyLeagueId String
   proposerTeamId  String
   receiverTeamId  String
-  proposerUserId  String
-  receiverUserId  String
+  proposerUserId  Int
+  receiverUserId  Int
   proposerGives   String[]
   receiverGives   String[]
   status          String        @default("pending")
@@ -259,7 +259,7 @@ model WaiverClaim {
   id              String        @id @default(cuid())
   fantasyLeagueId String
   fantasyTeamId   String
-  userId          String
+  userId          Int
   addTeamId       String
   dropTeamId      String?
   faabBid         Int?
@@ -280,7 +280,7 @@ model Transaction {
   id              String        @id @default(cuid())
   fantasyLeagueId String
   fantasyTeamId   String
-  userId          String
+  userId          Int
 
   type            String        // "waiver", "trade", "pickup", "drop"
 

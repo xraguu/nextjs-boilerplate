@@ -26,6 +26,11 @@ export async function GET(
         fantasyLeagueId: true,
         ownerUserId: true,
         displayName: true,
+        owner: {
+          select: {
+            displayName: true,
+          },
+        },
       },
     });
 
@@ -69,9 +74,21 @@ export async function GET(
           timestamp: transaction.processedAt,
         };
       } else {
+        // Determine the specific type
+        let specificType = "pickup";
+        if (transaction.type === "waiver") {
+          specificType = "waiver";
+        } else if (transaction.type === "drop" && !transaction.addTeamId) {
+          specificType = "drop";
+        } else if (transaction.type === "pickup" || transaction.addTeamId) {
+          specificType = "pickup";
+        }
+
         return {
           id: transaction.id,
-          type: transaction.type === "waiver" ? "waiver" : "fa-pickup",
+          type: specificType,
+          teamName: fantasyTeam.displayName,
+          username: fantasyTeam.owner.displayName,
           addTeamId: transaction.addTeamId,
           dropTeamId: transaction.dropTeamId,
           faabBid: transaction.faabBid,

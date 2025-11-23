@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { generateFantasyLeagueId } from "@/lib/id-generator";
 
 // GET /api/admin/leagues - List all fantasy leagues (admin only)
 export async function GET(request: NextRequest) {
@@ -102,9 +103,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate custom league ID
+    const leagueId = generateFantasyLeagueId(parseInt(season), name);
+
     // Create the league
     const league = await prisma.fantasyLeague.create({
       data: {
+        id: leagueId,
         name,
         season: parseInt(season),
         maxTeams: parseInt(maxTeams),

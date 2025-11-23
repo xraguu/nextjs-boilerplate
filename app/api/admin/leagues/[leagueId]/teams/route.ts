@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { generateFantasyTeamId } from "@/lib/id-generator";
 
 // POST /api/admin/leagues/[leagueId]/teams - Add a user to the league (admin only)
 export async function POST(
@@ -35,6 +36,7 @@ export async function POST(
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true },
     });
 
     if (!user) {
@@ -85,9 +87,13 @@ export async function POST(
       );
     }
 
+    // Generate custom team ID
+    const teamId = generateFantasyTeamId(leagueId, user.id);
+
     // Create the fantasy team
     const fantasyTeam = await prisma.fantasyTeam.create({
       data: {
+        id: teamId,
         fantasyLeagueId: leagueId,
         ownerUserId: userId,
         displayName: teamName,

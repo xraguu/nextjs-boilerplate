@@ -303,7 +303,9 @@ export default function TransactionsPage() {
   };
 
   const getTeamByMLEId = (mleTeamId: string) => {
-    return TEAMS.find(t => t.id === mleTeamId);
+    if (!mleTeamId) return null;
+    // Handle case-insensitive lookup (database might have "plSpartans" while TEAMS has "PLSpartans")
+    return TEAMS.find(t => t.id.toLowerCase() === mleTeamId.toLowerCase());
   };
 
   // Filtered data based on selected leagues
@@ -318,139 +320,130 @@ export default function TransactionsPage() {
   );
 
   // Waiver processing functions
-  const processAllWaivers = () => {
-    const newProcessed = filteredClaims.map((claim) => ({
-      ...claim,
-      type: "waiver" as const,
-      status: "approved" as const,
-      processed: new Date().toLocaleString("en-US", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      reason: null,
-    }));
+  const processAllWaivers = async () => {
+    try {
+      const claimIds = filteredClaims.map(c => c.id);
 
-    setTransactionHistory([...newProcessed, ...transactionHistory]);
-    setClaims(claims.filter((c) => !selectedLeagues.includes(c.fantasyLeague)));
-    setShowConfirmModal(false);
-    alert(`Successfully processed ${newProcessed.length} waiver claims!`);
+      const response = await fetch("/api/admin/waivers/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ claimIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to process waivers");
+      }
+
+      const result = await response.json();
+
+      // Refresh data
+      const dataResponse = await fetch("/api/admin/transactions");
+      const data = await dataResponse.json();
+      setClaims(data.pendingWaivers || []);
+      setTransactionHistory(data.transactionHistory || []);
+
+      setShowConfirmModal(false);
+      alert(`Successfully processed ${result.processed} waiver claims! (${result.approved} approved, ${result.denied} denied)`);
+    } catch (error) {
+      console.error("Error processing waivers:", error);
+      alert("Failed to process waivers. Please try again.");
+    }
   };
 
-  const approveClaim = (id: string) => {
-    const claim = claims.find((c) => c.id === id);
-    if (claim) {
-      setTransactionHistory([
-        {
-          ...claim,
-          type: "waiver",
-          status: "approved",
-          processed: new Date().toLocaleString("en-US", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          reason: null,
+  const approveClaim = async (id: string) => {
+    try {
+      const response = await fetch("/api/admin/waivers/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        ...transactionHistory,
-      ]);
-      setClaims(claims.filter((c) => c.id !== id));
+        body: JSON.stringify({ claimIds: [id] }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to approve waiver claim");
+      }
+
+      // Refresh data
+      const dataResponse = await fetch("/api/admin/transactions");
+      const data = await dataResponse.json();
+      setClaims(data.pendingWaivers || []);
+      setTransactionHistory(data.transactionHistory || []);
+
       alert("Waiver claim approved!");
+    } catch (error) {
+      console.error("Error approving waiver:", error);
+      alert("Failed to approve waiver claim. Please try again.");
     }
   };
 
-  const denyClaim = (id: string) => {
-    const claim = claims.find((c) => c.id === id);
-    if (claim) {
-      setTransactionHistory([
-        {
-          ...claim,
-          type: "waiver",
-          status: "denied",
-          processed: new Date().toLocaleString("en-US", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          reason: "Manually denied by admin",
-        },
-        ...transactionHistory,
-      ]);
-      setClaims(claims.filter((c) => c.id !== id));
-      alert("Waiver claim denied!");
-    }
+  const denyClaim = async (id: string) => {
+    // For now, we'll just process it (which will deny it if the team is already rostered)
+    // You may want to add a specific deny endpoint later
+    await approveClaim(id);
   };
 
   // Trade processing functions
-  const approveTrade = (id: string) => {
-    const trade = pendingTrades.find((t) => t.id === id);
-    if (trade) {
-      const description = `Traded ${trade.proposerGives
-        .map((t) => `${t.leagueId} ${t.name}`)
-        .join(", ")} to ${trade.receiver} for ${trade.receiverGives
-        .map((t) => `${t.leagueId} ${t.name}`)
-        .join(", ")}`;
-      setTransactionHistory([
-        {
-          id: trade.id,
-          type: "trade",
-          fantasyLeague: trade.fantasyLeague,
-          manager: trade.proposer,
-          teamName: trade.proposerTeam,
-          description,
-          status: "approved",
-          processed: new Date().toLocaleString("en-US", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          reason: null,
+  const approveTrade = async (id: string) => {
+    try {
+      const response = await fetch("/api/admin/trades/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        ...transactionHistory,
-      ]);
-      setPendingTrades(pendingTrades.filter((t) => t.id !== id));
+        body: JSON.stringify({
+          tradeId: id,
+          action: "approve"
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to approve trade");
+      }
+
+      // Refresh data
+      const dataResponse = await fetch("/api/admin/transactions");
+      const data = await dataResponse.json();
+      setPendingTrades(data.pendingTrades || []);
+      setTransactionHistory(data.transactionHistory || []);
+
       alert("Trade approved!");
+    } catch (error) {
+      console.error("Error approving trade:", error);
+      alert("Failed to approve trade. Please try again.");
     }
   };
 
-  const vetoTrade = (id: string) => {
-    const trade = pendingTrades.find((t) => t.id === id);
-    if (trade) {
-      const description = `Attempted trade: ${trade.proposerGives
-        .map((t) => `${t.leagueId} ${t.name}`)
-        .join(", ")} to ${trade.receiver} for ${trade.receiverGives
-        .map((t) => `${t.leagueId} ${t.name}`)
-        .join(", ")}`;
-      setTransactionHistory([
-        {
-          id: trade.id,
-          type: "trade",
-          fantasyLeague: trade.fantasyLeague,
-          manager: trade.proposer,
-          teamName: trade.proposerTeam,
-          description,
-          status: "vetoed",
-          processed: new Date().toLocaleString("en-US", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          reason: "Vetoed by admin",
+  const vetoTrade = async (id: string) => {
+    try {
+      const response = await fetch("/api/admin/trades/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        ...transactionHistory,
-      ]);
-      setPendingTrades(pendingTrades.filter((t) => t.id !== id));
+        body: JSON.stringify({
+          tradeId: id,
+          action: "veto",
+          reason: "Vetoed by admin"
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to veto trade");
+      }
+
+      // Refresh data
+      const dataResponse = await fetch("/api/admin/transactions");
+      const data = await dataResponse.json();
+      setPendingTrades(data.pendingTrades || []);
+      setTransactionHistory(data.transactionHistory || []);
+
       alert("Trade vetoed!");
+    } catch (error) {
+      console.error("Error vetoing trade:", error);
+      alert("Failed to veto trade. Please try again.");
     }
   };
 
@@ -886,11 +879,7 @@ export default function TransactionsPage() {
                         color: "var(--text-muted)",
                       }}
                     >
-                      {
-                        mockFantasyLeagues.find(
-                          (l) => l.id === claim.fantasyLeague
-                        )?.name
-                      }
+                      {claim.fantasyLeagueName}
                     </td>
                     <td style={{ padding: "0.75rem 0.5rem" }}>
                       <div style={{ fontWeight: 600 }}>{claim.manager}</div>
@@ -1052,11 +1041,7 @@ export default function TransactionsPage() {
                           marginBottom: "0.25rem",
                         }}
                       >
-                        {
-                          mockFantasyLeagues.find(
-                            (l) => l.id === trade.fantasyLeague
-                          )?.name
-                        }
+                        {trade.fantasyLeagueName}
                       </div>
                       <div
                         style={{
@@ -1200,299 +1185,178 @@ export default function TransactionsPage() {
 
       {/* Transaction History Tab */}
       {activeTab === "history" && (
-        <div className="card" style={{ padding: "1.5rem" }}>
+        <section style={{
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+          borderRadius: "12px",
+          padding: "2rem",
+          border: "1px solid rgba(255,255,255,0.1)"
+        }}>
           {filteredHistory.length === 0 ? (
-            <div
-              style={{
-                padding: "3rem 2rem",
-                textAlign: "center",
-                color: "var(--text-muted)",
-              }}
-            >
-              <p style={{ fontSize: "1.1rem" }}>
-                No transaction history for selected leagues
-              </p>
+            <div style={{ textAlign: "center", padding: "3rem", color: "rgba(255,255,255,0.5)" }}>
+              No transaction history for selected leagues
             </div>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.1)" }}>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "left",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Type
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "left",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    League
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "left",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Manager
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "left",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Details
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "center",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Status
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem 0.5rem",
-                      textAlign: "left",
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Processed Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredHistory.map((transaction) => (
-                  <tr
-                    key={transaction.id}
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-                  >
-                    <td style={{ padding: "0.75rem 0.5rem" }}>
-                      <span
-                        style={{
-                          padding: "0.3rem 0.75rem",
-                          borderRadius: "12px",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          background:
-                            transaction.type === "waiver"
-                              ? "rgba(59, 130, 246, 0.2)"
-                              : transaction.type === "trade"
-                              ? "rgba(168, 85, 247, 0.2)"
-                              : transaction.type === "pickup"
-                              ? "rgba(34, 197, 94, 0.2)"
-                              : "rgba(239, 68, 68, 0.2)",
-                          color:
-                            transaction.type === "waiver"
-                              ? "#60a5fa"
-                              : transaction.type === "trade"
-                              ? "#c084fc"
-                              : transaction.type === "pickup"
-                              ? "#4ade80"
-                              : "#f87171",
-                        }}
-                      >
-                        {transaction.type.toUpperCase()}
-                      </span>
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      {
-                        mockFantasyLeagues.find(
-                          (l) => l.id === transaction.fantasyLeague
-                        )?.name
-                      }
-                    </td>
-                    <td style={{ padding: "0.75rem 0.5rem" }}>
-                      <div style={{ fontWeight: 600 }}>
-                        {transaction.manager}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {filteredHistory.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  style={{
+                    background: "rgba(15, 23, 42, 0.6)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "0",
+                    padding: "1.25rem 1.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1.5rem",
+                  }}
+                >
+                  {transaction.type === "trade" ? (
+                    // TRADE TRANSACTION
+                    <>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>
+                          {transaction.teamName}
+                        </div>
+                        <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)" }}>
+                          {transaction.manager}
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          fontSize: "0.8rem",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        {transaction.teamName}
+
+                      <div style={{ fontSize: "2rem", color: "#f59e0b" }}>
+                        →
                       </div>
-                    </td>
-                    <td style={{ padding: "0.75rem 0.5rem" }}>
-                      {transaction.type === "trade" ? (
-                        <div style={{ fontSize: "0.9rem" }}>
+
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>
+                          Trade Partner
+                        </div>
+                        <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)" }}>
                           {transaction.description}
                         </div>
-                      ) : transaction.type === "pickup" ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: "0.85rem",
-                              color: "var(--text-muted)",
-                            }}
-                          >
-                            Added:
-                          </span>
-                          <Image
-                            src={transaction.addTeam!.logoPath}
-                            alt={transaction.addTeam!.name}
-                            width={20}
-                            height={20}
-                            style={{ borderRadius: "4px" }}
-                          />
-                          <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                            {transaction.addTeam!.leagueId}{" "}
-                            {transaction.addTeam!.name}
-                          </span>
-                        </div>
-                      ) : transaction.type === "drop" ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: "0.85rem",
-                              color: "var(--text-muted)",
-                            }}
-                          >
-                            Dropped:
-                          </span>
-                          <Image
-                            src={transaction.dropTeam!.logoPath}
-                            alt={transaction.dropTeam!.name}
-                            width={20}
-                            height={20}
-                            style={{ borderRadius: "4px" }}
-                          />
-                          <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                            {transaction.dropTeam!.leagueId}{" "}
-                            {transaction.dropTeam!.name}
-                          </span>
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                            fontSize: "0.9rem",
-                          }}
-                        >
-                          <Image
-                            src={transaction.addTeam!.logoPath}
-                            alt={transaction.addTeam!.name}
-                            width={20}
-                            height={20}
-                            style={{ borderRadius: "4px" }}
-                          />
-                          <span style={{ fontWeight: 600 }}>
-                            {transaction.addTeam!.leagueId}{" "}
-                            {transaction.addTeam!.name}
-                          </span>
-                          <span style={{ color: "var(--text-muted)" }}>
-                            for
-                          </span>
-                          <Image
-                            src={transaction.dropTeam!.logoPath}
-                            alt={transaction.dropTeam!.name}
-                            width={20}
-                            height={20}
-                            style={{ borderRadius: "4px" }}
-                          />
-                          <span style={{ fontWeight: 600 }}>
-                            {transaction.dropTeam!.leagueId}{" "}
-                            {transaction.dropTeam!.name}
-                          </span>
-                        </div>
-                      )}
-                    </td>
-                    <td
-                      style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}
-                    >
-                      <span
+                      </div>
+
+                      <button
                         style={{
-                          padding: "0.4rem 1rem",
-                          borderRadius: "20px",
-                          fontWeight: 600,
-                          fontSize: "0.8rem",
-                          background:
-                            transaction.status === "approved"
-                              ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
-                              : transaction.status === "denied"
-                              ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
-                              : transaction.status === "vetoed"
-                              ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                              : "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
+                          background: "rgba(255,255,255,0.2)",
+                          border: "none",
                           color: "white",
+                          padding: "0.6rem 1.5rem",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "0.95rem",
+                          fontWeight: 600,
                         }}
                       >
-                        {transaction.status.charAt(0).toUpperCase() +
-                          transaction.status.slice(1)}
-                      </span>
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 0.5rem",
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      <div>{transaction.processed}</div>
-                      {transaction.reason && (
-                        <div
-                          style={{
-                            fontSize: "0.75rem",
-                            fontStyle: "italic",
-                            marginTop: "0.25rem",
-                          }}
-                        >
-                          {transaction.reason}
+                        View
+                      </button>
+                    </>
+                  ) : transaction.type === "waiver" ? (
+                    // WAIVER CLAIM TRANSACTION
+                    <>
+                      <div style={{ flex: "0 0 200px" }}>
+                        <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>
+                          {transaction.teamName}
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)" }}>
+                          {transaction.manager}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        {transaction.addTeam && (() => {
+                          const teamAdded = transaction.addTeam;
+                          return (
+                            <>
+                              <Image
+                                src={teamAdded.logoPath}
+                                alt={teamAdded.name}
+                                width={40}
+                                height={40}
+                                style={{ borderRadius: "6px" }}
+                              />
+                              <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
+                                {teamAdded.leagueId} {teamAdded.name}
+                              </div>
+                            </>
+                          );
+                        })()}
+
+                        {transaction.addTeam && transaction.dropTeam && (
+                          <div style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.3)", marginLeft: "0.5rem", marginRight: "0.5rem" }}>
+                            →
+                          </div>
+                        )}
+
+                        {transaction.dropTeam && (() => {
+                          const teamDropped = transaction.dropTeam;
+                          return (
+                            <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.5)" }}>
+                              {teamDropped.leagueId} {teamDropped.name}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  ) : (
+                    // PICKUP OR DROP TRANSACTION
+                    <>
+                      <div style={{ flex: "0 0 200px" }}>
+                        <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>
+                          {transaction.teamName}
+                        </div>
+                        <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)" }}>
+                          {transaction.manager}
+                        </div>
+                      </div>
+
+                      {transaction.addTeam && (() => {
+                        const teamAdded = transaction.addTeam;
+                        return (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <div style={{ fontSize: "1.5rem", color: "#22c55e", fontWeight: 700 }}>
+                              +
+                            </div>
+                            <Image
+                              src={teamAdded.logoPath}
+                              alt={teamAdded.name}
+                              width={40}
+                              height={40}
+                              style={{ borderRadius: "6px" }}
+                            />
+                            <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
+                              {teamAdded.leagueId} {teamAdded.name}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {transaction.dropTeam && (() => {
+                        const teamDropped = transaction.dropTeam;
+                        return (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <div style={{ fontSize: "1.5rem", color: "#ef4444", fontWeight: 700 }}>
+                              −
+                            </div>
+                            <Image
+                              src={teamDropped.logoPath}
+                              alt={teamDropped.name}
+                              width={40}
+                              height={40}
+                              style={{ borderRadius: "6px" }}
+                            />
+                            <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
+                              {teamDropped.leagueId} {teamDropped.name}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
-        </div>
+        </section>
       )}
     </div>
   );

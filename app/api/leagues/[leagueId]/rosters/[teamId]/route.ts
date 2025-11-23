@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { generateRosterSlotId } from "@/lib/id-generator";
 
 /**
  * GET /api/leagues/[leagueId]/rosters/[teamId]
@@ -307,34 +308,56 @@ export async function POST(
       );
     }
 
-    // Create the roster slot
-    const rosterSlot = await prisma.rosterSlot.create({
-      data: {
-        fantasyTeamId: teamId,
-        mleTeamId,
-        week,
-        position,
-        slotIndex,
-        isLocked: false,
-      },
-      include: {
-        mleTeam: true,
-      },
+    // Create the roster slot and transaction record in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Generate custom roster slot ID
+      const rosterSlotId = generateRosterSlotId(teamId, week, position, slotIndex);
+
+      const rosterSlot = await tx.rosterSlot.create({
+        data: {
+          id: rosterSlotId,
+          fantasyTeamId: teamId,
+          mleTeamId,
+          week,
+          position,
+          slotIndex,
+          isLocked: false,
+        },
+        include: {
+          mleTeam: true,
+        },
+      });
+
+      // Create transaction record for FA pickup
+      await tx.transaction.create({
+        data: {
+          fantasyLeagueId: leagueId,
+          fantasyTeamId: teamId,
+          userId: session.user.id,
+          type: "pickup",
+          addTeamId: mleTeamId,
+          dropTeamId: null,
+          status: "approved",
+          processedAt: new Date(),
+        },
+      });
+
+      return rosterSlot;
     });
 
     return NextResponse.json({
       success: true,
       rosterSlot: {
-        id: rosterSlot.id,
-        position: rosterSlot.position,
-        slotIndex: rosterSlot.slotIndex,
-        isLocked: rosterSlot.isLocked,
+        id: result.id,
+        position: result.position,
+        slotIndex: result.slotIndex,
+        isLocked: result.isLocked,
         mleTeam: {
-          id: rosterSlot.mleTeam.id,
-          name: rosterSlot.mleTeam.name,
-          leagueId: rosterSlot.mleTeam.leagueId,
-          slug: rosterSlot.mleTeam.slug,
-          logoPath: rosterSlot.mleTeam.logoPath,
+          id: result.mleTeam.id,
+          name: result.mleTeam.name,
+          leagueId: result.mleTeam.leagueId,
+          slug: result.mleTeam.slug,
+          logoPath: result.mleTeam.logoPath,
         },
       },
     });
@@ -608,9 +631,25 @@ export async function DELETE(
       );
     }
 
-    // Delete the roster slot
-    await prisma.rosterSlot.delete({
-      where: { id: rosterSlotId },
+    // Delete the roster slot and create transaction record
+    await prisma.$transaction(async (tx) => {
+      await tx.rosterSlot.delete({
+        where: { id: rosterSlotId },
+      });
+
+      // Create transaction record for drop
+      await tx.transaction.create({
+        data: {
+          fantasyLeagueId: leagueId,
+          fantasyTeamId: teamId,
+          userId: session.user.id,
+          type: "drop",
+          addTeamId: null,
+          dropTeamId: rosterSlot.mleTeamId,
+          status: "approved",
+          processedAt: new Date(),
+        },
+      });
     });
 
     return NextResponse.json({

@@ -25,6 +25,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               role,
             },
             create: {
+              // ID will auto-increment starting from 1
               discordId: profile.id as string,
               displayName: user.name || "Unknown User",
               avatarUrl: user.image || null,
