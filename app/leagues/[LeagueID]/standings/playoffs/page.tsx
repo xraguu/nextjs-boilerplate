@@ -1,207 +1,29 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
-// Mock playoff data
-const mockPlayoffData = {
-  semiFinals: [
-    {
-      seed: 1,
-      teamName: "Fantastic Ballers",
-      manager: "xenn",
-      record: "2-1",
-      division: "3rd",
-      score: 198
-    },
-    {
-      seed: 4,
-      teamName: "Pixies",
-      manager: "Crazy",
-      record: "0-3",
-      division: "9th",
-      score: 198
-    }
-  ],
-  semiFinals2: [
-    {
-      seed: 2,
-      teamName: "Bar Demons",
-      manager: "xenn",
-      record: "2-1",
-      division: "3rd",
-      score: 198
-    },
-    {
-      seed: 3,
-      teamName: "Whiffers",
-      manager: "Crazy",
-      record: "0-3",
-      division: "9th",
-      score: 198
-    }
-  ],
-  grandFinals: [
-    {
-      seed: 1,
-      teamName: "Fantastic Ballers",
-      manager: "xenn",
-      record: "2-1",
-      division: "3rd",
-      score: 198
-    },
-    {
-      seed: 3,
-      teamName: "Whiffers",
-      manager: "Crazy",
-      record: "0-3",
-      division: "9th",
-      score: 198
-    }
-  ],
-  consolationRound1: [
-    {
-      matchupId: 1,
-      teams: [
-        {
-          seed: 5,
-          teamName: "Fantastic Ballers",
-          manager: "xenn",
-          record: "2-1",
-          division: "3rd",
-          score: 198
-        },
-        {
-          seed: 12,
-          teamName: "Pixies",
-          manager: "Crazy",
-          record: "0-3",
-          division: "9th",
-          score: 198
-        }
-      ]
-    },
-    {
-      matchupId: 2,
-      teams: [
-        {
-          seed: 6,
-          teamName: "Fantastic Ballers",
-          manager: "xenn",
-          record: "2-1",
-          division: "3rd",
-          score: 198
-        },
-        {
-          seed: 11,
-          teamName: "Pixies",
-          manager: "Crazy",
-          record: "0-3",
-          division: "9th",
-          score: 198
-        }
-      ]
-    },
-    {
-      matchupId: 3,
-      teams: [
-        {
-          seed: 7,
-          teamName: "Fantastic Ballers",
-          manager: "xenn",
-          record: "2-1",
-          division: "3rd",
-          score: 198
-        },
-        {
-          seed: 10,
-          teamName: "Pixies",
-          manager: "Crazy",
-          record: "0-3",
-          division: "9th",
-          score: 198
-        }
-      ]
-    }
-  ],
-  consolationRound2: [
-    {
-      matchupId: 4,
-      teams: [
-        {
-          seed: 5,
-          teamName: "Fantastic Ballers",
-          manager: "xenn",
-          record: "2-1",
-          division: "3rd",
-          score: 198
-        },
-        {
-          seed: 12,
-          teamName: "Pixies",
-          manager: "Crazy",
-          record: "0-3",
-          division: "9th",
-          score: 198
-        }
-      ]
-    },
-    {
-      matchupId: 5,
-      teams: [
-        {
-          seed: 6,
-          teamName: "Fantastic Ballers",
-          manager: "xenn",
-          record: "2-1",
-          division: "3rd",
-          score: 198
-        },
-        {
-          seed: 11,
-          teamName: "Pixies",
-          manager: "Crazy",
-          record: "0-3",
-          division: "9th",
-          score: 198
-        }
-      ]
-    },
-    {
-      matchupId: 6,
-      teams: [
-        {
-          seed: 6,
-          teamName: "Fantastic Ballers",
-          manager: "xenn",
-          record: "2-1",
-          division: "3rd",
-          score: 198
-        },
-        {
-          seed: 11,
-          teamName: "Pixies",
-          manager: "Crazy",
-          record: "0-3",
-          division: "9th",
-          score: 198
-        }
-      ]
-    }
-  ]
-};
+interface Standing {
+  rank: number;
+  fantasyTeamId: string;
+  manager: string;
+  team: string;
+  wins: number;
+  losses: number;
+  points: number;
+}
 
 interface TeamProps {
   seed: number;
   teamName: string;
   manager: string;
   record: string;
-  division: string;
   score: number;
   leagueId: string;
   onManagerClick: (manager: string) => void;
 }
 
-const TeamCard = ({ seed, teamName, manager, record, division, score, onManagerClick }: TeamProps) => {
+const TeamCard = ({ seed, teamName, manager, record, score, onManagerClick }: TeamProps) => {
   return (
     <div style={{
       background: "linear-gradient(135deg, #1e2139 0%, #252844 100%)",
@@ -214,21 +36,23 @@ const TeamCard = ({ seed, teamName, manager, record, division, score, onManagerC
       justifyContent: "center"
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <div style={{
-          background: "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
-          color: "#1a1a2e",
-          fontWeight: 700,
-          fontSize: "1rem",
-          width: "28px",
-          height: "28px",
-          borderRadius: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0
-        }}>
-          {seed}
-        </div>
+        {seed > 0 && (
+          <div style={{
+            background: "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
+            color: "#1a1a2e",
+            fontWeight: 700,
+            fontSize: "1rem",
+            width: "28px",
+            height: "28px",
+            borderRadius: "4px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0
+          }}>
+            {seed}
+          </div>
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             onClick={() => onManagerClick(manager)}
@@ -256,7 +80,7 @@ const TeamCard = ({ seed, teamName, manager, record, division, score, onManagerC
               }}
             >
               {manager}
-            </span> {record} {division}
+            </span> {record}
           </div>
         </div>
         <div style={{
@@ -264,7 +88,7 @@ const TeamCard = ({ seed, teamName, manager, record, division, score, onManagerC
           fontWeight: 700,
           color: "#f2b632"
         }}>
-          {score}
+          {score.toFixed(1)}
         </div>
       </div>
     </div>
@@ -276,9 +100,115 @@ export default function PlayoffsPage() {
   const router = useRouter();
   const leagueId = params.LeagueID as string;
 
+  const [standings, setStandings] = useState<Standing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch standings data
+  useEffect(() => {
+    const fetchStandings = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/leagues/${leagueId}/standings`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch standings");
+        }
+
+        const data = await response.json();
+        setStandings(data.standings || []);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load standings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (leagueId) {
+      fetchStandings();
+    }
+  }, [leagueId]);
+
   const handleManagerClick = (manager: string) => {
     router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(manager)}`);
   };
+
+  // Create projected playoff matchups from current standings
+  const getTeamByRank = (rank: number) => {
+    const team = standings.find(s => s.rank === rank);
+    if (!team) return null;
+    return {
+      seed: rank,
+      teamName: team.team,
+      manager: team.manager,
+      record: `${team.wins}-${team.losses}`,
+      score: team.points
+    };
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>Loading playoffs bracket...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#ef4444", fontSize: "1.1rem" }}>
+          Error: {error}
+        </div>
+      </div>
+    );
+  }
+
+  // Semi Finals matchups
+  const semiFinal1Team1 = getTeamByRank(1);
+  const semiFinal1Team2 = getTeamByRank(4);
+  const semiFinal2Team1 = getTeamByRank(2);
+  const semiFinal2Team2 = getTeamByRank(3);
+
+  // Grand Finals (projected winners - higher seeds) - remove seed numbers
+  const grandFinalTeam1 = semiFinal1Team1 ? { ...semiFinal1Team1, seed: 0 } : null;
+  const grandFinalTeam2 = semiFinal2Team1 ? { ...semiFinal2Team1, seed: 0 } : null;
+
+  // 3rd Place Game (projected losers - lower seeds) - remove seed numbers
+  const thirdPlaceTeam1 = semiFinal1Team2 ? { ...semiFinal1Team2, seed: 0 } : null;
+  const thirdPlaceTeam2 = semiFinal2Team2 ? { ...semiFinal2Team2, seed: 0 } : null;
+
+  // Consolation Round 1 matchups (4 matchups)
+  const consolationR1 = [
+    { team1: getTeamByRank(5), team2: getTeamByRank(12) },
+    { team1: getTeamByRank(6), team2: getTeamByRank(11) },
+    { team1: getTeamByRank(7), team2: getTeamByRank(10) },
+    { team1: getTeamByRank(8), team2: getTeamByRank(9) },
+  ];
+
+  // Consolation Round 2 (4 matchups: winners bracket + losers bracket) - remove seed numbers
+  const consolationR2Winners = [
+    {
+      team1: getTeamByRank(5) ? { ...getTeamByRank(5)!, seed: 0 } : null,
+      team2: getTeamByRank(6) ? { ...getTeamByRank(6)!, seed: 0 } : null
+    },
+    {
+      team1: getTeamByRank(7) ? { ...getTeamByRank(7)!, seed: 0 } : null,
+      team2: getTeamByRank(8) ? { ...getTeamByRank(8)!, seed: 0 } : null
+    },
+  ];
+
+  const consolationR2Losers = [
+    {
+      team1: getTeamByRank(12) ? { ...getTeamByRank(12)!, seed: 0 } : null,
+      team2: getTeamByRank(11) ? { ...getTeamByRank(11)!, seed: 0 } : null
+    },
+    {
+      team1: getTeamByRank(10) ? { ...getTeamByRank(10)!, seed: 0 } : null,
+      team2: getTeamByRank(9) ? { ...getTeamByRank(9)!, seed: 0 } : null
+    },
+  ];
 
   return (
     <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
@@ -343,54 +273,42 @@ export default function PlayoffsPage() {
               Semi Finals
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <TeamCard
-                seed={mockPlayoffData.semiFinals[0].seed}
-                teamName={mockPlayoffData.semiFinals[0].teamName}
-                manager={mockPlayoffData.semiFinals[0].manager}
-                record={mockPlayoffData.semiFinals[0].record}
-                division={mockPlayoffData.semiFinals[0].division}
-                score={mockPlayoffData.semiFinals[0].score}
-                leagueId={leagueId}
-                onManagerClick={handleManagerClick}
-              />
-              <TeamCard
-                seed={mockPlayoffData.semiFinals[1].seed}
-                teamName={mockPlayoffData.semiFinals[1].teamName}
-                manager={mockPlayoffData.semiFinals[1].manager}
-                record={mockPlayoffData.semiFinals[1].record}
-                division={mockPlayoffData.semiFinals[1].division}
-                score={mockPlayoffData.semiFinals[1].score}
-                leagueId={leagueId}
-                onManagerClick={handleManagerClick}
-              />
+              {semiFinal1Team1 && (
+                <TeamCard
+                  {...semiFinal1Team1}
+                  leagueId={leagueId}
+                  onManagerClick={handleManagerClick}
+                />
+              )}
+              {semiFinal1Team2 && (
+                <TeamCard
+                  {...semiFinal1Team2}
+                  leagueId={leagueId}
+                  onManagerClick={handleManagerClick}
+                />
+              )}
             </div>
 
             {/* Second Semi Final */}
             <div style={{ marginTop: "2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <TeamCard
-                seed={mockPlayoffData.semiFinals2[0].seed}
-                teamName={mockPlayoffData.semiFinals2[0].teamName}
-                manager={mockPlayoffData.semiFinals2[0].manager}
-                record={mockPlayoffData.semiFinals2[0].record}
-                division={mockPlayoffData.semiFinals2[0].division}
-                score={mockPlayoffData.semiFinals2[0].score}
-                leagueId={leagueId}
-                onManagerClick={handleManagerClick}
-              />
-              <TeamCard
-                seed={mockPlayoffData.semiFinals2[1].seed}
-                teamName={mockPlayoffData.semiFinals2[1].teamName}
-                manager={mockPlayoffData.semiFinals2[1].manager}
-                record={mockPlayoffData.semiFinals2[1].record}
-                division={mockPlayoffData.semiFinals2[1].division}
-                score={mockPlayoffData.semiFinals2[1].score}
-                leagueId={leagueId}
-                onManagerClick={handleManagerClick}
-              />
+              {semiFinal2Team1 && (
+                <TeamCard
+                  {...semiFinal2Team1}
+                  leagueId={leagueId}
+                  onManagerClick={handleManagerClick}
+                />
+              )}
+              {semiFinal2Team2 && (
+                <TeamCard
+                  {...semiFinal2Team2}
+                  leagueId={leagueId}
+                  onManagerClick={handleManagerClick}
+                />
+              )}
             </div>
           </div>
 
-          {/* Grand Finals */}
+          {/* Grand Finals and 3rd Place */}
           <div>
             <h2 style={{
               fontSize: "1.5rem",
@@ -404,26 +322,51 @@ export default function PlayoffsPage() {
               Grand Finals
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <TeamCard
-                seed={mockPlayoffData.grandFinals[0].seed}
-                teamName={mockPlayoffData.grandFinals[0].teamName}
-                manager={mockPlayoffData.grandFinals[0].manager}
-                record={mockPlayoffData.grandFinals[0].record}
-                division={mockPlayoffData.grandFinals[0].division}
-                score={mockPlayoffData.grandFinals[0].score}
-                leagueId={leagueId}
-                onManagerClick={handleManagerClick}
-              />
-              <TeamCard
-                seed={mockPlayoffData.grandFinals[1].seed}
-                teamName={mockPlayoffData.grandFinals[1].teamName}
-                manager={mockPlayoffData.grandFinals[1].manager}
-                record={mockPlayoffData.grandFinals[1].record}
-                division={mockPlayoffData.grandFinals[1].division}
-                score={mockPlayoffData.grandFinals[1].score}
-                leagueId={leagueId}
-                onManagerClick={handleManagerClick}
-              />
+              {grandFinalTeam1 && (
+                <TeamCard
+                  {...grandFinalTeam1}
+                  leagueId={leagueId}
+                  onManagerClick={handleManagerClick}
+                />
+              )}
+              {grandFinalTeam2 && (
+                <TeamCard
+                  {...grandFinalTeam2}
+                  leagueId={leagueId}
+                  onManagerClick={handleManagerClick}
+                />
+              )}
+            </div>
+
+            {/* 3rd Place Game */}
+            <div style={{ marginTop: "2rem" }}>
+              <h2 style={{
+                fontSize: "1.5rem",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.5)",
+                marginBottom: "1.5rem",
+                textAlign: "center",
+                borderBottom: "2px solid rgba(255,255,255,0.1)",
+                paddingBottom: "0.75rem"
+              }}>
+                3rd Place Game
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {thirdPlaceTeam1 && (
+                  <TeamCard
+                    {...thirdPlaceTeam1}
+                    leagueId={leagueId}
+                    onManagerClick={handleManagerClick}
+                  />
+                )}
+                {thirdPlaceTeam2 && (
+                  <TeamCard
+                    {...thirdPlaceTeam2}
+                    leagueId={leagueId}
+                    onManagerClick={handleManagerClick}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -454,28 +397,22 @@ export default function PlayoffsPage() {
               Consolation Round 1
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-              {mockPlayoffData.consolationRound1.map((matchup) => (
-                <div key={matchup.matchupId} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <TeamCard
-                    seed={matchup.teams[0].seed}
-                    teamName={matchup.teams[0].teamName}
-                    manager={matchup.teams[0].manager}
-                    record={matchup.teams[0].record}
-                    division={matchup.teams[0].division}
-                    score={matchup.teams[0].score}
-                    leagueId={leagueId}
-                    onManagerClick={handleManagerClick}
-                  />
-                  <TeamCard
-                    seed={matchup.teams[1].seed}
-                    teamName={matchup.teams[1].teamName}
-                    manager={matchup.teams[1].manager}
-                    record={matchup.teams[1].record}
-                    division={matchup.teams[1].division}
-                    score={matchup.teams[1].score}
-                    leagueId={leagueId}
-                    onManagerClick={handleManagerClick}
-                  />
+              {consolationR1.map((matchup, idx) => (
+                <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {matchup.team1 && (
+                    <TeamCard
+                      {...matchup.team1}
+                      leagueId={leagueId}
+                      onManagerClick={handleManagerClick}
+                    />
+                  )}
+                  {matchup.team2 && (
+                    <TeamCard
+                      {...matchup.team2}
+                      leagueId={leagueId}
+                      onManagerClick={handleManagerClick}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -494,31 +431,71 @@ export default function PlayoffsPage() {
             }}>
               Consolation Round 2
             </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-              {mockPlayoffData.consolationRound2.map((matchup) => (
-                <div key={matchup.matchupId} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <TeamCard
-                    seed={matchup.teams[0].seed}
-                    teamName={matchup.teams[0].teamName}
-                    manager={matchup.teams[0].manager}
-                    record={matchup.teams[0].record}
-                    division={matchup.teams[0].division}
-                    score={matchup.teams[0].score}
-                    leagueId={leagueId}
-                    onManagerClick={handleManagerClick}
-                  />
-                  <TeamCard
-                    seed={matchup.teams[1].seed}
-                    teamName={matchup.teams[1].teamName}
-                    manager={matchup.teams[1].manager}
-                    record={matchup.teams[1].record}
-                    division={matchup.teams[1].division}
-                    score={matchup.teams[1].score}
-                    leagueId={leagueId}
-                    onManagerClick={handleManagerClick}
-                  />
-                </div>
-              ))}
+
+            {/* Winners Bracket */}
+            <div style={{ marginBottom: "2rem" }}>
+              <h3 style={{
+                fontSize: "1rem",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.4)",
+                marginBottom: "1rem",
+                textAlign: "center"
+              }}>
+                Winners Bracket
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                {consolationR2Winners.map((matchup, idx) => (
+                  <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {matchup.team1 && (
+                      <TeamCard
+                        {...matchup.team1}
+                        leagueId={leagueId}
+                        onManagerClick={handleManagerClick}
+                      />
+                    )}
+                    {matchup.team2 && (
+                      <TeamCard
+                        {...matchup.team2}
+                        leagueId={leagueId}
+                        onManagerClick={handleManagerClick}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Losers Bracket */}
+            <div>
+              <h3 style={{
+                fontSize: "1rem",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.4)",
+                marginBottom: "1rem",
+                textAlign: "center"
+              }}>
+                Losers Bracket
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+                {consolationR2Losers.map((matchup, idx) => (
+                  <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {matchup.team1 && (
+                      <TeamCard
+                        {...matchup.team1}
+                        leagueId={leagueId}
+                        onManagerClick={handleManagerClick}
+                      />
+                    )}
+                    {matchup.team2 && (
+                      <TeamCard
+                        {...matchup.team2}
+                        leagueId={leagueId}
+                        onManagerClick={handleManagerClick}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

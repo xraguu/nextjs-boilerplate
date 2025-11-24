@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id             Int           @id @default(autoincrement()) // Auto-incrementing integer ID (1, 2, 3, etc.)
+  id             String        @id
   discordId      String        @unique
   displayName    String
   avatarUrl      String?
@@ -19,8 +19,8 @@ model User {
   fantasyTeams   FantasyTeam[]
   proposedTrades Trade[]       @relation("TradeProposer")
   receivedTrades Trade[]       @relation("TradeReceiver")
+  transactions   Transaction[]
   waiverClaims   WaiverClaim[]
-  transactions     Transaction[]
 }
 
 model MLELeague {
@@ -48,18 +48,18 @@ model MLETeam {
 }
 
 model MLEPlayer {
-  id                String                  @id
-  name              String
-  salary            Float?
-  memberId          String?                 @unique
-  skillGroup        String?                 // FL, AL, CL, ML, PL
-  teamId            String?
-  team              MLETeam?                @relation(fields: [teamId], references: [id])
-  staffPosition     String?                 // Captain, Assistant General Manager, General Manager, Franchise Manager
-  rosterSlot        String?                 // A, B, C, D, E, F, G, H, NONE
-  roleUsages        RoleUsage[]
-  matchStats        PlayerMatchStats[]
-  historicalStats   PlayerHistoricalStats[]
+  id              String                  @id
+  name            String
+  salary          Float?
+  memberId        String?                 @unique
+  skillGroup      String?
+  teamId          String?
+  staffPosition   String?
+  rosterSlot      String?
+  team            MLETeam?                @relation(fields: [teamId], references: [id])
+  historicalStats PlayerHistoricalStats[]
+  matchStats      PlayerMatchStats[]
+  roleUsages      RoleUsage[]
 }
 
 model RoleUsage {
@@ -160,7 +160,7 @@ model TeamWeeklyStats {
 }
 
 model FantasyLeague {
-  id                   String        @id // Format: [Season][LeagueName]-[3Letters][2Numbers] (e.g., "2025Alpha-ABC12")
+  id                   String        @id
   name                 String
   season               Int
   maxTeams             Int           @default(12)
@@ -171,7 +171,7 @@ model FantasyLeague {
   faabBudget           Int?
   rosterConfig         Json
   createdAt            DateTime      @default(now())
-  createdByUserId      Int
+  createdByUserId      String
   draftPickDeadline    DateTime?
   draftPickTimeSeconds Int?          @default(90)
   draftStatus          String?       @default("not_started")
@@ -179,14 +179,14 @@ model FantasyLeague {
   fantasyTeams         FantasyTeam[]
   matchups             Matchup[]
   trades               Trade[]
+  transactions         Transaction[]
   waivers              WaiverClaim[]
-  transactions    Transaction[]
 }
 
 model FantasyTeam {
-  id              String        @id // Format: [FantasyLeagueID]-[UserID] (e.g., "2025Alpha-ABC12-1")
+  id              String        @id
   fantasyLeagueId String
-  ownerUserId     Int
+  ownerUserId     String
   displayName     String
   shortCode       String
   draftPosition   Int?
@@ -199,14 +199,14 @@ model FantasyTeam {
   roster          RosterSlot[]
   proposedTrades  Trade[]       @relation("TradeProposerTeam")
   receivedTrades  Trade[]       @relation("TradeReceiverTeam")
+  transactions    Transaction[]
   waiverClaims    WaiverClaim[]
-  transactions      Transaction[]
 
   @@unique([fantasyLeagueId, ownerUserId])
 }
 
 model RosterSlot {
-  id            String      @id // Format: [FantasyTeamID]-W[Week]-[Position]-[SlotIndex] (e.g., "2025Alpha-ABC12-1-W1-starter-0")
+  id            String      @id
   fantasyTeamId String
   mleTeamId     String
   week          Int
@@ -241,8 +241,8 @@ model Trade {
   fantasyLeagueId String
   proposerTeamId  String
   receiverTeamId  String
-  proposerUserId  Int
-  receiverUserId  Int
+  proposerUserId  String
+  receiverUserId  String
   proposerGives   String[]
   receiverGives   String[]
   status          String        @default("pending")
@@ -259,7 +259,7 @@ model WaiverClaim {
   id              String        @id @default(cuid())
   fantasyLeagueId String
   fantasyTeamId   String
-  userId          Int
+  userId          String
   addTeamId       String
   dropTeamId      String?
   faabBid         Int?
@@ -272,39 +272,25 @@ model WaiverClaim {
   user            User          @relation(fields: [userId], references: [id])
 }
 
-// ============================================================================
-// TRANSACTION HISTORY
-// ============================================================================
-
 model Transaction {
-  id              String        @id @default(cuid())
-  fantasyLeagueId String
-  fantasyTeamId   String
-  userId          Int
-
-  type            String        // "waiver", "trade", "pickup", "drop"
-
-  // MLE Teams involved
-  addTeamId       String?       // MLE team added to roster
-  dropTeamId      String?       // MLE team dropped from roster
-
-  // Trade-specific fields
-  tradeId         String?       // Reference to Trade if applicable
-  tradePartnerTeamId String?    // Other fantasy team in trade
-  tradePartnerGave String[]     @default([]) // MLE teams received from trade partner
-
-  // Waiver-specific fields
-  waiverClaimId   String?       // Reference to WaiverClaim if applicable
-  faabBid         Int?          // FAAB amount spent
-
-  // Status and metadata
-  status          String        // "approved", "denied", "failed", "vetoed"
-  reason          String?       // Reason for denial/failure
-  processedAt     DateTime      @default(now())
-
-  league          FantasyLeague @relation(fields: [fantasyLeagueId], references: [id])
-  fantasyTeam     FantasyTeam   @relation(fields: [fantasyTeamId], references: [id])
-  user            User          @relation(fields: [userId], references: [id])
+  id                 String        @id @default(cuid())
+  fantasyLeagueId    String
+  fantasyTeamId      String
+  userId             String
+  type               String
+  addTeamId          String?
+  dropTeamId         String?
+  tradeId            String?
+  tradePartnerTeamId String?
+  tradePartnerGave   String[]      @default([])
+  waiverClaimId      String?
+  faabBid            Int?
+  status             String
+  reason             String?
+  processedAt        DateTime      @default(now())
+  league             FantasyLeague @relation(fields: [fantasyLeagueId], references: [id])
+  fantasyTeam        FantasyTeam   @relation(fields: [fantasyTeamId], references: [id])
+  user               User          @relation(fields: [userId], references: [id])
 
   @@index([fantasyLeagueId])
   @@index([fantasyTeamId])

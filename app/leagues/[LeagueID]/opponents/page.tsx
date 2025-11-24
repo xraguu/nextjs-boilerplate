@@ -78,8 +78,8 @@ export default function OpponentsPage() {
     status?: string;
   }) | null>(null);
 
-  // Track game modes for each slot (2s or 3s)
-  const [slotModes, setSlotModes] = useState<string[]>([]);
+  // Track game mode for stats tab (2s or 3s)
+  const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
 
   // Fetch opponents data
   useEffect(() => {
@@ -447,7 +447,7 @@ export default function OpponentsPage() {
               </button>
             </div>
             <a
-              href={`/leagues/2025-alpha/opponents/${selectedManagerId}/trade`}
+              href={`/leagues/${leagueId}/opponents/${selectedManagerId}/trade`}
               className="btn btn-primary"
               style={{ fontSize: "0.9rem" }}
             >
@@ -603,10 +603,10 @@ export default function OpponentsPage() {
       {/* Stats Tab */}
       {activeTab === "stats" && (
         <section className="card">
-          {/* Week Navigation */}
+          {/* Week Navigation and 2s/3s Switch */}
           <div style={{
             display: "flex",
-            justifyContent: "center",
+            justifyContent: "space-between",
             alignItems: "center",
             padding: "1rem 1.5rem",
             borderBottom: "1px solid rgba(255,255,255,0.1)"
@@ -630,6 +630,52 @@ export default function OpponentsPage() {
                 disabled={currentWeek === 10}
               >
                 Week {getNextWeek(currentWeek)} ►
+              </button>
+            </div>
+
+            {/* 2s/3s Switch */}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                backgroundColor: "rgba(255,255,255,0.05)",
+                borderRadius: "6px",
+                padding: "0.25rem",
+              }}
+            >
+              <button
+                onClick={() => setGameMode("2s")}
+                style={{
+                  padding: "0.4rem 1rem",
+                  borderRadius: "4px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor:
+                    gameMode === "2s" ? "var(--accent)" : "transparent",
+                  color: gameMode === "2s" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                2s
+              </button>
+              <button
+                onClick={() => setGameMode("3s")}
+                style={{
+                  padding: "0.4rem 1rem",
+                  borderRadius: "4px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor:
+                    gameMode === "3s" ? "var(--accent)" : "transparent",
+                  color: gameMode === "3s" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                3s
               </button>
             </div>
           </div>
@@ -774,8 +820,6 @@ export default function OpponentsPage() {
               <tbody>
                 {sortedRosterTeams.map((team, index) => {
                   const isEmpty = !team.name;
-                  const originalIndex = roster?.teams.findIndex(t => t === team) ?? index;
-                  const currentMode = slotModes[originalIndex] || "2s";
 
                   return (
                     <tr
@@ -785,38 +829,9 @@ export default function OpponentsPage() {
                       }}
                     >
                       <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", justifyContent: "center" }}>
-                          {!isEmpty && (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const newModes = [...slotModes];
-                                  newModes[originalIndex] = slotModes[originalIndex] === "2s" ? "3s" : "2s";
-                                  setSlotModes(newModes);
-                                }}
-                                style={{
-                                  background: "rgba(255,255,255,0.1)",
-                                  border: "none",
-                                  borderRadius: "4px",
-                                  padding: "0.25rem 0.5rem",
-                                  fontSize: "0.75rem",
-                                  fontWeight: 600,
-                                  color: "var(--accent)",
-                                  cursor: "pointer",
-                                  transition: "all 0.2s ease"
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(242, 182, 50, 0.2)"}
-                                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
-                              >
-                                ⇄
-                              </button>
-                              <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--accent)" }}>
-                                {currentMode}
-                              </span>
-                            </>
-                          )}
-                        </div>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent)" }}>
+                          {gameMode}
+                        </span>
                       </td>
                       <td style={{ padding: "0.75rem 1rem", fontWeight: 700, fontSize: "0.9rem", color: "var(--accent)" }}>
                         {index + 1}

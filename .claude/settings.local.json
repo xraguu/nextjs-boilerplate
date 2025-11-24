@@ -38,7 +38,9 @@
       "Bash(docker build:*)",
       "Bash(set:*)",
       "Bash(powershell -Command \"(Get-Content exports\\MLETeam.json | Measure-Object -Line).Lines\")",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(npx prisma db pull:*)",
+      "Bash(tasklist:*)"
     ],
     "deny": [],
     "ask": []
