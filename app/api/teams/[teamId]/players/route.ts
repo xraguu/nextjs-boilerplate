@@ -1,0 +1,92 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+/**
+ * GET /api/teams/[teamId]/players
+ * Get all players for a specific MLE team
+ */
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ teamId: string }> }
+) {
+  try {
+    const { teamId } = await params;
+
+    // Find the team first to ensure it exists
+    const team = await prisma.mLETeam.findUnique({
+      where: { id: teamId },
+      select: {
+        id: true,
+        name: true,
+        leagueId: true,
+      },
+    });
+
+    if (!team) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Fetch players for this team
+    const players = await prisma.mLEPlayer.findMany({
+      where: {
+        teamId: teamId,
+      },
+      select: {
+        id: true,
+        name: true,
+        skillGroup: true,
+        salary: true,
+        memberId: true,
+        staffPosition: true,
+        rosterSlot: true,
+      },
+    });
+
+    // Get historical stats for each player (we'll aggregate them for current season)
+    const playersWithStats = await Promise.all(
+      players.map(async (player) => {
+        // Get the most recent season stats for both game modes
+        const doublesStats = await prisma.playerHistoricalStats.findFirst({
+          where: {
+            playerId: player.id,
+            gamemode: "doubles",
+          },
+          orderBy: {
+            season: "desc",
+          },
+        });
+
+        const standardStats = await prisma.playerHistoricalStats.findFirst({
+          where: {
+            playerId: player.id,
+            gamemode: "standard",
+          },
+          orderBy: {
+            season: "desc",
+          },
+        });
+
+        return {
+          ...player,
+          doublesStats: doublesStats || null,
+          standardStats: standardStats || null,
+        };
+      })
+    );
+
+    return NextResponse.json({
+      team: {
+        id: team.id,
+        name: team.name,
+        leagueId: team.leagueId,
+      },
+      players: playersWithStats,
+    });
+  } catch (error) {
+    console.error("Error fetching team players:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch team players" },
+      { status: 500 }
+    );
+  }
+}

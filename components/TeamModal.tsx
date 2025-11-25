@@ -1,8 +1,30 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { getPlayersByTeamId, Player } from "@/lib/players";
+import { useState, useEffect } from "react";
+import PlayerModal from "./PlayerModal";
+
+interface PlayerWithStats {
+  id: string;
+  name: string;
+  skillGroup: string | null;
+  doublesStats: {
+    totalGoals: number;
+    totalShots: number;
+    totalSaves: number;
+    totalAssists: number;
+    totalDemosInflicted: number;
+    gamesPlayed: number;
+  } | null;
+  standardStats: {
+    totalGoals: number;
+    totalShots: number;
+    totalSaves: number;
+    totalAssists: number;
+    totalDemosInflicted: number;
+    gamesPlayed: number;
+  } | null;
+}
 
 interface TeamModalProps {
   team: {
@@ -92,10 +114,40 @@ export default function TeamModal({
   const [weeklySortDirection, setWeeklySortDirection] = useState<
     "asc" | "desc"
   >("asc");
+  const [selectedPlayer, setSelectedPlayer] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [players, setPlayers] = useState<PlayerWithStats[]>([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
+
+  // Fetch players when team changes
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      if (!team) return;
+
+      try {
+        setLoadingPlayers(true);
+        const response = await fetch(`/api/teams/${team.id}/players`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch players");
+        }
+
+        const data = await response.json();
+        setPlayers(data.players || []);
+      } catch (error) {
+        console.error("Error fetching players:", error);
+        setPlayers([]);
+      } finally {
+        setLoadingPlayers(false);
+      }
+    };
+
+    fetchPlayers();
+  }, [team?.id]);
 
   if (!team) return null;
-
-  const players = getPlayersByTeamId(team.id);
 
   const handlePlayerSort = (column: string) => {
     if (playerSortColumn === column) {
@@ -116,12 +168,43 @@ export default function TeamModal({
   };
 
   const sortedPlayers = [...players].sort((a, b) => {
-    const aVal = a[playerSortColumn as keyof Player];
-    const bVal = b[playerSortColumn as keyof Player];
-    if (typeof aVal === "number" && typeof bVal === "number") {
-      return playerSortDirection === "asc" ? aVal - bVal : bVal - aVal;
+    const stats = gameMode === "2s" ? "doublesStats" : "standardStats";
+    const aStats = a[stats];
+    const bStats = b[stats];
+
+    if (!aStats && !bStats) return 0;
+    if (!aStats) return 1;
+    if (!bStats) return -1;
+
+    let aVal: number = 0;
+    let bVal: number = 0;
+
+    switch (playerSortColumn) {
+      case "goals":
+        aVal = aStats.totalGoals;
+        bVal = bStats.totalGoals;
+        break;
+      case "shots":
+        aVal = aStats.totalShots;
+        bVal = bStats.totalShots;
+        break;
+      case "saves":
+        aVal = aStats.totalSaves;
+        bVal = bStats.totalSaves;
+        break;
+      case "assists":
+        aVal = aStats.totalAssists;
+        bVal = bStats.totalAssists;
+        break;
+      case "demos":
+        aVal = aStats.totalDemosInflicted;
+        bVal = bStats.totalDemosInflicted;
+        break;
+      default:
+        return 0;
     }
-    return 0;
+
+    return playerSortDirection === "asc" ? aVal - bVal : bVal - aVal;
   });
 
   const sortedWeeklyStats = [...weeklyStats].sort((a, b) => {
@@ -589,116 +672,139 @@ export default function TeamModal({
                       fontWeight: 600,
                     }}
                   >
-                    Record
-                  </th>
-                  <th
-                    onClick={() =>
-                      handlePlayerSort(gameMode === "2s" ? "2sU" : "3sU")
-                    }
-                    style={{
-                      padding: "0.75rem 1rem",
-                      textAlign: "center",
-                      fontSize: "0.85rem",
-                      color: "rgba(255,255,255,0.9)",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      userSelect: "none",
-                    }}
-                  >
-                    {gameMode === "2s" ? "2sU" : "3sU"}
-                    <PlayerSortIcon
-                      column={gameMode === "2s" ? "2sU" : "3sU"}
-                    />
+                    Usages
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {sortedPlayers.map((player) => (
-                  <tr
-                    key={player.id}
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}
-                  >
+                {loadingPlayers ? (
+                  <tr>
                     <td
+                      colSpan={7}
                       style={{
-                        padding: "0.75rem 1rem",
-                        fontWeight: 600,
-                        color: "#ffffff",
-                      }}
-                    >
-                      {player.name}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 1rem",
-                        textAlign: "right",
-                        fontSize: "0.9rem",
-                        color: "rgba(255,255,255,0.95)",
-                      }}
-                    >
-                      {player.goals}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 1rem",
-                        textAlign: "right",
-                        fontSize: "0.9rem",
-                        color: "rgba(255,255,255,0.95)",
-                      }}
-                    >
-                      {player.shots}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 1rem",
-                        textAlign: "right",
-                        fontSize: "0.9rem",
-                        color: "rgba(255,255,255,0.95)",
-                      }}
-                    >
-                      {player.saves}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 1rem",
-                        textAlign: "right",
-                        fontSize: "0.9rem",
-                        color: "rgba(255,255,255,0.95)",
-                      }}
-                    >
-                      {player.assists}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 1rem",
-                        textAlign: "right",
-                        fontSize: "0.9rem",
-                        color: "rgba(255,255,255,0.95)",
-                      }}
-                    >
-                      {player.demos}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 1rem",
+                        padding: "2rem",
                         textAlign: "center",
-                        fontSize: "0.9rem",
-                        color: "rgba(255,255,255,0.8)",
+                        color: "rgba(255,255,255,0.7)",
                       }}
                     >
-                      {player.record}
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 1rem",
-                        textAlign: "center",
-                        fontSize: "0.9rem",
-                        color: "rgba(255,255,255,0.95)",
-                      }}
-                    >
-                      {gameMode === "2s" ? player["2sU"] : player["3sU"]}
+                      Loading players...
                     </td>
                   </tr>
-                ))}
+                ) : sortedPlayers.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      style={{
+                        padding: "2rem",
+                        textAlign: "center",
+                        color: "rgba(255,255,255,0.7)",
+                      }}
+                    >
+                      No players found
+                    </td>
+                  </tr>
+                ) : (
+                  sortedPlayers.map((player) => {
+                    const stats =
+                      gameMode === "2s"
+                        ? player.doublesStats
+                        : player.standardStats;
+
+                    return (
+                      <tr
+                        key={player.id}
+                        style={{
+                          borderBottom: "1px solid rgba(255,255,255,0.1)",
+                        }}
+                      >
+                        <td
+                          onClick={() =>
+                            setSelectedPlayer({
+                              id: player.id,
+                              name: player.name,
+                            })
+                          }
+                          style={{
+                            padding: "0.75rem 1rem",
+                            fontWeight: 600,
+                            color: "#ffffff",
+                            cursor: "pointer",
+                            transition: "color 0.2s",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.color =
+                              "rgba(255,255,255,0.7)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.color = "#ffffff")
+                          }
+                        >
+                          {player.name}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem 1rem",
+                            textAlign: "right",
+                            fontSize: "0.9rem",
+                            color: "rgba(255,255,255,0.95)",
+                          }}
+                        >
+                          {stats?.totalGoals || 0}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem 1rem",
+                            textAlign: "right",
+                            fontSize: "0.9rem",
+                            color: "rgba(255,255,255,0.95)",
+                          }}
+                        >
+                          {stats?.totalShots || 0}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem 1rem",
+                            textAlign: "right",
+                            fontSize: "0.9rem",
+                            color: "rgba(255,255,255,0.95)",
+                          }}
+                        >
+                          {stats?.totalSaves || 0}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem 1rem",
+                            textAlign: "right",
+                            fontSize: "0.9rem",
+                            color: "rgba(255,255,255,0.95)",
+                          }}
+                        >
+                          {stats?.totalAssists || 0}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem 1rem",
+                            textAlign: "right",
+                            fontSize: "0.9rem",
+                            color: "rgba(255,255,255,0.95)",
+                          }}
+                        >
+                          {stats?.totalDemosInflicted || 0}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem 1rem",
+                            textAlign: "center",
+                            fontSize: "0.9rem",
+                            color: "rgba(255,255,255,0.8)",
+                          }}
+                        >
+                          {stats?.gamesPlayed || 0}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -1057,6 +1163,15 @@ export default function TeamModal({
               </table>
             </div>
           </div>
+        )}
+
+        {/* Player Modal */}
+        {selectedPlayer && (
+          <PlayerModal
+            player={selectedPlayer}
+            team={team}
+            onClose={() => setSelectedPlayer(null)}
+          />
         )}
       </div>
     </div>

@@ -73,7 +73,7 @@ async function importHistoricalStats() {
     playerName: string;
     season: string;
     gamemode: string;
-    skillGroup: string;
+    skillGroups: Set<string>; // Track multiple skill groups
     gamesPlayed: number;
     totalGoals: number;
     totalSaves: number;
@@ -83,9 +83,20 @@ async function importHistoricalStats() {
     totalShotsAgainst: number;
     totalDemosInflicted: number;
     totalDemosTaken: number;
-    totalSprocketRating: number;
-    totalAvgScore: number;
+    totalSprocketRating: number; // Sum of (rating * games) for weighted average
+    totalAvgScore: number; // Sum of (score * games) for weighted average
   }>();
+
+  // Helper function to normalize skill group names
+  const normalizeSkillGroup = (skillGroup: string): string => {
+    const normalized = skillGroup.trim().toUpperCase();
+    if (normalized.includes('FOUNDATION')) return 'FL';
+    if (normalized.includes('ACADEMY')) return 'AL';
+    if (normalized.includes('CHAMPION')) return 'CL';
+    if (normalized.includes('MASTER')) return 'ML';
+    if (normalized.includes('PREMIER')) return 'PL';
+    return normalized;
+  };
 
   // Process each row
   for (const row of records) {
@@ -101,10 +112,19 @@ async function importHistoricalStats() {
 
     const key = `${playerId}-${season}-${gamemode}`;
 
+    const normalizedSkillGroup = normalizeSkillGroup(row.skill_group || '');
+
     if (aggregatedStats.has(key)) {
       // Aggregate stats if player played for multiple teams in same season/gamemode
       const existing = aggregatedStats.get(key)!;
       const gamesPlayed = parseInt(row.games_played) || 0;
+
+      // Add skill group to set (will automatically avoid duplicates)
+      if (normalizedSkillGroup) {
+        existing.skillGroups.add(normalizedSkillGroup);
+      }
+
+      // Sum totals
       existing.gamesPlayed += gamesPlayed;
       existing.totalGoals += parseInt(row.total_goals) || 0;
       existing.totalSaves += parseInt(row.total_saves) || 0;
@@ -114,17 +134,24 @@ async function importHistoricalStats() {
       existing.totalShotsAgainst += parseInt(row.total_shots_against) || 0;
       existing.totalDemosInflicted += parseInt(row.total_demos_inflicted) || 0;
       existing.totalDemosTaken += parseInt(row.total_demos_taken) || 0;
+
+      // For weighted averages: sum (value * games)
       existing.totalSprocketRating += (parseFloat(row.sprocket_rating) || 0) * gamesPlayed;
       existing.totalAvgScore += (parseFloat(row.avg_score) || 0) * gamesPlayed;
     } else {
       // Create new entry
       const gamesPlayed = parseInt(row.games_played) || 0;
+      const skillGroups = new Set<string>();
+      if (normalizedSkillGroup) {
+        skillGroups.add(normalizedSkillGroup);
+      }
+
       aggregatedStats.set(key, {
         playerId,
         playerName: row.name?.trim() || '',
         season,
         gamemode,
-        skillGroup: row.skill_group?.trim() || '',
+        skillGroups,
         gamesPlayed,
         totalGoals: parseInt(row.total_goals) || 0,
         totalSaves: parseInt(row.total_saves) || 0,
@@ -164,17 +191,21 @@ async function importHistoricalStats() {
         continue;
       }
 
-      // Calculate averages
-      const sprocketRating = stats.totalSprocketRating / stats.gamesPlayed;
-      const avgScore = stats.totalAvgScore / stats.gamesPlayed;
-      const goalsPerGame = stats.totalGoals / stats.gamesPlayed;
-      const savesPerGame = stats.totalSaves / stats.gamesPlayed;
-      const shotsPerGame = stats.totalShots / stats.gamesPlayed;
-      const assistsPerGame = stats.totalAssists / stats.gamesPlayed;
-      const avgGoalsAgainst = stats.totalGoalsAgainst / stats.gamesPlayed;
-      const avgShotsAgainst = stats.totalShotsAgainst / stats.gamesPlayed;
-      const avgDemosInflicted = stats.totalDemosInflicted / stats.gamesPlayed;
-      const avgDemosTaken = stats.totalDemosTaken / stats.gamesPlayed;
+      // Convert skill groups Set to string with "/" separator
+      // Sort to ensure consistent ordering
+      const skillGroupString = Array.from(stats.skillGroups).sort().join('/');
+
+      // Calculate weighted averages
+      const sprocketRating = stats.gamesPlayed > 0 ? stats.totalSprocketRating / stats.gamesPlayed : 0;
+      const avgScore = stats.gamesPlayed > 0 ? stats.totalAvgScore / stats.gamesPlayed : 0;
+      const goalsPerGame = stats.gamesPlayed > 0 ? stats.totalGoals / stats.gamesPlayed : 0;
+      const savesPerGame = stats.gamesPlayed > 0 ? stats.totalSaves / stats.gamesPlayed : 0;
+      const shotsPerGame = stats.gamesPlayed > 0 ? stats.totalShots / stats.gamesPlayed : 0;
+      const assistsPerGame = stats.gamesPlayed > 0 ? stats.totalAssists / stats.gamesPlayed : 0;
+      const avgGoalsAgainst = stats.gamesPlayed > 0 ? stats.totalGoalsAgainst / stats.gamesPlayed : 0;
+      const avgShotsAgainst = stats.gamesPlayed > 0 ? stats.totalShotsAgainst / stats.gamesPlayed : 0;
+      const avgDemosInflicted = stats.gamesPlayed > 0 ? stats.totalDemosInflicted / stats.gamesPlayed : 0;
+      const avgDemosTaken = stats.gamesPlayed > 0 ? stats.totalDemosTaken / stats.gamesPlayed : 0;
 
       // Create historical stats entry
       await prisma.playerHistoricalStats.create({
@@ -182,7 +213,7 @@ async function importHistoricalStats() {
           playerId: stats.playerId,
           season: stats.season,
           gamemode: stats.gamemode,
-          skillGroup: stats.skillGroup,
+          skillGroup: skillGroupString,
           gamesPlayed: stats.gamesPlayed,
           sprocketRating,
           avgScore,

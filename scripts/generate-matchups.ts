@@ -25,80 +25,41 @@ async function generateMatchups(leagueId: string) {
       where: { fantasyLeagueId: leagueId },
     });
 
-    // Generate round-robin schedule for 8 weeks
-    // With 12 teams, we can create 6 matchups per week (12/2 = 6)
+    // Use circle method (round-robin tournament algorithm) for 8 weeks
+    // With 12 teams, we create 6 matchups per week with NO repeats
+    // This guarantees each team plays 8 different opponents
     const matchups: Array<{ week: number; homeTeamId: string; awayTeamId: string }> = [];
 
-    // Track which teams have played each other
-    const played = new Map<string, Set<string>>();
-    teams.forEach((team) => {
-      played.set(team.id, new Set());
-    });
+    // Create rotation array (fix first team, rotate others)
+    // This is the classic "polygon method" for round-robin scheduling
+    const rotation = teams.map((_, i) => i);
 
-    // Generate matchups for 8 weeks
     for (let week = 1; week <= 8; week++) {
-      const availableTeams = [...teams];
       const weekMatchups: Array<{ homeTeamId: string; awayTeamId: string }> = [];
 
-      // Try to create 6 matchups for this week
-      while (availableTeams.length >= 2 && weekMatchups.length < 6) {
-        let matched = false;
+      // Create 6 matchups by pairing teams across the circle
+      for (let i = 0; i < 6; i++) {
+        const home = rotation[i];
+        const away = rotation[11 - i]; // Pair with opposite position
 
-        // Try to find two teams that haven't played each other yet
-        for (let i = 0; i < availableTeams.length - 1; i++) {
-          const team1 = availableTeams[i];
-
-          for (let j = i + 1; j < availableTeams.length; j++) {
-            const team2 = availableTeams[j];
-
-            // Check if these teams have already played
-            if (!played.get(team1.id)?.has(team2.id)) {
-              // Create matchup
-              weekMatchups.push({
-                homeTeamId: team1.id,
-                awayTeamId: team2.id,
-              });
-
-              // Mark as played
-              played.get(team1.id)?.add(team2.id);
-              played.get(team2.id)?.add(team1.id);
-
-              // Remove from available teams
-              availableTeams.splice(j, 1);
-              availableTeams.splice(i, 1);
-
-              matched = true;
-              break;
-            }
-          }
-
-          if (matched) break;
-        }
-
-        // If we couldn't find a fresh matchup, allow repeats for remaining teams
-        if (!matched && availableTeams.length >= 2) {
-          const team1 = availableTeams[0];
-          const team2 = availableTeams[1];
-
-          weekMatchups.push({
-            homeTeamId: team1.id,
-            awayTeamId: team2.id,
-          });
-
-          availableTeams.splice(1, 1);
-          availableTeams.splice(0, 1);
-        }
+        weekMatchups.push({
+          homeTeamId: teams[home].id,
+          awayTeamId: teams[away].id,
+        });
       }
 
-      // Add week matchups to the main list
+      // Add to main matchups list
       weekMatchups.forEach((matchup) => {
-        matchups.push({
-          week,
-          ...matchup,
-        });
+        matchups.push({ week, ...matchup });
       });
 
       console.log(`Week ${week}: Generated ${weekMatchups.length} matchups`);
+
+      // Rotate teams for next week (keep position 0 fixed)
+      if (week < 8) {
+        const last = rotation.pop()!;
+        rotation.splice(1, 0, last);
+      }
     }
 
     // Insert matchups into database

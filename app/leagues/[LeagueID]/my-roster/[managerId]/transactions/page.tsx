@@ -256,6 +256,20 @@ export default function TransactionsPage() {
                       </div>
                     </div>
 
+                    <div style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      minWidth: "150px"
+                    }}>
+                      <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", marginBottom: "0.25rem" }}>
+                        Date processed
+                      </div>
+                      <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
+                        {new Date(transaction.timestamp).toLocaleDateString()}
+                      </div>
+                    </div>
+
                     <button
                       style={{
                         background: "rgba(255,255,255,0.2)",
@@ -283,7 +297,7 @@ export default function TransactionsPage() {
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1 }}>
                       {transaction.addTeamId && (() => {
                         const teamAdded = getTeamByMLEId(transaction.addTeamId);
                         return teamAdded ? (
@@ -317,6 +331,20 @@ export default function TransactionsPage() {
                         ) : null;
                       })()}
                     </div>
+
+                    <div style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      minWidth: "150px"
+                    }}>
+                      <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", marginBottom: "0.25rem" }}>
+                        Date processed
+                      </div>
+                      <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
+                        {new Date(transaction.timestamp).toLocaleDateString()}
+                      </div>
+                    </div>
                   </>
                 ) : (
                   // PICKUP OR DROP TRANSACTION
@@ -330,47 +358,63 @@ export default function TransactionsPage() {
                       </div>
                     </div>
 
-                    {transaction.addTeamId && (() => {
-                      const teamAdded = getTeamByMLEId(transaction.addTeamId);
-                      return teamAdded ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <div style={{ fontSize: "1.5rem", color: "#22c55e", fontWeight: 700 }}>
-                            +
+                    <div style={{ flex: 1 }}>
+                      {transaction.addTeamId && (() => {
+                        const teamAdded = getTeamByMLEId(transaction.addTeamId);
+                        return teamAdded ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <div style={{ fontSize: "1.5rem", color: "#22c55e", fontWeight: 700 }}>
+                              +
+                            </div>
+                            <Image
+                              src={teamAdded.logoPath}
+                              alt={teamAdded.name}
+                              width={40}
+                              height={40}
+                              style={{ borderRadius: "6px" }}
+                            />
+                            <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
+                              {teamAdded.leagueId} {teamAdded.name}
+                            </div>
                           </div>
-                          <Image
-                            src={teamAdded.logoPath}
-                            alt={teamAdded.name}
-                            width={40}
-                            height={40}
-                            style={{ borderRadius: "6px" }}
-                          />
-                          <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
-                            {teamAdded.leagueId} {teamAdded.name}
-                          </div>
-                        </div>
-                      ) : null;
-                    })()}
+                        ) : null;
+                      })()}
 
-                    {transaction.dropTeamId && (() => {
-                      const teamDropped = getTeamByMLEId(transaction.dropTeamId);
-                      return teamDropped ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <div style={{ fontSize: "1.5rem", color: "#ef4444", fontWeight: 700 }}>
-                            −
+                      {transaction.dropTeamId && (() => {
+                        const teamDropped = getTeamByMLEId(transaction.dropTeamId);
+                        return teamDropped ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <div style={{ fontSize: "1.5rem", color: "#ef4444", fontWeight: 700 }}>
+                              −
+                            </div>
+                            <Image
+                              src={teamDropped.logoPath}
+                              alt={teamDropped.name}
+                              width={40}
+                              height={40}
+                              style={{ borderRadius: "6px" }}
+                            />
+                            <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
+                              {teamDropped.leagueId} {teamDropped.name}
+                            </div>
                           </div>
-                          <Image
-                            src={teamDropped.logoPath}
-                            alt={teamDropped.name}
-                            width={40}
-                            height={40}
-                            style={{ borderRadius: "6px" }}
-                          />
-                          <div style={{ fontSize: "1rem", fontWeight: 600, color: "white" }}>
-                            {teamDropped.leagueId} {teamDropped.name}
-                          </div>
-                        </div>
-                      ) : null;
-                    })()}
+                        ) : null;
+                      })()}
+                    </div>
+
+                    <div style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      minWidth: "150px"
+                    }}>
+                      <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", marginBottom: "0.25rem" }}>
+                        Date processed
+                      </div>
+                      <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
+                        {new Date(transaction.timestamp).toLocaleDateString()}
+                      </div>
+                    </div>
                   </>
                 )}
               </div>

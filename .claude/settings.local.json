@@ -40,7 +40,9 @@
       "Bash(powershell -Command \"(Get-Content exports\\MLETeam.json | Measure-Object -Line).Lines\")",
       "Bash(xargs ls:*)",
       "Bash(npx prisma db pull:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(powershell -Command \"(Get-Content exports\\PlayerHistoricalStats.json | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command:*)"
     ],
     "deny": [],
     "ask": []

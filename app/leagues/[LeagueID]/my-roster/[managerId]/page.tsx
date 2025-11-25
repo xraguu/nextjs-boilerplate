@@ -82,6 +82,9 @@ export default function MyRosterPage() {
     null
   );
   const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editableRoster, setEditableRoster] = useState<RosterSlot[]>([]);
 
   // Track game modes for each slot
   const [slotModes, setSlotModes] = useState<string[]>([]);
@@ -163,10 +166,12 @@ export default function MyRosterPage() {
     return slots;
   }, [rosterData]);
 
-  // Initialize slot modes
+  // Initialize slot modes and editable roster
   useEffect(() => {
     if (fullRoster.length > 0) {
       setSlotModes(new Array(fullRoster.length).fill("2s"));
+      setEditableRoster([...fullRoster]);
+      setHasUnsavedChanges(false);
     }
   }, [fullRoster.length]);
 
@@ -196,11 +201,12 @@ export default function MyRosterPage() {
     fetchRoster();
   }, [leagueId, teamId, currentWeek]);
 
+  // Initialize current week only on first load
   useEffect(() => {
-    if (rosterData) {
+    if (rosterData && currentWeek === 1 && rosterData.league.currentWeek !== 1) {
       setCurrentWeek(rosterData.league.currentWeek);
     }
-  }, [rosterData]);
+  }, [rosterData?.league.currentWeek]);
 
   const handleScheduleClick = () => {
     router.push(`/leagues/${leagueId}/my-roster/${teamId}/schedule`);
@@ -210,7 +216,55 @@ export default function MyRosterPage() {
     router.push(`/leagues/${leagueId}/my-roster/${teamId}/transactions`);
   };
 
-  const handleMoveToggle = () => {
+  const handleSaveRoster = async () => {
+    if (!rosterData) return;
+
+    try {
+      setIsSaving(true);
+
+      const response = await fetch(
+        `/api/leagues/${leagueId}/roster/update`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fantasyTeamId: rosterData.fantasyTeam.id,
+            week: currentWeek,
+            roster: editableRoster,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to save roster");
+      }
+
+      setHasUnsavedChanges(false);
+
+      // Refetch roster to get updated data
+      const rosterResponse = await fetch(
+        `/api/leagues/${leagueId}/rosters/${teamId}?week=${currentWeek}`
+      );
+      if (rosterResponse.ok) {
+        const updatedRoster = await rosterResponse.json();
+        setRosterData(updatedRoster);
+      }
+    } catch (error) {
+      console.error("Error saving roster:", error);
+      alert(error instanceof Error ? error.message : "Failed to save lineup");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleMoveToggle = async () => {
+    if (moveMode && hasUnsavedChanges) {
+      // Save changes when exiting move mode
+      await handleSaveRoster();
+    }
     setMoveMode(!moveMode);
     setSelectedTeamIndex(null);
   };
@@ -218,7 +272,7 @@ export default function MyRosterPage() {
   const handleTeamClick = (index: number) => {
     if (!moveMode) return;
 
-    const slot = fullRoster[index];
+    const slot = editableRoster[index];
     if (!slot.mleTeam) return; // Can't select empty slots
 
     if (selectedTeamIndex === null) {
@@ -226,9 +280,31 @@ export default function MyRosterPage() {
     } else if (selectedTeamIndex === index) {
       setSelectedTeamIndex(null);
     } else {
-      // Swap the teams (you'll need to implement the actual swap logic)
-      alert("Swap functionality coming soon");
+      // Swap the teams but keep slots static
+      const newRoster = [...editableRoster];
+      const team1Slot = newRoster[selectedTeamIndex].position;
+      const team2Slot = newRoster[index].position;
+
+      // Swap the entire team objects
+      const temp = newRoster[selectedTeamIndex];
+      newRoster[selectedTeamIndex] = newRoster[index];
+      newRoster[index] = temp;
+
+      // Restore the original slots
+      newRoster[selectedTeamIndex] = {
+        ...newRoster[selectedTeamIndex],
+        position: team1Slot,
+        slotIndex: newRoster[selectedTeamIndex].slotIndex,
+      };
+      newRoster[index] = {
+        ...newRoster[index],
+        position: team2Slot,
+        slotIndex: newRoster[index].slotIndex,
+      };
+
+      setEditableRoster(newRoster);
       setSelectedTeamIndex(null);
+      setHasUnsavedChanges(true);
     }
   };
 
@@ -634,28 +710,47 @@ export default function MyRosterPage() {
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
                 onClick={() => setCurrentWeek((prev) => getPrevWeek(prev))}
-                className="btn btn-ghost"
-                style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
                 disabled={currentWeek === 1}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color:
+                    currentWeek === 1
+                      ? "rgba(255,255,255,0.3)"
+                      : "rgba(255,255,255,0.7)",
+                  cursor: currentWeek === 1 ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                }}
               >
-                ◄ Week {getPrevWeek(currentWeek)}
+                {currentWeek === 1 ? "◄" : `◄ Week ${getPrevWeek(currentWeek)}`}
               </button>
+
               <span
                 style={{
+                  color: "#d4af37",
                   fontSize: "1.1rem",
-                  fontWeight: 700,
-                  color: "var(--accent)",
+                  fontWeight: 600,
+                  padding: "0 1rem",
                 }}
               >
                 Week {currentWeek}
               </span>
+
               <button
                 onClick={() => setCurrentWeek((prev) => getNextWeek(prev))}
-                className="btn btn-ghost"
-                style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
                 disabled={currentWeek === 10}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color:
+                    currentWeek === 10
+                      ? "rgba(255,255,255,0.3)"
+                      : "rgba(255,255,255,0.7)",
+                  cursor: currentWeek === 10 ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                }}
               >
-                Week {getNextWeek(currentWeek)} ►
+                {currentWeek === 10 ? "►" : `Week ${getNextWeek(currentWeek)} ►`}
               </button>
             </div>
             <div style={{ display: "flex", gap: "0.75rem" }}>
@@ -675,6 +770,7 @@ export default function MyRosterPage() {
               </button>
               <button
                 onClick={handleMoveToggle}
+                disabled={isSaving}
                 className={moveMode ? "btn btn-primary" : "btn btn-ghost"}
                 style={{
                   fontSize: "0.9rem",
@@ -682,9 +778,15 @@ export default function MyRosterPage() {
                   boxShadow: moveMode
                     ? "0 0 12px rgba(242, 182, 50, 0.4)"
                     : "0 0 8px rgba(242, 182, 50, 0.3)",
+                  opacity: isSaving ? 0.6 : 1,
+                  cursor: isSaving ? "not-allowed" : "pointer",
                 }}
               >
-                {moveMode ? "✓ Done Editing" : "Edit Lineup"}
+                {isSaving
+                  ? "Saving..."
+                  : moveMode
+                  ? "✓ Done Editing"
+                  : "Edit Lineup"}
               </button>
             </div>
           </div>
@@ -816,7 +918,7 @@ export default function MyRosterPage() {
                 </tr>
               </thead>
               <tbody>
-                {fullRoster.map((slot, index) => {
+                {(editableRoster.length > 0 ? editableRoster : fullRoster).map((slot, index) => {
                   const currentMode = slotModes[index] || "2s";
                   const isEmpty = !slot.mleTeam;
                   const isBench = slot.position === "be";
@@ -836,7 +938,7 @@ export default function MyRosterPage() {
                         borderTop:
                           isBench &&
                           index ===
-                            fullRoster.findIndex((s) => s.position === "be")
+                            (editableRoster.length > 0 ? editableRoster : fullRoster).findIndex((s) => s.position === "be")
                             ? "2px solid rgba(255,255,255,0.15)"
                             : "none",
                         cursor: moveMode && !isEmpty ? "pointer" : "default",
@@ -933,7 +1035,7 @@ export default function MyRosterPage() {
                             : "var(--accent)",
                         }}
                       >
-                        {slot.position.toUpperCase()}
+                        {slot.position === "be" || slot.position === "flx" ? slot.position.toUpperCase() : slot.position}
                       </td>
                       <td style={{ padding: "0.75rem 1rem" }}>
                         {isEmpty ? (
@@ -1088,15 +1190,63 @@ export default function MyRosterPage() {
       {/* Stats Tab */}
       {activeTab === "stats" && (
         <section className="card">
-          {/* Game Mode Toggle */}
+          {/* Week Navigation and Game Mode Toggle */}
           <div
             style={{
               padding: "1rem 1.5rem",
               borderBottom: "1px solid rgba(255,255,255,0.1)",
               display: "flex",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+              <button
+                onClick={() => setCurrentWeek((prev) => getPrevWeek(prev))}
+                disabled={currentWeek === 1}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color:
+                    currentWeek === 1
+                      ? "rgba(255,255,255,0.3)"
+                      : "rgba(255,255,255,0.7)",
+                  cursor: currentWeek === 1 ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                }}
+              >
+                {currentWeek === 1 ? "◄" : `◄ Week ${getPrevWeek(currentWeek)}`}
+              </button>
+
+              <span
+                style={{
+                  color: "#d4af37",
+                  fontSize: "1.1rem",
+                  fontWeight: 600,
+                  padding: "0 1rem",
+                }}
+              >
+                Week {currentWeek}
+              </span>
+
+              <button
+                onClick={() => setCurrentWeek((prev) => getNextWeek(prev))}
+                disabled={currentWeek === 10}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color:
+                    currentWeek === 10
+                      ? "rgba(255,255,255,0.3)"
+                      : "rgba(255,255,255,0.7)",
+                  cursor: currentWeek === 10 ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                }}
+              >
+                {currentWeek === 10 ? "►" : `Week ${getNextWeek(currentWeek)} ►`}
+              </button>
+            </div>
+
             <div
               style={{
                 display: "flex",
@@ -1716,7 +1866,7 @@ export default function MyRosterPage() {
                               marginTop: "0.25rem",
                             }}
                           >
-                            {slot.position.toUpperCase()} ·{" "}
+                            {slot.position === "be" || slot.position === "flx" ? slot.position.toUpperCase() : slot.position} ·{" "}
                             {slot.fantasyPoints?.toFixed(1) || 0} pts
                           </div>
                         </div>

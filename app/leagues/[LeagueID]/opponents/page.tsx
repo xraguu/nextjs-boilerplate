@@ -81,6 +81,9 @@ export default function OpponentsPage() {
   // Track game mode for stats tab (2s or 3s)
   const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
 
+  // Track game modes for each slot
+  const [slotModes, setSlotModes] = useState<string[]>([]);
+
   // Fetch opponents data
   useEffect(() => {
     const fetchOpponents = async () => {
@@ -428,22 +431,47 @@ export default function OpponentsPage() {
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
                 onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
-                className="btn btn-ghost"
-                style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
                 disabled={currentWeek === 1}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color:
+                    currentWeek === 1
+                      ? "rgba(255,255,255,0.3)"
+                      : "rgba(255,255,255,0.7)",
+                  cursor: currentWeek === 1 ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                }}
               >
-                ◄ Week {getPrevWeek(currentWeek)}
+                {currentWeek === 1 ? "◄" : `◄ Week ${getPrevWeek(currentWeek)}`}
               </button>
-              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
+
+              <span
+                style={{
+                  color: "#d4af37",
+                  fontSize: "1.1rem",
+                  fontWeight: 600,
+                  padding: "0 1rem",
+                }}
+              >
                 Week {currentWeek}
               </span>
+
               <button
                 onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
-                className="btn btn-ghost"
-                style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
                 disabled={currentWeek === 10}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color:
+                    currentWeek === 10
+                      ? "rgba(255,255,255,0.3)"
+                      : "rgba(255,255,255,0.7)",
+                  cursor: currentWeek === 10 ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                }}
               >
-                Week {getNextWeek(currentWeek)} ►
+                {currentWeek === 10 ? "►" : `Week ${getNextWeek(currentWeek)} ►`}
               </button>
             </div>
             <a
@@ -614,22 +642,47 @@ export default function OpponentsPage() {
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
                 onClick={() => setCurrentWeek(prev => getPrevWeek(prev))}
-                className="btn btn-ghost"
-                style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
                 disabled={currentWeek === 1}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color:
+                    currentWeek === 1
+                      ? "rgba(255,255,255,0.3)"
+                      : "rgba(255,255,255,0.7)",
+                  cursor: currentWeek === 1 ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                }}
               >
-                ◄ Week {getPrevWeek(currentWeek)}
+                {currentWeek === 1 ? "◄" : `◄ Week ${getPrevWeek(currentWeek)}`}
               </button>
-              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--accent)" }}>
+
+              <span
+                style={{
+                  color: "#d4af37",
+                  fontSize: "1.1rem",
+                  fontWeight: 600,
+                  padding: "0 1rem",
+                }}
+              >
                 Week {currentWeek}
               </span>
+
               <button
                 onClick={() => setCurrentWeek(prev => getNextWeek(prev))}
-                className="btn btn-ghost"
-                style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
                 disabled={currentWeek === 10}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color:
+                    currentWeek === 10
+                      ? "rgba(255,255,255,0.3)"
+                      : "rgba(255,255,255,0.7)",
+                  cursor: currentWeek === 10 ? "not-allowed" : "pointer",
+                  fontSize: "1rem",
+                }}
               >
-                Week {getNextWeek(currentWeek)} ►
+                {currentWeek === 10 ? "►" : `Week ${getNextWeek(currentWeek)} ►`}
               </button>
             </div>
 
