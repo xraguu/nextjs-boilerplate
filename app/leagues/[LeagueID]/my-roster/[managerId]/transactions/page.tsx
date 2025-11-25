@@ -42,7 +42,7 @@ export default function TransactionsPage() {
       try {
         setLoading(true);
         const response = await fetch(
-          `/api/leagues/${leagueId}/rosters/${teamId}/transactions`
+          `/api/leagues/${leagueId}/transactions`
         );
 
         if (!response.ok) {
@@ -59,10 +59,10 @@ export default function TransactionsPage() {
       }
     };
 
-    if (leagueId && teamId) {
+    if (leagueId) {
       fetchTransactions();
     }
-  }, [leagueId, teamId]);
+  }, [leagueId]);
 
   const getTeamByMLEId = (mleTeamId: string) => {
     if (!mleTeamId) return null;

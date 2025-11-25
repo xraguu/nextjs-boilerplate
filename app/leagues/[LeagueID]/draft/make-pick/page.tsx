@@ -1001,7 +1001,7 @@ export default function MakePickPage() {
                 transition: "all 0.2s ease"
               }}
             >
-              Your Roster
+              Rosters
             </button>
             <button
               onClick={() => setRightPanelTab("queue")}
