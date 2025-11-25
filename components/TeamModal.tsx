@@ -49,20 +49,28 @@ interface TeamModalProps {
   isDraftContext?: boolean;
 }
 
+interface TeamStaff {
+  franchiseManager: { id: string; name: string } | null;
+  generalManager: { id: string; name: string } | null;
+  captain: { id: string; name: string } | null;
+}
+
 export default function TeamModal({
   team,
   onClose,
   isDraftContext = false,
 }: TeamModalProps) {
-  // Mock data for draft context
-  const mockFranchiseManager = "Hermanos";
-  const mockGeneralManager = "thecyco";
-  const mockTeamCaptain = "xraguu";
   const [gameMode, setGameMode] = useState<"2s" | "3s">("2s");
   const [playerSortColumn, setPlayerSortColumn] = useState<string>("goals");
   const [playerSortDirection, setPlayerSortDirection] = useState<
     "asc" | "desc"
   >("desc");
+  const [staff, setStaff] = useState<TeamStaff>({
+    franchiseManager: null,
+    generalManager: null,
+    captain: null,
+  });
+  const [loadingStaff, setLoadingStaff] = useState(true);
   const [weeklyStats] = useState([
     {
       week: 1,
@@ -145,6 +153,40 @@ export default function TeamModal({
     };
 
     fetchPlayers();
+  }, [team?.id]);
+
+  // Fetch staff when team changes
+  useEffect(() => {
+    const fetchStaff = async () => {
+      if (!team) return;
+
+      try {
+        setLoadingStaff(true);
+        const response = await fetch(`/api/teams/${team.id}/staff`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch staff");
+        }
+
+        const data = await response.json();
+        setStaff(data.staff || {
+          franchiseManager: null,
+          generalManager: null,
+          captain: null,
+        });
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+        setStaff({
+          franchiseManager: null,
+          generalManager: null,
+          captain: null,
+        });
+      } finally {
+        setLoadingStaff(false);
+      }
+    };
+
+    fetchStaff();
   }, [team?.id]);
 
   if (!team) return null;
@@ -334,158 +376,117 @@ export default function TeamModal({
                   : "th"}
               </div>
             )}
-            {team.fpts && (
-              <div
-                style={{
-                  display: "flex",
-                  gap: "2rem",
-                  marginBottom: "0.75rem",
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontSize: "1.5rem",
-                      fontWeight: 700,
-                      color: "#ffffff",
-                    }}
-                  >
-                    {team.fpts}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "rgba(255,255,255,0.8)",
-                    }}
-                  >
-                    Fantasy Points
-                  </div>
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: "1.5rem",
-                      fontWeight: 700,
-                      color: "#ffffff",
-                    }}
-                  >
-                    {team.avg}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "rgba(255,255,255,0.8)",
-                    }}
-                  >
-                    Avg Fantasy Points
-                  </div>
-                </div>
-              </div>
-            )}
-            {isDraftContext ? (
-              <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-                <div>
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "rgba(255,255,255,0.7)",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    Franchise Manager
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.95rem",
-                      color: "#ffffff",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {mockFranchiseManager}
-                  </div>
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "rgba(255,255,255,0.7)",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    General Manager
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.95rem",
-                      color: "#ffffff",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {mockGeneralManager}
-                  </div>
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "rgba(255,255,255,0.7)",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    Team Captain
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.95rem",
-                      color: "#ffffff",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {mockTeamCaptain}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              (team.status || team.rosteredBy) && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <span
-                    style={{
-                      display: "inline-block",
-                      padding: "0.35rem 0.75rem",
-                      borderRadius: "4px",
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      backgroundColor: "rgba(255, 255, 255, 0.2)",
-                      color: "#ffffff",
-                      backdropFilter: "blur(4px)",
-                    }}
-                  >
-                    {team.rosteredBy
-                      ? "Rostered"
-                      : team.status === "free-agent"
-                      ? "Free Agent"
-                      : "On Waivers"}
-                  </span>
-                  {team.rosteredBy && (
-                    <span
+            {/* Staff Information - Always show if available */}
+            {!loadingStaff && (staff.franchiseManager || staff.generalManager || staff.captain) && (
+              <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+                {staff.franchiseManager && (
+                  <div>
+                    <div
                       style={{
-                        fontSize: "0.9rem",
-                        color: "rgba(255, 255, 255, 0.9)",
+                        fontSize: "0.75rem",
+                        color: "rgba(255,255,255,0.7)",
+                        marginBottom: "0.25rem",
+                      }}
+                    >
+                      Franchise Manager
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.95rem",
+                        color: "#ffffff",
                         fontWeight: 600,
                       }}
                     >
-                      | {team.rosteredBy.rosterName} (
-                      {team.rosteredBy.managerName})
-                    </span>
-                  )}
-                </div>
-              )
+                      {staff.franchiseManager.name}
+                    </div>
+                  </div>
+                )}
+                {staff.generalManager && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "rgba(255,255,255,0.7)",
+                        marginBottom: "0.25rem",
+                      }}
+                    >
+                      General Manager
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.95rem",
+                        color: "#ffffff",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {staff.generalManager.name}
+                    </div>
+                  </div>
+                )}
+                {staff.captain && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "rgba(255,255,255,0.7)",
+                        marginBottom: "0.25rem",
+                      }}
+                    >
+                      Team Captain
+                    </div>
+                    <div
+                      style={{
+                      fontSize: "0.95rem",
+                        color: "#ffffff",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {staff.captain.name}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {!isDraftContext && (team.status || team.rosteredBy) && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  marginTop: "1.5rem",
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "0.35rem 0.75rem",
+                    borderRadius: "4px",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    color: "#ffffff",
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
+                  {team.rosteredBy
+                    ? "Rostered"
+                    : team.status === "free-agent"
+                    ? "Free Agent"
+                    : "On Waivers"}
+                </span>
+                {team.rosteredBy && (
+                  <span
+                    style={{
+                      fontSize: "0.9rem",
+                      color: "rgba(255, 255, 255, 0.9)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    | {team.rosteredBy.rosterName} (
+                    {team.rosteredBy.managerName})
+                  </span>
+                )}
+              </div>
             )}
           </div>
           <button

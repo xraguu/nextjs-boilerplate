@@ -54,6 +54,7 @@ model MLEPlayer {
   memberId        String?                 @unique
   skillGroup      String?
   teamId          String?
+  franchise       String?
   staffPosition   String?
   rosterSlot      String?
   team            MLETeam?                @relation(fields: [teamId], references: [id])

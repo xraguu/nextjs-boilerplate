@@ -53,6 +53,7 @@ async function updateStaffPositions() {
     try {
       const memberId = row.member_id?.trim();
       const staffPosition = row['Franchise Staff Position']?.trim();
+      const franchise = row.franchise?.trim();
       const playerName = row.name?.trim();
 
       if (!memberId || !playerName) {
@@ -62,6 +63,7 @@ async function updateStaffPositions() {
 
       // Convert "NA" to null, otherwise use the actual value
       const staffPositionValue = staffPosition === 'NA' ? null : staffPosition;
+      const franchiseValue = franchise === 'NA' ? null : franchise;
 
       // Find player by id (the database id matches the CSV member_id)
       const player = await prisma.mLEPlayer.findUnique({
@@ -73,11 +75,12 @@ async function updateStaffPositions() {
         continue;
       }
 
-      // Update staff position and memberId
+      // Update staff position, franchise, and memberId
       await prisma.mLEPlayer.update({
         where: { id: player.id },
         data: {
           staffPosition: staffPositionValue,
+          franchise: franchiseValue,
           memberId: memberId, // Also populate the memberId field
         },
       });

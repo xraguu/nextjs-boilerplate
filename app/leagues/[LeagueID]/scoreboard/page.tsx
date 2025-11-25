@@ -150,12 +150,8 @@ export default function ScoreboardPage() {
     setSaveMessage(null);
   }, [selectedMatch?.id]); // Only re-run when the match ID changes
 
-  const handleManagerClick = (managerName: string) => {
-    router.push(
-      `/leagues/${leagueId}/opponents?manager=${encodeURIComponent(
-        managerName
-      )}`
-    );
+  const handleManagerClick = (teamId: string) => {
+    router.push(`/leagues/${leagueId}/opponents?teamId=${teamId}`);
   };
 
   const handleMoveToggle = async () => {
@@ -373,19 +369,19 @@ export default function ScoreboardPage() {
                   fontWeight: 700,
                   color: getTeamColor(selectedMatch.team1.score, selectedMatch.team2.score, true),
                   marginBottom: "0.25rem",
-                  cursor: "pointer",
+                  cursor: isUserTeam1 ? "default" : "pointer",
                   transition: "color 0.2s",
                 }}
-                onClick={() => handleManagerClick(selectedMatch.team1.managerName)}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "var(--accent)")
+                onClick={!isUserTeam1 ? () => handleManagerClick(selectedMatch.team1.id) : undefined}
+                onMouseEnter={!isUserTeam1 ? (e) =>
+                  (e.currentTarget.style.color = "var(--accent)") : undefined
                 }
-                onMouseLeave={(e) =>
+                onMouseLeave={!isUserTeam1 ? (e) =>
                   (e.currentTarget.style.color = getTeamColor(
                     selectedMatch.team1.score,
                     selectedMatch.team2.score,
                     true
-                  ))
+                  )) : undefined
                 }
               >
                 {selectedMatch.team1.teamName}
@@ -407,15 +403,15 @@ export default function ScoreboardPage() {
                   color: "rgba(255,255,255,0.6)",
                   fontSize: "0.9rem",
                   margin: 0,
-                  cursor: "pointer",
+                  cursor: isUserTeam1 ? "default" : "pointer",
                   transition: "color 0.2s",
                 }}
-                onClick={() => handleManagerClick(selectedMatch.team1.managerName)}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "var(--accent)")
+                onClick={!isUserTeam1 ? () => handleManagerClick(selectedMatch.team1.id) : undefined}
+                onMouseEnter={!isUserTeam1 ? (e) =>
+                  (e.currentTarget.style.color = "var(--accent)") : undefined
                 }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "rgba(255,255,255,0.6)")
+                onMouseLeave={!isUserTeam1 ? (e) =>
+                  (e.currentTarget.style.color = "rgba(255,255,255,0.6)") : undefined
                 }
               >
                 {selectedMatch.team1.managerName}
@@ -526,21 +522,21 @@ export default function ScoreboardPage() {
                     false
                   ),
                   marginBottom: "0.25rem",
-                  cursor: "pointer",
+                  cursor: isUserTeam2 ? "default" : "pointer",
                   transition: "color 0.2s",
                 }}
-                onClick={() =>
-                  handleManagerClick(selectedMatch.team2.managerName)
+                onClick={!isUserTeam2 ? () =>
+                  handleManagerClick(selectedMatch.team2.id) : undefined
                 }
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "var(--accent)")
+                onMouseEnter={!isUserTeam2 ? (e) =>
+                  (e.currentTarget.style.color = "var(--accent)") : undefined
                 }
-                onMouseLeave={(e) =>
+                onMouseLeave={!isUserTeam2 ? (e) =>
                   (e.currentTarget.style.color = getTeamColor(
                     selectedMatch.team1.score,
                     selectedMatch.team2.score,
                     false
-                  ))
+                  )) : undefined
                 }
               >
                 {selectedMatch.team2.teamName}
@@ -562,17 +558,17 @@ export default function ScoreboardPage() {
                   color: "rgba(255,255,255,0.6)",
                   fontSize: "0.9rem",
                   margin: 0,
-                  cursor: "pointer",
+                  cursor: isUserTeam2 ? "default" : "pointer",
                   transition: "color 0.2s",
                 }}
-                onClick={() =>
-                  handleManagerClick(selectedMatch.team2.managerName)
+                onClick={!isUserTeam2 ? () =>
+                  handleManagerClick(selectedMatch.team2.id) : undefined
                 }
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "var(--accent)")
+                onMouseEnter={!isUserTeam2 ? (e) =>
+                  (e.currentTarget.style.color = "var(--accent)") : undefined
                 }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "rgba(255,255,255,0.6)")
+                onMouseLeave={!isUserTeam2 ? (e) =>
+                  (e.currentTarget.style.color = "rgba(255,255,255,0.6)") : undefined
                 }
               >
                 {selectedMatch.team2.managerName}
@@ -1050,6 +1046,11 @@ export default function ScoreboardPage() {
             const team1TopPerformers = getTopPerformers(matchup.team1.roster);
             const team2TopPerformers = getTopPerformers(matchup.team2.roster);
 
+            // Check if current user is in this matchup
+            const currentUserId = session?.user?.id;
+            const isUserTeam1 = currentUserId === matchup.team1.managerId;
+            const isUserTeam2 = currentUserId === matchup.team2.managerId;
+
             return (
               <section
                 key={matchup.id}
@@ -1094,24 +1095,36 @@ export default function ScoreboardPage() {
                             true
                           ),
                           marginBottom: "0.25rem",
-                          cursor: "pointer",
+                          cursor: isUserTeam1 ? "default" : "pointer",
                           transition: "color 0.2s",
                         }}
-                        onClick={() =>
-                          handleManagerClick(matchup.team1.managerName)
+                        onClick={!isUserTeam1 ? () =>
+                          handleManagerClick(matchup.team1.id) : undefined
                         }
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.color = "var(--accent)")
+                        onMouseEnter={!isUserTeam1 ? (e) =>
+                          (e.currentTarget.style.color = "var(--accent)") : undefined
                         }
-                        onMouseLeave={(e) =>
+                        onMouseLeave={!isUserTeam1 ? (e) =>
                           (e.currentTarget.style.color = getTeamColor(
                             matchup.team1.score,
                             matchup.team2.score,
                             true
-                          ))
+                          )) : undefined
                         }
                       >
                         {matchup.team1.teamName}
+                        {isUserTeam1 && (
+                          <span
+                            style={{
+                              fontSize: "0.7rem",
+                              color: "var(--accent)",
+                              marginLeft: "0.5rem",
+                              fontWeight: 500,
+                            }}
+                          >
+                            (You)
+                          </span>
+                        )}
                       </h2>
                       <p
                         style={{
@@ -1121,18 +1134,18 @@ export default function ScoreboardPage() {
                         }}
                       >
                         <span
-                          onClick={() =>
-                            handleManagerClick(matchup.team1.managerName)
+                          onClick={!isUserTeam1 ? () =>
+                            handleManagerClick(matchup.team1.id) : undefined
                           }
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.color = "var(--accent)")
+                          onMouseEnter={!isUserTeam1 ? (e) =>
+                            (e.currentTarget.style.color = "var(--accent)") : undefined
                           }
-                          onMouseLeave={(e) =>
+                          onMouseLeave={!isUserTeam1 ? (e) =>
                             (e.currentTarget.style.color =
-                              "rgba(255,255,255,0.6)")
+                              "rgba(255,255,255,0.6)") : undefined
                           }
                           style={{
-                            cursor: "pointer",
+                            cursor: isUserTeam1 ? "default" : "pointer",
                             color: "rgba(255,255,255,0.6)",
                             transition: "color 0.2s",
                           }}
@@ -1177,24 +1190,36 @@ export default function ScoreboardPage() {
                             false
                           ),
                           marginBottom: "0.25rem",
-                          cursor: "pointer",
+                          cursor: isUserTeam2 ? "default" : "pointer",
                           transition: "color 0.2s",
                         }}
-                        onClick={() =>
-                          handleManagerClick(matchup.team2.managerName)
+                        onClick={!isUserTeam2 ? () =>
+                          handleManagerClick(matchup.team2.id) : undefined
                         }
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.color = "var(--accent)")
+                        onMouseEnter={!isUserTeam2 ? (e) =>
+                          (e.currentTarget.style.color = "var(--accent)") : undefined
                         }
-                        onMouseLeave={(e) =>
+                        onMouseLeave={!isUserTeam2 ? (e) =>
                           (e.currentTarget.style.color = getTeamColor(
                             matchup.team1.score,
                             matchup.team2.score,
                             false
-                          ))
+                          )) : undefined
                         }
                       >
                         {matchup.team2.teamName}
+                        {isUserTeam2 && (
+                          <span
+                            style={{
+                              fontSize: "0.7rem",
+                              color: "var(--accent)",
+                              marginLeft: "0.5rem",
+                              fontWeight: 500,
+                            }}
+                          >
+                            (You)
+                          </span>
+                        )}
                       </h2>
                       <p
                         style={{
@@ -1204,18 +1229,18 @@ export default function ScoreboardPage() {
                         }}
                       >
                         <span
-                          onClick={() =>
-                            handleManagerClick(matchup.team2.managerName)
+                          onClick={!isUserTeam2 ? () =>
+                            handleManagerClick(matchup.team2.id) : undefined
                           }
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.color = "var(--accent)")
+                          onMouseEnter={!isUserTeam2 ? (e) =>
+                            (e.currentTarget.style.color = "var(--accent)") : undefined
                           }
-                          onMouseLeave={(e) =>
+                          onMouseLeave={!isUserTeam2 ? (e) =>
                             (e.currentTarget.style.color =
-                              "rgba(255,255,255,0.6)")
+                              "rgba(255,255,255,0.6)") : undefined
                           }
                           style={{
-                            cursor: "pointer",
+                            cursor: isUserTeam2 ? "default" : "pointer",
                             color: "rgba(255,255,255,0.6)",
                             transition: "color 0.2s",
                           }}

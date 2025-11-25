@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
@@ -59,12 +59,14 @@ interface OpponentData {
 
 export default function OpponentsPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const leagueId = params.LeagueID as string;
+  const teamIdParam = searchParams.get("teamId");
 
   const [opponents, setOpponents] = useState<OpponentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedManagerId, setSelectedManagerId] = useState<string | null>(null);
+  const [selectedManagerId, setSelectedManagerId] = useState<string | null>(teamIdParam);
   const [currentWeek, setCurrentWeek] = useState(1);
   const [activeTab, setActiveTab] = useState<"lineup" | "stats">("lineup");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -98,8 +100,8 @@ export default function OpponentsPage() {
         const data = await response.json();
         setOpponents(data.opponents || []);
 
-        // Set default selected manager to first opponent
-        if (data.opponents && data.opponents.length > 0 && !selectedManagerId) {
+        // Set default selected manager to first opponent only if no teamId param and no selection
+        if (data.opponents && data.opponents.length > 0 && !selectedManagerId && !teamIdParam) {
           setSelectedManagerId(data.opponents[0].id);
         }
 

@@ -66,8 +66,8 @@ export default function StandingsPage() {
     }
   }, [leagueId]);
 
-  const handleManagerClick = (managerName: string) => {
-    router.push(`/leagues/${leagueId}/opponents?manager=${encodeURIComponent(managerName)}`);
+  const handleManagerClick = (teamId: string) => {
+    router.push(`/leagues/${leagueId}/opponents?teamId=${teamId}`);
   };
 
   const handlePlayoffsClick = () => {
@@ -156,11 +156,11 @@ export default function StandingsPage() {
                     </td>
                   <td style={{ padding: "0.75rem 0.5rem" }}>
                     <span
-                      onClick={() => handleManagerClick(team.manager)}
-                      onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
-                      onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                      onClick={!team.isYou ? () => handleManagerClick(team.fantasyTeamId) : undefined}
+                      onMouseEnter={!team.isYou ? (e) => e.currentTarget.style.color = "var(--accent)" : undefined}
+                      onMouseLeave={!team.isYou ? (e) => e.currentTarget.style.color = "var(--text-main)" : undefined}
                       style={{
-                        cursor: "pointer",
+                        cursor: team.isYou ? "default" : "pointer",
                         color: "var(--text-main)",
                         transition: "color 0.2s"
                       }}
@@ -171,11 +171,11 @@ export default function StandingsPage() {
                   </td>
                   <td style={{ padding: "0.75rem 0.5rem", color: "var(--text-muted)" }}>
                     <span
-                      onClick={() => handleManagerClick(team.manager)}
-                      onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
-                      onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-muted)"}
+                      onClick={!team.isYou ? () => handleManagerClick(team.fantasyTeamId) : undefined}
+                      onMouseEnter={!team.isYou ? (e) => e.currentTarget.style.color = "var(--accent)" : undefined}
+                      onMouseLeave={!team.isYou ? (e) => e.currentTarget.style.color = "var(--text-muted)" : undefined}
                       style={{
-                        cursor: "pointer",
+                        cursor: team.isYou ? "default" : "pointer",
                         transition: "color 0.2s"
                       }}
                     >
