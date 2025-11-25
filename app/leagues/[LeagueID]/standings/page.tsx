@@ -130,9 +130,8 @@ export default function StandingsPage() {
             </thead>
             <tbody>
               {standings.map((team) => (
-                <>
+                <React.Fragment key={team.rank}>
                   <tr
-                    key={team.rank}
                     style={{
                       borderBottom: team.rank === 4 ? "2px dotted var(--accent)" : "1px solid rgba(255,255,255,0.05)",
                       backgroundColor: team.isYou ? "rgba(242, 182, 50, 0.08)" : "transparent",
@@ -298,7 +297,7 @@ export default function StandingsPage() {
                     </td>
                   </tr>
                 )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

@@ -25,12 +25,20 @@ const defaultSettings = {
   })) as WeekDate[],
   scoring: {
     goals: 2,
+    goalsAgainst: -2,
     shots: 0.1,
+    shotsAgainst: -0.1,
     saves: 1,
     assists: 1.5,
     demosInflicted: 0.5,
     demosTaken: -0.5, // Negative example
-    sprocketRating: 0.1,
+    sprocketRatingRanges: [
+      { min: 0, max: 30, points: 0 },
+      { min: 31, max: 50, points: 5 },
+      { min: 51, max: 70, points: 10 },
+      { min: 71, max: 90, points: 15 },
+      { min: 91, max: 100, points: 20 },
+    ],
     gameWin: 10,
     gameLoss: 0, // Can be negative
   },
@@ -99,12 +107,55 @@ export default function SettingsPage() {
     setHasChanges(true);
   };
 
-  const updateScoringSetting = (key: string, value: number) => {
+  const updateScoringSetting = (key: string, value: number | any) => {
     setSettings((prev) => ({
       ...prev,
       scoring: {
         ...prev.scoring,
         [key]: value,
+      },
+    }));
+    setHasChanges(true);
+  };
+
+  const addSprocketRange = () => {
+    const ranges = settings.scoring.sprocketRatingRanges || [];
+    const lastRange = ranges[ranges.length - 1];
+    const newRange = {
+      min: lastRange ? lastRange.max + 1 : 0,
+      max: lastRange ? lastRange.max + 20 : 20,
+      points: 0,
+    };
+    setSettings((prev) => ({
+      ...prev,
+      scoring: {
+        ...prev.scoring,
+        sprocketRatingRanges: [...ranges, newRange],
+      },
+    }));
+    setHasChanges(true);
+  };
+
+  const updateSprocketRange = (index: number, field: 'min' | 'max' | 'points', value: number) => {
+    const newRanges = [...(settings.scoring.sprocketRatingRanges || [])];
+    newRanges[index] = { ...newRanges[index], [field]: value };
+    setSettings((prev) => ({
+      ...prev,
+      scoring: {
+        ...prev.scoring,
+        sprocketRatingRanges: newRanges,
+      },
+    }));
+    setHasChanges(true);
+  };
+
+  const removeSprocketRange = (index: number) => {
+    const newRanges = (settings.scoring.sprocketRatingRanges || []).filter((_, i) => i !== index);
+    setSettings((prev) => ({
+      ...prev,
+      scoring: {
+        ...prev.scoring,
+        sprocketRatingRanges: newRanges,
       },
     }));
     setHasChanges(true);
@@ -536,6 +587,37 @@ export default function SettingsPage() {
                 fontWeight: 600,
               }}
             >
+              Goals Against
+            </label>
+            <input
+              type="number"
+              value={settings.scoring.goalsAgainst}
+              onChange={(e) =>
+                updateScoringSetting("goalsAgainst", Number(e.target.value))
+              }
+              step={0.1}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                background: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: "6px",
+                color: "var(--text-main)",
+                fontSize: "0.95rem",
+              }}
+            />
+          </div>
+
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "0.5rem",
+                fontSize: "0.9rem",
+                color: "var(--text-muted)",
+                fontWeight: 600,
+              }}
+            >
               Shots
             </label>
             <input
@@ -543,6 +625,37 @@ export default function SettingsPage() {
               value={settings.scoring.shots}
               onChange={(e) =>
                 updateScoringSetting("shots", Number(e.target.value))
+              }
+              step={0.1}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                background: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: "6px",
+                color: "var(--text-main)",
+                fontSize: "0.95rem",
+              }}
+            />
+          </div>
+
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "0.5rem",
+                fontSize: "0.9rem",
+                color: "var(--text-muted)",
+                fontWeight: 600,
+              }}
+            >
+              Shots Against
+            </label>
+            <input
+              type="number"
+              value={settings.scoring.shotsAgainst}
+              onChange={(e) =>
+                updateScoringSetting("shotsAgainst", Number(e.target.value))
               }
               step={0.1}
               style={{
@@ -684,36 +797,6 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontSize: "0.9rem",
-                color: "var(--text-muted)",
-                fontWeight: 600,
-              }}
-            >
-              Sprocket Rating (SR)
-            </label>
-            <input
-              type="number"
-              value={settings.scoring.sprocketRating}
-              onChange={(e) =>
-                updateScoringSetting("sprocketRating", Number(e.target.value))
-              }
-              step={0.01}
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "6px",
-                color: "var(--text-main)",
-                fontSize: "0.95rem",
-              }}
-            />
-          </div>
 
           <div>
             <label
@@ -777,6 +860,123 @@ export default function SettingsPage() {
             />
             <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
               Can be negative (penalty)
+            </p>
+          </div>
+        </div>
+
+        {/* Sprocket Rating Ranges Section */}
+        <div style={{ marginTop: "2.5rem", paddingTop: "2rem", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <div>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "0.25rem" }}>
+                Sprocket Rating (SR) Point Ranges
+              </h3>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                Points are added based on the team's Sprocket Rating range (not multiplied)
+              </p>
+            </div>
+            <button
+              className="btn btn-primary"
+              style={{ padding: "0.5rem 1rem", fontSize: "0.85rem" }}
+              onClick={addSprocketRange}
+            >
+              + Add Range
+            </button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            {(settings.scoring.sprocketRatingRanges || []).map((range, index) => (
+              <div
+                key={index}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "150px 150px 150px auto",
+                  gap: "1rem",
+                  padding: "1rem",
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: "6px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  alignItems: "end",
+                }}
+              >
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                    Min Rating
+                  </label>
+                  <input
+                    type="number"
+                    value={range.min}
+                    onChange={(e) => updateSprocketRange(index, 'min', Number(e.target.value))}
+                    min={0}
+                    style={{
+                      width: "100%",
+                      padding: "0.65rem",
+                      background: "rgba(255,255,255,0.1)",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      borderRadius: "4px",
+                      color: "var(--text-main)",
+                      fontSize: "0.9rem",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                    Max Rating
+                  </label>
+                  <input
+                    type="number"
+                    value={range.max}
+                    onChange={(e) => updateSprocketRange(index, 'max', Number(e.target.value))}
+                    min={0}
+                    style={{
+                      width: "100%",
+                      padding: "0.65rem",
+                      background: "rgba(255,255,255,0.1)",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      borderRadius: "4px",
+                      color: "var(--text-main)",
+                      fontSize: "0.9rem",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                    Points Added
+                  </label>
+                  <input
+                    type="number"
+                    value={range.points}
+                    onChange={(e) => updateSprocketRange(index, 'points', Number(e.target.value))}
+                    step={0.5}
+                    style={{
+                      width: "100%",
+                      padding: "0.65rem",
+                      background: "rgba(255,255,255,0.1)",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      borderRadius: "4px",
+                      color: "var(--text-main)",
+                      fontSize: "0.9rem",
+                    }}
+                  />
+                </div>
+
+                <button
+                  className="btn btn-ghost"
+                  style={{ padding: "0.65rem 1rem", fontSize: "0.85rem" }}
+                  onClick={() => removeSprocketRange(index)}
+                  disabled={(settings.scoring.sprocketRatingRanges || []).length === 1}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: "1rem", padding: "1rem", background: "rgba(242, 182, 50, 0.1)", borderRadius: "6px", borderLeft: "3px solid var(--accent)" }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+              <strong style={{ color: "var(--text-main)" }}>Example:</strong> If a team has SR of 65, and the range 51-70 has +10 points, that team will receive an additional 10 points to their total fantasy points.
             </p>
           </div>
         </div>

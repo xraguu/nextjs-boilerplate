@@ -1850,9 +1850,22 @@ export default function MyRosterPage() {
                                 style={{ borderRadius: "4px" }}
                               />
                               <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTeam(team);
+                                  setShowModal(true);
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.color = "var(--accent)")
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.color = "var(--text-main)")
+                                }
                                 style={{
                                   fontSize: "0.9rem",
                                   color: "var(--text-main)",
+                                  cursor: "pointer",
+                                  transition: "color 0.2s",
                                 }}
                               >
                                 {team.name}
@@ -1921,9 +1934,22 @@ export default function MyRosterPage() {
                                 style={{ borderRadius: "4px" }}
                               />
                               <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTeam(team);
+                                  setShowModal(true);
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.color = "var(--accent)")
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.color = "var(--text-main)")
+                                }
                                 style={{
                                   fontSize: "0.9rem",
                                   color: "var(--text-main)",
+                                  cursor: "pointer",
+                                  transition: "color 0.2s",
                                 }}
                               >
                                 {team.name}
