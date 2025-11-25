@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { TEAMS } from "@/lib/teams";
 import TeamModal from "@/components/TeamModal";
 
@@ -565,32 +566,55 @@ export default function OpponentsPage() {
                             Empty
                           </span>
                         ) : (
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>
-                              <span
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {/* Team Logo */}
+                            {(() => {
+                              const parts = team.name.split(" ");
+                              const leagueId = parts[parts.length - 1];
+                              const name = parts.slice(0, -1).join(" ");
+                              const teamId = `${leagueId}${name.replace(/\s+/g, "")}`;
+                              const teamData = TEAMS.find(t => t.id === teamId);
+                              return teamData ? (
+                                <Image
+                                  src={teamData.logoPath}
+                                  alt={team.name}
+                                  width={32}
+                                  height={32}
+                                  style={{ borderRadius: "4px" }}
+                                />
+                              ) : null;
+                            })()}
+                            <div>
+                              <div
                                 onClick={() => handleTeamClick(team.name)}
+                                style={{
+                                  fontWeight: 600,
+                                  fontSize: "1rem",
+                                  cursor: "pointer",
+                                  color: "var(--text-main)",
+                                  transition: "color 0.2s"
+                                }}
                                 onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
                                 onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
-                                style={{
-                                  cursor: "pointer",
-                                  transition: "color 0.2s",
-                                  color: "var(--text-main)"
-                                }}
                               >
                                 {team.name}
-                              </span>
+                              </div>
+                              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                                {team.opponent && team.opponentGameRecord && team.opponentFantasyRank ? (
+                                  <>
+                                    vs. {team.opponent} {team.opponentGameRecord}{" "}
+                                    <span style={{ color: getFantasyRankColor(team.opponentFantasyRank) }}>
+                                      ({team.opponentFantasyRank}
+                                      {team.opponentFantasyRank === 1 ? "st" :
+                                       team.opponentFantasyRank === 2 ? "nd" :
+                                       team.opponentFantasyRank === 3 ? "rd" : "th"})
+                                    </span>
+                                  </>
+                                ) : (
+                                  "vs. - -"
+                                )}
+                              </div>
                             </div>
-                          {team.opponent && team.opponentGameRecord && team.opponentFantasyRank && (
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
-                              vs. {team.opponent} {team.opponentGameRecord}{" "}
-                              <span style={{ color: getFantasyRankColor(team.opponentFantasyRank) }}>
-                                ({team.opponentFantasyRank}
-                                {team.opponentFantasyRank === 1 ? "st" :
-                                 team.opponentFantasyRank === 2 ? "nd" :
-                                 team.opponentFantasyRank === 3 ? "rd" : "th"})
-                              </span>
-                            </div>
-                            )}
                           </div>
                         )}
                       </td>
@@ -897,32 +921,55 @@ export default function OpponentsPage() {
                             Empty
                           </span>
                         ) : (
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>
-                              <span
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {/* Team Logo (smaller for stats tab) */}
+                            {(() => {
+                              const parts = team.name.split(" ");
+                              const leagueId = parts[parts.length - 1];
+                              const name = parts.slice(0, -1).join(" ");
+                              const teamId = `${leagueId}${name.replace(/\s+/g, "")}`;
+                              const teamData = TEAMS.find(t => t.id === teamId);
+                              return teamData ? (
+                                <Image
+                                  src={teamData.logoPath}
+                                  alt={team.name}
+                                  width={24}
+                                  height={24}
+                                  style={{ borderRadius: "4px" }}
+                                />
+                              ) : null;
+                            })()}
+                            <div>
+                              <div
                                 onClick={() => handleTeamClick(team.name)}
+                                style={{
+                                  fontWeight: 600,
+                                  fontSize: "0.95rem",
+                                  cursor: "pointer",
+                                  color: "var(--text-main)",
+                                  transition: "color 0.2s"
+                                }}
                                 onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
                                 onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
-                                style={{
-                                  cursor: "pointer",
-                                  transition: "color 0.2s",
-                                  color: "var(--text-main)"
-                                }}
                               >
                                 {team.name}
-                              </span>
+                              </div>
+                              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                                {team.opponent && team.opponentGameRecord && team.opponentFantasyRank ? (
+                                  <>
+                                    vs. {team.opponent} {team.opponentGameRecord}{" "}
+                                    <span style={{ color: getFantasyRankColor(team.opponentFantasyRank) }}>
+                                      ({team.opponentFantasyRank}
+                                      {team.opponentFantasyRank === 1 ? "st" :
+                                       team.opponentFantasyRank === 2 ? "nd" :
+                                       team.opponentFantasyRank === 3 ? "rd" : "th"})
+                                    </span>
+                                  </>
+                                ) : (
+                                  "vs. - -"
+                                )}
+                              </div>
                             </div>
-                          {team.opponent && team.opponentGameRecord && team.opponentFantasyRank && (
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
-                              vs. {team.opponent} {team.opponentGameRecord}{" "}
-                              <span style={{ color: getFantasyRankColor(team.opponentFantasyRank) }}>
-                                ({team.opponentFantasyRank}
-                                {team.opponentFantasyRank === 1 ? "st" :
-                                 team.opponentFantasyRank === 2 ? "nd" :
-                                 team.opponentFantasyRank === 3 ? "rd" : "th"})
-                              </span>
-                            </div>
-                            )}
                           </div>
                         )}
                       </td>

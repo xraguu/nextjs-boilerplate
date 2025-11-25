@@ -99,9 +99,9 @@ export default function TradePage() {
     setSubmitting(true);
 
     try {
-      // Build arrays of MLE team IDs
-      const proposerGives = selectedMyTeams.map(idx => myRoster.rosterSlots[idx].mleTeamId);
-      const receiverGives = selectedOpponentTeams.map(idx => opponentRoster.rosterSlots[idx].mleTeamId);
+      // Build arrays of MLE team IDs (accessing mleTeam.id from the roster slot)
+      const proposerGives = selectedMyTeams.map(idx => myRoster.rosterSlots[idx].mleTeam.id);
+      const receiverGives = selectedOpponentTeams.map(idx => opponentRoster.rosterSlots[idx].mleTeam.id);
 
       const response = await fetch(`/api/leagues/${leagueId}/trades/propose`, {
         method: "POST",
@@ -151,10 +151,11 @@ export default function TradePage() {
 
   // Transform roster slots for display
   const getSlotDisplay = (position: string) => {
-    if (position === "twos") return "2s";
-    if (position === "threes") return "3s";
-    if (position === "flex") return "FLX";
-    if (position === "bench") return "BE";
+    // Handle both old format (twos/threes/flex/bench) and new format (2s/3s/FLX/BE)
+    if (position === "twos" || position === "2s") return "2s";
+    if (position === "threes" || position === "3s") return "3s";
+    if (position === "flex" || position === "FLX") return "FLX";
+    if (position === "bench" || position === "BE") return "BE";
     return position.toUpperCase();
   };
 
@@ -166,7 +167,7 @@ export default function TradePage() {
     record: slot.mleTeam.record || "0-0",
     rk: 0,
     logo: slot.mleTeam.logoPath,
-    mleTeamId: slot.mleTeamId,
+    mleTeamId: slot.mleTeam.id,
   }));
 
   const opponentTeams = opponentRoster.rosterSlots.map(slot => ({
@@ -177,7 +178,7 @@ export default function TradePage() {
     record: slot.mleTeam.record || "0-0",
     rk: 0,
     logo: slot.mleTeam.logoPath,
-    mleTeamId: slot.mleTeamId,
+    mleTeamId: slot.mleTeam.id,
   }));
 
   return (

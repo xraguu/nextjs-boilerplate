@@ -192,16 +192,16 @@ export async function GET(
             let slotIndex = 0;
 
             if (slotName === "2s") {
-              position = "twos";
+              position = "2s";
               slotIndex = expectedSlots.slice(0, index).filter(s => s === "2s").length;
             } else if (slotName === "3s") {
-              position = "threes";
+              position = "3s";
               slotIndex = expectedSlots.slice(0, index).filter(s => s === "3s").length;
             } else if (slotName === "FLX") {
-              position = "flex";
+              position = "FLX";
               slotIndex = expectedSlots.slice(0, index).filter(s => s === "FLX").length;
             } else if (slotName === "BE") {
-              position = "bench";
+              position = "BE";
               slotIndex = expectedSlots.slice(0, index).filter(s => s === "BE").length;
             }
 

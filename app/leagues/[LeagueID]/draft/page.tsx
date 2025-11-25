@@ -604,42 +604,115 @@ export default function DraftPage() {
             {/* Roster Tab Content */}
             {rightPanelTab === "rosters" && (
               <div>
-                <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "1rem" }}>
-                  {currentRoster.length} teams drafted
-                </div>
-                {currentRoster.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
-                    No teams drafted yet
+                {/* Roster Table */}
+                <div style={{
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                }}>
+                  {/* Header */}
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "60px 1fr 80px",
+                    padding: "0.75rem 1rem",
+                    background: "rgba(255,255,255,0.05)",
+                    borderBottom: "1px solid rgba(255,255,255,0.1)",
+                  }}>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                      Slot
+                    </div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                      Team
+                    </div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)", textAlign: "right" }}>
+                      Pick
+                    </div>
                   </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    {currentRoster.map((slot, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.75rem",
-                          padding: "0.75rem",
-                          background: "rgba(255,255,255,0.05)",
-                          borderRadius: "6px",
-                        }}
-                      >
-                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", minWidth: "40px" }}>
-                          {slot.position.toUpperCase()}
+
+                  {/* Roster Slots */}
+                  {(() => {
+                    // Create all slots for the roster config
+                    const rosterConfig = { "2s": 2, "3s": 2, flx: 1, be: 3 };
+                    const allSlots: Array<{position: string, slotIndex: number}> = [];
+
+                    // Add 2s slots
+                    for (let i = 0; i < rosterConfig["2s"]; i++) {
+                      allSlots.push({ position: "2s", slotIndex: i });
+                    }
+                    // Add 3s slots
+                    for (let i = 0; i < rosterConfig["3s"]; i++) {
+                      allSlots.push({ position: "3s", slotIndex: i });
+                    }
+                    // Add flx slots
+                    for (let i = 0; i < rosterConfig.flx; i++) {
+                      allSlots.push({ position: "flx", slotIndex: i });
+                    }
+                    // Add be slots
+                    for (let i = 0; i < rosterConfig.be; i++) {
+                      allSlots.push({ position: "be", slotIndex: i });
+                    }
+
+                    return allSlots.map((slotDef, idx) => {
+                      // Find the matching roster entry
+                      const rosterEntry = currentRoster.find(
+                        r => r.position === slotDef.position && r.slotIndex === slotDef.slotIndex
+                      );
+
+                      // Find the draft pick for this team
+                      const draftPick = rosterEntry?.mleTeamId
+                        ? draftState.picks.find(p => p.mleTeamId === rosterEntry.mleTeamId && p.fantasyTeamId === currentTeam?.id)
+                        : null;
+
+                      return (
+                        <div
+                          key={`${slotDef.position}-${slotDef.slotIndex}`}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "60px 1fr 80px",
+                            padding: "0.75rem 1rem",
+                            borderBottom: idx < allSlots.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                            alignItems: "center",
+                          }}
+                        >
+                          {/* Slot Position */}
+                          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                            {slotDef.position === "flx" || slotDef.position === "be"
+                              ? slotDef.position.toUpperCase()
+                              : slotDef.position}
+                          </div>
+
+                          {/* Team */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            {rosterEntry?.mleTeam ? (
+                              <>
+                                <Image
+                                  src={rosterEntry.mleTeam.logoPath}
+                                  alt={rosterEntry.mleTeam.name}
+                                  width={24}
+                                  height={24}
+                                  style={{ borderRadius: "4px" }}
+                                />
+                                <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
+                                  {rosterEntry.mleTeam.leagueId} {rosterEntry.mleTeam.name}
+                                </span>
+                              </>
+                            ) : (
+                              <span style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>-</span>
+                            )}
+                          </div>
+
+                          {/* Pick Number */}
+                          <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "right" }}>
+                            {draftPick
+                              ? `${draftPick.round} (${draftPick.pickNumber})`
+                              : "-"
+                            }
+                          </div>
                         </div>
-                        {slot.mleTeam && (
-                          <>
-                            <Image src={slot.mleTeam.logoPath} alt={slot.mleTeam.name} width={24} height={24} />
-                            <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
-                              {slot.mleTeam.leagueId} {slot.mleTeam.name}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             )}
 
@@ -651,20 +724,27 @@ export default function DraftPage() {
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem",
-                    background: isMyTurn
-                      ? "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)"
-                      : "rgba(255,255,255,0.1)",
+                    background: "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
                     border: "none",
                     borderRadius: "8px",
-                    color: isMyTurn ? "#ffffff" : "var(--accent)",
+                    color: "#ffffff",
                     fontWeight: 600,
                     fontSize: "0.9rem",
                     cursor: "pointer",
                     marginBottom: "1rem",
                     opacity: 1,
                     transition: "all 0.2s ease",
+                    boxShadow: "0 4px 10px rgba(212, 175, 55, 0.3)",
                   }}
                   title={isMyTurn ? "Make your pick" : "View full team stats"}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 15px rgba(212, 175, 55, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 10px rgba(212, 175, 55, 0.3)";
+                  }}
                 >
                   {isMyTurn ? "Make Pick" : "See Full Stats"}
                 </button>

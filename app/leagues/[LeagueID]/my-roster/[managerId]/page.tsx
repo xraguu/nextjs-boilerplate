@@ -86,6 +86,10 @@ export default function MyRosterPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [editableRoster, setEditableRoster] = useState<RosterSlot[]>([]);
 
+  // Trades state
+  const [trades, setTrades] = useState<any[]>([]);
+  const [tradesLoading, setTradesLoading] = useState(false);
+
   // Track game modes for each slot
   const [slotModes, setSlotModes] = useState<string[]>([]);
 
@@ -207,6 +211,33 @@ export default function MyRosterPage() {
       setCurrentWeek(rosterData.league.currentWeek);
     }
   }, [rosterData?.league.currentWeek]);
+
+  // Fetch trades when trades tab is active
+  useEffect(() => {
+    const fetchTrades = async () => {
+      if (activeTab !== "trades" || !teamId || !leagueId) return;
+
+      try {
+        setTradesLoading(true);
+        const response = await fetch(
+          `/api/leagues/${leagueId}/trades?teamId=${teamId}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch trades");
+        }
+
+        const data = await response.json();
+        setTrades(data.trades || []);
+      } catch (error) {
+        console.error("Error fetching trades:", error);
+      } finally {
+        setTradesLoading(false);
+      }
+    };
+
+    fetchTrades();
+  }, [activeTab, teamId, leagueId]);
 
   const handleScheduleClick = () => {
     router.push(`/leagues/${leagueId}/my-roster/${teamId}/schedule`);
@@ -1691,15 +1722,312 @@ export default function MyRosterPage() {
       {activeTab === "trades" && (
         <section className="card">
           <div style={{ padding: "1.5rem", minHeight: "300px" }}>
-            <div
-              style={{
-                textAlign: "center",
-                color: "var(--text-muted)",
-                padding: "3rem",
-              }}
-            >
-              No pending trades
-            </div>
+            {tradesLoading ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                  padding: "3rem",
+                }}
+              >
+                Loading trades...
+              </div>
+            ) : trades.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                  padding: "3rem",
+                }}
+              >
+                No trades found
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {trades.map((trade) => (
+                  <div
+                    key={trade.id}
+                    style={{
+                      background: "rgba(15, 23, 42, 0.6)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      padding: "1.5rem",
+                    }}
+                  >
+                    {/* Trade Header */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "1rem",
+                      }}
+                    >
+                      <div>
+                        <span
+                          style={{
+                            fontSize: "0.9rem",
+                            fontWeight: 600,
+                            color:
+                              trade.status === "pending"
+                                ? "#fbbf24"
+                                : trade.status === "accepted"
+                                ? "#22c55e"
+                                : trade.status === "rejected"
+                                ? "#ef4444"
+                                : "var(--text-muted)",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {trade.status}
+                        </span>
+                        <span
+                          style={{
+                            marginLeft: "1rem",
+                            fontSize: "0.85rem",
+                            color: "var(--text-muted)",
+                          }}
+                        >
+                          {new Date(trade.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Trade Details */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr auto 1fr",
+                        gap: "2rem",
+                        alignItems: "center",
+                      }}
+                    >
+                      {/* Proposer Side */}
+                      <div>
+                        <div
+                          style={{
+                            fontSize: "0.85rem",
+                            color: "var(--text-muted)",
+                            marginBottom: "0.5rem",
+                          }}
+                        >
+                          {trade.isProposer ? "You give" : `${trade.proposer.managerName} gives`}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "1rem",
+                            fontWeight: 600,
+                            color: "var(--text-main)",
+                            marginBottom: "0.5rem",
+                          }}
+                        >
+                          {trade.proposer.teamName}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          {trade.proposer.gives.map((team: any) => (
+                            <div
+                              key={team.id}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.5rem",
+                                padding: "0.5rem",
+                                background: "rgba(255,255,255,0.05)",
+                                borderRadius: "6px",
+                              }}
+                            >
+                              <Image
+                                src={team.logoPath}
+                                alt={team.name}
+                                width={32}
+                                height={32}
+                                style={{ borderRadius: "4px" }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "0.9rem",
+                                  color: "var(--text-main)",
+                                }}
+                              >
+                                {team.name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Arrow */}
+                      <div
+                        style={{
+                          fontSize: "2rem",
+                          color: "var(--accent)",
+                          fontWeight: 700,
+                        }}
+                      >
+                        ⇄
+                      </div>
+
+                      {/* Receiver Side */}
+                      <div>
+                        <div
+                          style={{
+                            fontSize: "0.85rem",
+                            color: "var(--text-muted)",
+                            marginBottom: "0.5rem",
+                          }}
+                        >
+                          {trade.isProposer ? `${trade.receiver.managerName} gives` : "You give"}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "1rem",
+                            fontWeight: 600,
+                            color: "var(--text-main)",
+                            marginBottom: "0.5rem",
+                          }}
+                        >
+                          {trade.receiver.teamName}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          {trade.receiver.gives.map((team: any) => (
+                            <div
+                              key={team.id}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.5rem",
+                                padding: "0.5rem",
+                                background: "rgba(255,255,255,0.05)",
+                                borderRadius: "6px",
+                              }}
+                            >
+                              <Image
+                                src={team.logoPath}
+                                alt={team.name}
+                                width={32}
+                                height={32}
+                                style={{ borderRadius: "4px" }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "0.9rem",
+                                  color: "var(--text-main)",
+                                }}
+                              >
+                                {team.name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons for Pending Trades */}
+                    {trade.status === "pending" && !trade.isProposer && (
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "1rem",
+                          marginTop: "1.5rem",
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(
+                                `/api/leagues/${leagueId}/trades/${trade.id}`,
+                                {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ action: "reject" }),
+                                }
+                              );
+
+                              if (response.ok) {
+                                // Refresh trades
+                                const tradesResponse = await fetch(
+                                  `/api/leagues/${leagueId}/trades?teamId=${teamId}`
+                                );
+                                if (tradesResponse.ok) {
+                                  const data = await tradesResponse.json();
+                                  setTrades(data.trades || []);
+                                }
+                              }
+                            } catch (error) {
+                              console.error("Error rejecting trade:", error);
+                            }
+                          }}
+                          style={{
+                            background: "rgba(239, 68, 68, 0.2)",
+                            border: "1px solid #ef4444",
+                            color: "#ef4444",
+                            padding: "0.5rem 1.5rem",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "0.9rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Reject
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(
+                                `/api/leagues/${leagueId}/trades/${trade.id}`,
+                                {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ action: "accept" }),
+                                }
+                              );
+
+                              if (response.ok) {
+                                // Refresh trades
+                                const tradesResponse = await fetch(
+                                  `/api/leagues/${leagueId}/trades?teamId=${teamId}`
+                                );
+                                if (tradesResponse.ok) {
+                                  const data = await tradesResponse.json();
+                                  setTrades(data.trades || []);
+                                }
+                              }
+                            } catch (error) {
+                              console.error("Error accepting trade:", error);
+                            }
+                          }}
+                          style={{
+                            background: "rgba(34, 197, 94, 0.2)",
+                            border: "1px solid #22c55e",
+                            color: "#22c55e",
+                            padding: "0.5rem 1.5rem",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "0.9rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Accept
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}

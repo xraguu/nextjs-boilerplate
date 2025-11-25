@@ -12,8 +12,10 @@ export default function LeagueNavbar() {
   const leagueId = params?.LeagueID as string;
   const { data: session } = useSession();
   const [myTeamId, setMyTeamId] = useState<string | null>(null);
+  const [isDraftComplete, setIsDraftComplete] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(1);
 
-  // Fetch the user's fantasy team ID for this league
+  // Fetch the user's fantasy team ID and league data
   useEffect(() => {
     const fetchMyTeam = async () => {
       if (!session?.user?.id || !leagueId) return;
@@ -28,6 +30,11 @@ export default function LeagueNavbar() {
           );
           if (myTeam) {
             setMyTeamId(myTeam.id);
+          }
+          // Check if draft is complete and get current week
+          if (data.league) {
+            setIsDraftComplete(data.league.draftStatus === "completed");
+            setCurrentWeek(data.league.currentWeek || 1);
           }
         }
       } catch (error) {
@@ -97,10 +104,12 @@ export default function LeagueNavbar() {
             Draft
           </Link>
 
-          {/* Current Week Pill */}
-          <span className="card-pill" style={{ fontWeight: 700, fontSize: "0.85rem" }}>
-            Week 3
-          </span>
+          {/* Current Week Pill - Only show after draft is complete */}
+          {isDraftComplete && (
+            <span className="card-pill" style={{ fontWeight: 700, fontSize: "0.85rem" }}>
+              Week {currentWeek}
+            </span>
+          )}
 
           {links.map((link) => {
             return (
