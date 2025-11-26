@@ -63,6 +63,7 @@ export default function OpponentsPage() {
   const searchParams = useSearchParams();
   const leagueId = params.LeagueID as string;
   const teamIdParam = searchParams.get("teamId");
+  const managerParam = searchParams.get("manager");
 
   const [opponents, setOpponents] = useState<OpponentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,9 +102,26 @@ export default function OpponentsPage() {
         const data = await response.json();
         setOpponents(data.opponents || []);
 
-        // Set default selected manager to first opponent only if no teamId param and no selection
-        if (data.opponents && data.opponents.length > 0 && !selectedManagerId && !teamIdParam) {
-          setSelectedManagerId(data.opponents[0].id);
+        // Set selected manager based on URL parameters
+        if (data.opponents && data.opponents.length > 0) {
+          if (teamIdParam) {
+            // If teamId param provided, use it
+            setSelectedManagerId(teamIdParam);
+          } else if (managerParam) {
+            // If manager param provided, find opponent by manager name
+            const opponent = data.opponents.find(
+              (opp: OpponentData) => opp.name === decodeURIComponent(managerParam)
+            );
+            if (opponent) {
+              setSelectedManagerId(opponent.id);
+            } else {
+              // Fallback to first opponent if manager not found
+              setSelectedManagerId(data.opponents[0].id);
+            }
+          } else if (!selectedManagerId) {
+            // No params and no selection, default to first opponent
+            setSelectedManagerId(data.opponents[0].id);
+          }
         }
 
         setError(null);
@@ -117,7 +135,7 @@ export default function OpponentsPage() {
     if (leagueId) {
       fetchOpponents();
     }
-  }, [leagueId, currentWeek, selectedManagerId]);
+  }, [leagueId, currentWeek, selectedManagerId, teamIdParam, managerParam]);
 
   // Derived values
   const selectedManager = opponents.find(m => m.id === selectedManagerId);

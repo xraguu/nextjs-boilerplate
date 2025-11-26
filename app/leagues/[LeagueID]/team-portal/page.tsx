@@ -95,7 +95,6 @@ export default function TeamPortalPage() {
   const [leagueFilter, setLeagueFilter] = useState<"All" | "Foundation" | "Academy" | "Champion" | "Master" | "Premier">("All");
   const [modeFilter, setModeFilter] = useState<"2s" | "3s">("3s");
   const [leagueFilterOpen, setLeagueFilterOpen] = useState(false);
-  const [modeFilterOpen, setModeFilterOpen] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] = useState<{rostered: boolean; freeAgent: boolean; waivers: boolean}>({
     rostered: false,
     freeAgent: true,
@@ -895,78 +894,50 @@ export default function TeamPortalPage() {
           )}
         </div>
 
-        {/* Mode Filter */}
-        <div style={{ position: "relative", width: "150px" }}>
+        {/* 2s/3s Switch */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            backgroundColor: "rgba(255,255,255,0.05)",
+            borderRadius: "6px",
+            padding: "0.25rem",
+          }}
+        >
           <button
-            onClick={() => setModeFilterOpen(!modeFilterOpen)}
+            onClick={() => setModeFilter("2s")}
             style={{
-              width: "100%",
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "var(--text-main)",
-              padding: "0.5rem 1rem",
-              borderRadius: "6px",
-              cursor: "pointer",
+              padding: "0.4rem 1rem",
+              borderRadius: "4px",
               fontSize: "0.9rem",
               fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              border: "none",
+              cursor: "pointer",
+              backgroundColor:
+                modeFilter === "2s" ? "var(--accent)" : "transparent",
+              color: modeFilter === "2s" ? "#1a1a2e" : "var(--text-main)",
+              transition: "all 0.2s ease",
             }}
           >
-            <span>Mode: {modeFilter}</span>
-            <span>{modeFilterOpen ? "▲" : "▼"}</span>
+            2s
           </button>
-
-          {modeFilterOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                right: 0,
-                marginTop: "0.5rem",
-                background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
-                borderRadius: "6px",
-                padding: "0.5rem 0",
-                border: "1px solid rgba(255,255,255,0.1)",
-                boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-                zIndex: 1000,
-              }}
-            >
-              {(["2s", "3s"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => {
-                    setModeFilter(mode);
-                    setModeFilterOpen(false);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "0.5rem 1rem",
-                    background: mode === modeFilter ? "rgba(255,255,255,0.1)" : "transparent",
-                    border: "none",
-                    color: "var(--text-main)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    transition: "background 0.2s ease",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (mode !== modeFilter) {
-                      e.currentTarget.style.background = "transparent";
-                    }
-                  }}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-          )}
+          <button
+            onClick={() => setModeFilter("3s")}
+            style={{
+              padding: "0.4rem 1rem",
+              borderRadius: "4px",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              backgroundColor:
+                modeFilter === "3s" ? "var(--accent)" : "transparent",
+              color: modeFilter === "3s" ? "#1a1a2e" : "var(--text-main)",
+              transition: "all 0.2s ease",
+            }}
+          >
+            3s
+          </button>
         </div>
       </div>
 

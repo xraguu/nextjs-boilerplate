@@ -23,6 +23,14 @@ interface RosterData {
     ownerDisplayName: string;
   };
   rosterSlots: any[];
+  league: {
+    rosterConfig: {
+      "2s": number;
+      "3s": number;
+      flx: number;
+      be: number;
+    };
+  };
 }
 
 export default function TradePage() {
@@ -79,7 +87,22 @@ export default function TradePage() {
     }
   }, [leagueId, opponentTeamId]);
 
-  const isNonEqualTrade = selectedMyTeams.length < selectedOpponentTeams.length;
+  // Calculate if user will need to drop teams after trade
+  const calculateNeedsToDrop = () => {
+    if (!myRoster) return false;
+
+    const config = myRoster.league.rosterConfig;
+    const totalSlots = config["2s"] + config["3s"] + config.flx + config.be;
+    const currentFilledSlots = myRoster.rosterSlots.filter(slot => slot.mleTeam !== null).length;
+
+    // After trade: current teams - teams sent + teams received
+    const afterTradeFilledSlots = currentFilledSlots - selectedMyTeams.length + selectedOpponentTeams.length;
+
+    // Need to drop if after trade we exceed roster capacity
+    return afterTradeFilledSlots > totalSlots;
+  };
+
+  const needsToDrop = calculateNeedsToDrop();
 
   const toggleMyTeam = (index: number) => {
     setSelectedMyTeams(prev =>
@@ -121,8 +144,29 @@ export default function TradePage() {
         throw new Error(errorData.error || "Failed to propose trade");
       }
 
+      // Check if this is a counter offer and reject the original trade
+      const counterTradeId = sessionStorage.getItem("counterTradeId");
+      const counterTradeLeagueId = sessionStorage.getItem("counterTradeLeagueId");
+
+      if (counterTradeId && counterTradeLeagueId) {
+        try {
+          await fetch(`/api/leagues/${counterTradeLeagueId}/trades/${counterTradeId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "reject" }),
+          });
+
+          // Clear the counter trade data from session storage
+          sessionStorage.removeItem("counterTradeId");
+          sessionStorage.removeItem("counterTradeLeagueId");
+          sessionStorage.removeItem("counterTradeTeamId");
+        } catch (error) {
+          console.error("Error rejecting original trade:", error);
+        }
+      }
+
       // Success! Redirect to My Roster page
-      alert("Trade proposed successfully!");
+      alert(counterTradeId ? "Counter offer proposed and original trade rejected!" : "Trade proposed successfully!");
       router.push(`/leagues/${leagueId}/my-roster/${myRoster.fantasyTeam.id}`);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to propose trade");
@@ -240,7 +284,7 @@ export default function TradePage() {
               <button
                 onClick={() => {
                   setShowConfirmModal(false);
-                  if (isNonEqualTrade) {
+                  if (needsToDrop) {
                     setShowDropModal(true);
                   } else {
                     handleProposeTrade();
