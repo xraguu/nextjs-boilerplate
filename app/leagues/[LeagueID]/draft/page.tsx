@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
-import TeamModal from "@/components/TeamModal";
+import DraftTeamModal from "@/components/DraftTeamModal";
 
 // Types
 interface DraftPick {
@@ -71,29 +71,15 @@ export default function DraftPage() {
   const [rightPanelTab, setRightPanelTab] = useState<"rosters" | "teams" | "queue">("rosters");
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentManagerId, setCurrentManagerId] = useState<string | null>(null);
 
-  // Draft queue and autodraft (stored in localStorage)
-  const [draftQueue, setDraftQueue] = useState<MLETeam[]>(() => {
-    if (typeof window === "undefined") return [];
-    const saved = localStorage.getItem(`draftQueue_${leagueId}`);
-    try {
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // Draft queue and autodraft (stored in localStorage) - Per manager using managerIds
+  const [draftQueue, setDraftQueue] = useState<MLETeam[]>([]);
 
   const [autodraftEnabled, setAutodraftEnabled] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(`autodraft_${leagueId}`) === "true";
   });
-
-  // Save queue to localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`draftQueue_${leagueId}`, JSON.stringify(draftQueue));
-    }
-  }, [draftQueue, leagueId]);
 
   // Fetch current user session
   useEffect(() => {
@@ -111,6 +97,25 @@ export default function DraftPage() {
     fetchSession();
   }, []);
 
+  // Load queue from localStorage when managerId is available
+  useEffect(() => {
+    if (currentManagerId && typeof window !== "undefined") {
+      const saved = localStorage.getItem(`draftQueue_${currentManagerId}`);
+      try {
+        setDraftQueue(saved ? JSON.parse(saved) : []);
+      } catch {
+        setDraftQueue([]);
+      }
+    }
+  }, [currentManagerId]);
+
+  // Save queue to localStorage when it changes
+  useEffect(() => {
+    if (currentManagerId && typeof window !== "undefined") {
+      localStorage.setItem(`draftQueue_${currentManagerId}`, JSON.stringify(draftQueue));
+    }
+  }, [draftQueue, currentManagerId]);
+
   // Fetch draft state
   const fetchDraftState = useCallback(async () => {
     try {
@@ -126,13 +131,21 @@ export default function DraftPage() {
         setSelectedManager(data.fantasyTeams[0].displayName);
       }
 
+      // Set current manager ID when user team is found
+      if (currentUserId && data.fantasyTeams) {
+        const userTeam = data.fantasyTeams.find((t: FantasyTeam) => t.ownerUserId === currentUserId);
+        if (userTeam && !currentManagerId) {
+          setCurrentManagerId(userTeam.id);
+        }
+      }
+
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load draft");
     } finally {
       setLoading(false);
     }
-  }, [leagueId, selectedManager]);
+  }, [leagueId, selectedManager, currentUserId, currentManagerId]);
 
   // Initial fetch
   useEffect(() => {
@@ -181,6 +194,48 @@ export default function DraftPage() {
     if (typeof window !== "undefined") {
       localStorage.setItem(`autodraft_${leagueId}`, String(newValue));
     }
+  };
+
+  const handlePickTeam = async (team: MLETeam) => {
+    if (!isMyTurn || !currentUserTeam) {
+      alert("It's not your turn to pick!");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/leagues/${leagueId}/draft/pick`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mleTeamId: team.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to make pick");
+      }
+
+      // Refresh draft state
+      await fetchDraftState();
+
+      // Remove from queue if it was there
+      setDraftQueue((prev) => prev.filter((t) => t.id !== team.id));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to make pick");
+    }
+  };
+
+  const handleAddToQueue = (team: MLETeam) => {
+    // Check if team is already in queue
+    if (draftQueue.some((t) => t.id === team.id)) {
+      alert("Team is already in your queue!");
+      return;
+    }
+
+    setDraftQueue((prev) => [...prev, team]);
   };
 
   const formatTime = (seconds: number): string => {
@@ -242,14 +297,9 @@ export default function DraftPage() {
   return (
     <div>
       {/* Team Stats Modal */}
-      <TeamModal
-        team={showModal && selectedTeam ? {
-          ...selectedTeam,
-          teamPrimaryColor: selectedTeam.primaryColor,
-          teamSecondaryColor: selectedTeam.secondaryColor,
-        } : null}
+      <DraftTeamModal
+        team={showModal && selectedTeam ? selectedTeam : null}
         onClose={() => setShowModal(false)}
-        isDraftContext={true}
       />
 
       <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
@@ -530,7 +580,7 @@ export default function DraftPage() {
                     textTransform: "capitalize",
                   }}
                 >
-                  {tab} {tab === "queue" && `(${draftQueue.length})`}
+                  {tab === "teams" ? "Available Teams" : tab} {tab === "queue" && `(${draftQueue.length})`}
                 </button>
               ))}
             </div>
@@ -753,25 +803,105 @@ export default function DraftPage() {
                   {draftState.availableTeams.map((team) => (
                     <div
                       key={team.id}
-                      onClick={() => {
-                        setSelectedTeam(team);
-                        setShowModal(true);
-                      }}
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "0.75rem",
+                        gap: "0.5rem",
                         padding: "0.75rem",
                         background: "rgba(255,255,255,0.05)",
                         borderRadius: "6px",
-                        cursor: "pointer",
                         transition: "all 0.2s ease",
                       }}
                     >
-                      <Image src={team.logoPath} alt={team.name} width={24} height={24} />
-                      <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
+                      <Image
+                        src={team.logoPath}
+                        alt={team.name}
+                        width={24}
+                        height={24}
+                        onClick={() => {
+                          setSelectedTeam(team);
+                          setShowModal(true);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      />
+                      <span
+                        onClick={() => {
+                          setSelectedTeam(team);
+                          setShowModal(true);
+                        }}
+                        style={{
+                          flex: 1,
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                          color: "var(--text-main)",
+                          cursor: "pointer",
+                        }}
+                      >
                         {team.leagueId} {team.name}
                       </span>
+                      {isMyTurn ? (
+                        <button
+                          onClick={() => handlePickTeam(team)}
+                          style={{
+                            padding: "0.4rem 0.75rem",
+                            background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                            border: "none",
+                            borderRadius: "6px",
+                            color: "#ffffff",
+                            fontWeight: 600,
+                            fontSize: "0.8rem",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            boxShadow: "0 2px 6px rgba(34, 197, 94, 0.3)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = "translateY(-1px)";
+                            e.currentTarget.style.boxShadow = "0 4px 8px rgba(34, 197, 94, 0.4)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "0 2px 6px rgba(34, 197, 94, 0.3)";
+                          }}
+                        >
+                          Pick
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddToQueue(team)}
+                          style={{
+                            padding: "0.4rem 0.75rem",
+                            background: draftQueue.some((t) => t.id === team.id)
+                              ? "rgba(212, 175, 55, 0.3)"
+                              : "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
+                            border: "none",
+                            borderRadius: "6px",
+                            color: "#ffffff",
+                            fontWeight: 600,
+                            fontSize: "0.8rem",
+                            cursor: draftQueue.some((t) => t.id === team.id) ? "default" : "pointer",
+                            transition: "all 0.2s ease",
+                            boxShadow: draftQueue.some((t) => t.id === team.id)
+                              ? "none"
+                              : "0 2px 6px rgba(212, 175, 55, 0.3)",
+                            opacity: draftQueue.some((t) => t.id === team.id) ? 0.6 : 1,
+                          }}
+                          disabled={draftQueue.some((t) => t.id === team.id)}
+                          onMouseEnter={(e) => {
+                            if (!draftQueue.some((t) => t.id === team.id)) {
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                              e.currentTarget.style.boxShadow = "0 4px 8px rgba(212, 175, 55, 0.4)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!draftQueue.some((t) => t.id === team.id)) {
+                              e.currentTarget.style.transform = "translateY(0)";
+                              e.currentTarget.style.boxShadow = "0 2px 6px rgba(212, 175, 55, 0.3)";
+                            }
+                          }}
+                        >
+                          {draftQueue.some((t) => t.id === team.id) ? "Queued" : "Queue"}
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -782,8 +912,13 @@ export default function DraftPage() {
             {rightPanelTab === "queue" && (
               <div>
                 {draftQueue.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
-                    No teams in queue
+                  <div style={{
+                    padding: "2rem 1rem",
+                    textAlign: "center",
+                    color: "var(--text-muted)"
+                  }}>
+                    <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>No teams in queue</p>
+                    <p style={{ fontSize: "0.85rem" }}>Click &quot;Queue&quot; on teams to add them to your draft queue</p>
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -797,22 +932,125 @@ export default function DraftPage() {
                           padding: "0.75rem",
                           background: "rgba(255,255,255,0.05)",
                           borderRadius: "6px",
+                          border: "1px solid rgba(255,255,255,0.1)"
                         }}
                       >
-                        <div style={{ fontWeight: 700, color: "var(--accent)", minWidth: "24px" }}>#{idx + 1}</div>
-                        <Image src={team.logoPath} alt={team.name} width={24} height={24} />
-                        <span style={{ flex: 1, fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
+                        <div style={{
+                          width: "24px",
+                          height: "24px",
+                          borderRadius: "50%",
+                          background: "var(--accent)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#000"
+                        }}>
+                          {idx + 1}
+                        </div>
+                        <Image
+                          src={team.logoPath}
+                          alt={team.name}
+                          width={24}
+                          height={24}
+                          style={{ borderRadius: "4px", cursor: "pointer" }}
+                          onClick={() => {
+                            setSelectedTeam(team);
+                            setShowModal(true);
+                          }}
+                        />
+                        <span
+                          onClick={() => {
+                            setSelectedTeam(team);
+                            setShowModal(true);
+                          }}
+                          style={{
+                            flex: 1,
+                            fontSize: "0.9rem",
+                            fontWeight: 600,
+                            color: "var(--text-main)",
+                            cursor: "pointer",
+                            transition: "color 0.2s"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                        >
                           {team.leagueId} {team.name}
                         </span>
+
+                        {/* Reorder buttons */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                          <button
+                            onClick={() => {
+                              if (idx > 0) {
+                                const newQueue = [...draftQueue];
+                                [newQueue[idx - 1], newQueue[idx]] = [newQueue[idx], newQueue[idx - 1]];
+                                setDraftQueue(newQueue);
+                              }
+                            }}
+                            disabled={idx === 0}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: idx === 0 ? "rgba(255,255,255,0.2)" : "var(--text-muted)",
+                              cursor: idx === 0 ? "not-allowed" : "pointer",
+                              fontSize: "0.8rem",
+                              padding: "0",
+                              lineHeight: 1
+                            }}
+                            onMouseEnter={(e) => {
+                              if (idx !== 0) e.currentTarget.style.color = "var(--accent)";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (idx !== 0) e.currentTarget.style.color = "var(--text-muted)";
+                            }}
+                          >
+                            ▲
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (idx < draftQueue.length - 1) {
+                                const newQueue = [...draftQueue];
+                                [newQueue[idx], newQueue[idx + 1]] = [newQueue[idx + 1], newQueue[idx]];
+                                setDraftQueue(newQueue);
+                              }
+                            }}
+                            disabled={idx === draftQueue.length - 1}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: idx === draftQueue.length - 1 ? "rgba(255,255,255,0.2)" : "var(--text-muted)",
+                              cursor: idx === draftQueue.length - 1 ? "not-allowed" : "pointer",
+                              fontSize: "0.8rem",
+                              padding: "0",
+                              lineHeight: 1
+                            }}
+                            onMouseEnter={(e) => {
+                              if (idx !== draftQueue.length - 1) e.currentTarget.style.color = "var(--accent)";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (idx !== draftQueue.length - 1) e.currentTarget.style.color = "var(--text-muted)";
+                            }}
+                          >
+                            ▼
+                          </button>
+                        </div>
+
                         <button
-                          onClick={() => setDraftQueue((prev) => prev.filter((_, i) => i !== idx))}
+                          onClick={() => {
+                            setDraftQueue(prev => prev.filter((_, i) => i !== idx));
+                          }}
                           style={{
                             background: "transparent",
                             border: "none",
-                            color: "#ef4444",
+                            color: "var(--text-muted)",
                             cursor: "pointer",
                             fontSize: "1.2rem",
+                            padding: "0.25rem"
                           }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "#ef4444"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-muted)"}
                         >
                           ×
                         </button>
