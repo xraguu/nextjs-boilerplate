@@ -1110,7 +1110,7 @@ export default function TransactionsPage() {
                       >
                         {trade.proposerTeam} Gives
                       </div>
-                      {trade.proposerGives.map((team: Team, idx) => (
+                      {trade.proposerGives.map((team: Team, idx: number) => (
                         <div
                           key={idx}
                           style={{
@@ -1152,7 +1152,7 @@ export default function TransactionsPage() {
                       >
                         {trade.receiverTeam} Gives
                       </div>
-                      {trade.receiverGives.map((team: Team, idx) => (
+                      {trade.receiverGives.map((team: Team, idx: number) => (
                         <div
                           key={idx}
                           style={{
