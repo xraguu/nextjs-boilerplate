@@ -86,7 +86,7 @@ async function main() {
         continue;
       }
 
-      const newTeamId = generateFantasyTeamId(newLeagueId, newUserId);
+      const newTeamId = generateFantasyTeamId(newLeagueId, String(newUserId));
       mapping.teams.set(team.id, newTeamId);
       console.log(`  Team "${team.displayName}": ${team.id} → ${newTeamId}`);
     }
