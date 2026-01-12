@@ -127,7 +127,8 @@ export async function GET(
           );
         };
 
-        let topTeam: typeof rosterSlots[0]["mleTeam"] | null = null;
+        type MLETeamWithStats = NonNullable<typeof rosterSlots[number]["mleTeam"]>;
+        let topTeam: MLETeamWithStats | null = null;
         let topTeamFpts = 0;
 
         rosterSlots.forEach((slot) => {
