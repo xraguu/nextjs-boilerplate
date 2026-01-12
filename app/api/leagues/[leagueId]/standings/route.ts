@@ -127,7 +127,8 @@ export async function GET(
           );
         };
 
-        let topTeam: typeof rosterSlots[0]["mleTeam"] | null = null;
+        type MLETeamWithStats = NonNullable<typeof rosterSlots[number]["mleTeam"]>;
+        let topTeam: MLETeamWithStats | null = null;
         let topTeamFpts = 0;
 
         rosterSlots.forEach((slot) => {
@@ -153,13 +154,13 @@ export async function GET(
           avgPoints,
           topTeam: topTeam
             ? {
-                id: topTeam!.id,
-                name: topTeam!.name,
-                leagueId: topTeam!.leagueId,
-                slug: topTeam!.slug,
-                logoPath: topTeam!.logoPath,
-                primaryColor: topTeam!.primaryColor,
-                secondaryColor: topTeam!.secondaryColor,
+                id: topTeam.id,
+                name: topTeam.name,
+                leagueId: topTeam.leagueId,
+                slug: topTeam.slug,
+                logoPath: topTeam.logoPath,
+                primaryColor: topTeam.primaryColor,
+                secondaryColor: topTeam.secondaryColor,
               }
             : null,
           topTeamFpts,
