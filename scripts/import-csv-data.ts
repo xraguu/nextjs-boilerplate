@@ -414,27 +414,59 @@ async function importHistoricalStats() {
 
   for (const stat of historicalStats) {
     try {
+      const gamesPlayed = parseInt(stat.games_played) || 0;
+      const totalGoals = parseInt(stat.total_goals) || 0;
+      const totalShots = parseInt(stat.total_shots) || 0;
+      const totalSaves = parseInt(stat.total_saves) || 0;
+      const totalAssists = parseInt(stat.total_assists) || 0;
+
       await prisma.playerHistoricalStats.upsert({
-        where: { id: stat.member_id },
+        where: {
+          playerId_season_gamemode: {
+            playerId: stat.member_id,
+            season: "S18",
+            gamemode: stat.gamemode || "3s",
+          }
+        },
         update: {
-          totalGoals: parseInt(stat.total_goals) || 0,
-          totalShots: parseInt(stat.total_shots) || 0,
-          totalSaves: parseInt(stat.total_saves) || 0,
-          totalAssists: parseInt(stat.total_assists) || 0,
+          totalGoals,
+          totalShots,
+          totalSaves,
+          totalAssists,
           totalDemosInflicted: parseInt(stat.total_demos_inflicted) || 0,
-          avgSR: parseFloat(stat.sprocket_rating) || 0,
-          gamesPlayed: parseInt(stat.games_played) || 0,
+          totalDemosTaken: parseInt(stat.total_demos_taken) || 0,
+          sprocketRating: parseFloat(stat.sprocket_rating) || 0,
+          gamesPlayed,
+          goalsPerGame: gamesPlayed > 0 ? totalGoals / gamesPlayed : 0,
+          assistsPerGame: gamesPlayed > 0 ? totalAssists / gamesPlayed : 0,
+          savesPerGame: gamesPlayed > 0 ? totalSaves / gamesPlayed : 0,
+          shotsPerGame: gamesPlayed > 0 ? totalShots / gamesPlayed : 0,
         },
         create: {
           id: stat.member_id,
           playerId: stat.member_id,
-          totalGoals: parseInt(stat.total_goals) || 0,
-          totalShots: parseInt(stat.total_shots) || 0,
-          totalSaves: parseInt(stat.total_saves) || 0,
-          totalAssists: parseInt(stat.total_assists) || 0,
+          season: "S18",
+          gamemode: stat.gamemode || "3s",
+          skillGroup: "ML",
+          totalGoals,
+          totalShots,
+          totalSaves,
+          totalAssists,
           totalDemosInflicted: parseInt(stat.total_demos_inflicted) || 0,
-          avgSR: parseFloat(stat.sprocket_rating) || 0,
-          gamesPlayed: parseInt(stat.games_played) || 0,
+          totalDemosTaken: parseInt(stat.total_demos_taken) || 0,
+          totalGoalsAgainst: 0,
+          totalShotsAgainst: 0,
+          sprocketRating: parseFloat(stat.sprocket_rating) || 0,
+          gamesPlayed,
+          goalsPerGame: gamesPlayed > 0 ? totalGoals / gamesPlayed : 0,
+          assistsPerGame: gamesPlayed > 0 ? totalAssists / gamesPlayed : 0,
+          savesPerGame: gamesPlayed > 0 ? totalSaves / gamesPlayed : 0,
+          shotsPerGame: gamesPlayed > 0 ? totalShots / gamesPlayed : 0,
+          avgDemosInflicted: 0,
+          avgDemosTaken: 0,
+          avgGoalsAgainst: 0,
+          avgScore: 0,
+          avgShotsAgainst: 0,
         },
       });
       count++;

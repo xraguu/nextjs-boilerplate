@@ -118,10 +118,10 @@ async function main() {
 
     try {
       const salary = salaryStr ? parseFloat(salaryStr) : null;
-      const leagueAbbrev = LEAGUE_MAP[skillGroup];
-      const teamId = buildTeamId(franchise, skillGroup);
-      const rosterSlot = mapSlot(slot);
-      const position = mapStaffPosition(staffPosition);
+      const leagueAbbrev = skillGroup ? LEAGUE_MAP[skillGroup] : null;
+      const teamId = (franchise && skillGroup) ? buildTeamId(franchise, skillGroup) : null;
+      const rosterSlot = slot ? mapSlot(slot) : null;
+      const position = staffPosition ? mapStaffPosition(staffPosition) : null;
 
       // Use member_id as the primary key
       const playerId = memberId;
