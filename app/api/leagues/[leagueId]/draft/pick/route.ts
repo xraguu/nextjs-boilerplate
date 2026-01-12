@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { generateRosterSlotId } from "@/lib/id-generator";
 
 /**
  * POST /api/leagues/[leagueId]/draft/pick
@@ -139,8 +140,15 @@ export async function POST(
       console.error("Roster is full but draft is still ongoing");
     }
 
+    const rosterSlotId = generateRosterSlotId(
+      userTeam.id,
+      1,
+      "be",
+      nextBenchIndex
+    );
     await prisma.rosterSlot.create({
       data: {
+        id: rosterSlotId,
         fantasyTeamId: userTeam.id,
         mleTeamId,
         week: 1,
