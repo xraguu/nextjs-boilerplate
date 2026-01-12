@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Discord from "next-auth/providers/discord";
 import { prisma } from "@/lib/prisma";
+import { randomUUID } from "crypto";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -25,7 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               role,
             },
             create: {
-              // ID will auto-increment starting from 1
+              id: randomUUID(),
               discordId: profile.id as string,
               displayName: user.name || "Unknown User",
               avatarUrl: user.image || null,
