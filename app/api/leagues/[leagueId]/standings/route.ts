@@ -127,11 +127,21 @@ export async function GET(
           );
         };
 
-        type MLETeamWithStats = NonNullable<typeof rosterSlots[number]["mleTeam"]>;
-        let topTeam: MLETeamWithStats | null = null;
+        interface TopTeamInfo {
+          id: string;
+          name: string;
+          leagueId: string;
+          slug: string;
+          logoPath: string;
+          primaryColor: string;
+          secondaryColor: string;
+        }
+        let topTeam: TopTeamInfo | null = null;
         let topTeamFpts = 0;
 
         rosterSlots.forEach((slot) => {
+          if (!slot.mleTeam) return;
+
           const weeklyStats = slot.mleTeam.weeklyStats;
           const totalFantasyPoints = weeklyStats.reduce(
             (sum, stats) => sum + calculateFantasyPoints(stats),
@@ -140,7 +150,15 @@ export async function GET(
 
           if (totalFantasyPoints > topTeamFpts) {
             topTeamFpts = totalFantasyPoints;
-            topTeam = slot.mleTeam;
+            topTeam = {
+              id: slot.mleTeam.id,
+              name: slot.mleTeam.name,
+              leagueId: slot.mleTeam.leagueId,
+              slug: slot.mleTeam.slug,
+              logoPath: slot.mleTeam.logoPath,
+              primaryColor: slot.mleTeam.primaryColor,
+              secondaryColor: slot.mleTeam.secondaryColor,
+            };
           }
         });
 
@@ -152,17 +170,7 @@ export async function GET(
           losses,
           points: totalPoints,
           avgPoints,
-          topTeam: topTeam
-            ? {
-                id: topTeam.id,
-                name: topTeam.name,
-                leagueId: topTeam.leagueId,
-                slug: topTeam.slug,
-                logoPath: topTeam.logoPath,
-                primaryColor: topTeam.primaryColor,
-                secondaryColor: topTeam.secondaryColor,
-              }
-            : null,
+          topTeam: topTeam,
           topTeamFpts,
           pointsFor: totalPoints,
           pointsAgainst,
