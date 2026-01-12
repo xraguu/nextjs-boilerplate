@@ -11,6 +11,7 @@ export async function GET(
 ) {
   try {
     const { teamId } = await params;
+    console.log('Staff API - Fetching staff for team ID:', teamId);
 
     // Find the team first to ensure it exists and get its name
     const team = await prisma.mLETeam.findUnique({
@@ -22,13 +23,17 @@ export async function GET(
       },
     });
 
+    console.log('Staff API - Team found:', team);
+
     if (!team) {
+      console.log('Staff API - Team not found');
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
     // The team name is already the franchise name (e.g., "Bulls", "Aviators")
     // No need to extract it - the team ID contains the league prefix, not the name
     const franchiseName = team.name;
+    console.log('Staff API - Using franchise name:', franchiseName);
 
     // Find Franchise Manager for this franchise
     const franchiseManager = await prisma.mLEPlayer.findFirst({
@@ -42,6 +47,7 @@ export async function GET(
         staffPosition: true,
       },
     });
+    console.log('Staff API - Franchise Manager:', franchiseManager);
 
     // Find General Manager for this franchise
     const generalManager = await prisma.mLEPlayer.findFirst({
@@ -55,6 +61,7 @@ export async function GET(
         staffPosition: true,
       },
     });
+    console.log('Staff API - General Manager:', generalManager);
 
     // Find Captain for this specific team
     const captain = await prisma.mLEPlayer.findFirst({
@@ -68,6 +75,7 @@ export async function GET(
         staffPosition: true,
       },
     });
+    console.log('Staff API - Captain:', captain);
 
     return NextResponse.json({
       team: {
@@ -83,9 +91,16 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error fetching team staff:", error);
+    console.error("Staff API - Error fetching team staff:", error);
+    console.error("Staff API - Error details:", {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: "Failed to fetch team staff" },
+      {
+        error: "Failed to fetch team staff",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

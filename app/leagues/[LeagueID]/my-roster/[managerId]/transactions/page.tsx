@@ -33,34 +33,50 @@ export default function TransactionsPage() {
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>(["Waiver", "Trade", "Pick Up/Drop"]);
+  const [managerFilterOpen, setManagerFilterOpen] = useState(false);
+  const [selectedManagers, setSelectedManagers] = useState<string[]>([]);
+  const [allManagers, setAllManagers] = useState<string[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTransactions = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
+
+        // Fetch transactions
+        const transactionsResponse = await fetch(
           `/api/leagues/${leagueId}/transactions`
         );
-
-        if (!response.ok) {
+        if (!transactionsResponse.ok) {
           throw new Error("Failed to fetch transactions");
         }
+        const transactionsData = await transactionsResponse.json();
+        setTransactions(transactionsData.transactions || []);
 
-        const data = await response.json();
-        setTransactions(data.transactions || []);
+        // Fetch all managers from standings
+        const standingsResponse = await fetch(
+          `/api/leagues/${leagueId}/standings`
+        );
+        if (!standingsResponse.ok) {
+          throw new Error("Failed to fetch managers");
+        }
+        const standingsData = await standingsResponse.json();
+        const managers = standingsData.standings.map((s: any) => s.manager);
+        setAllManagers(managers);
+        setSelectedManagers(managers); // Default to all managers selected
+
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load transactions");
+        setError(err instanceof Error ? err.message : "Failed to load data");
       } finally {
         setLoading(false);
       }
     };
 
     if (leagueId) {
-      fetchTransactions();
+      fetchData();
     }
   }, [leagueId]);
 
@@ -78,14 +94,36 @@ export default function TransactionsPage() {
     );
   };
 
+  const toggleManagerFilter = (manager: string) => {
+    setSelectedManagers((prev) =>
+      prev.includes(manager)
+        ? prev.filter((m) => m !== manager)
+        : [...prev, manager]
+    );
+  };
+
   const filteredTransactions = transactions.filter((transaction) => {
-    if (selectedFilters.length === 0) return true;
+    // Filter by transaction type (if any filters selected, only show those types)
+    if (selectedFilters.length > 0) {
+      const typeMatch =
+        (selectedFilters.includes("Trade") && transaction.type === "trade") ||
+        (selectedFilters.includes("Waiver") && transaction.type === "waiver") ||
+        (selectedFilters.includes("Pick Up/Drop") && (transaction.type === "pickup" || transaction.type === "drop"));
 
-    if (selectedFilters.includes("Trade") && transaction.type === "trade") return true;
-    if (selectedFilters.includes("Waiver") && transaction.type === "waiver") return true;
-    if (selectedFilters.includes("Pick Up/Drop") && (transaction.type === "pickup" || transaction.type === "drop")) return true;
+      if (!typeMatch) return false;
+    }
 
-    return false;
+    // Filter by manager (if any managers selected, only show transactions involving those managers)
+    if (selectedManagers.length > 0) {
+      const isInvolved =
+        (transaction.username && selectedManagers.includes(transaction.username)) ||
+        (transaction.fromManager && selectedManagers.includes(transaction.fromManager)) ||
+        (transaction.toManager && selectedManagers.includes(transaction.toManager));
+
+      if (!isInvolved) return false;
+    }
+
+    return true;
   });
 
   if (loading) {
@@ -121,94 +159,189 @@ export default function TransactionsPage() {
         padding: "2rem",
         border: "1px solid rgba(255,255,255,0.1)"
       }}>
-        {/* Filter Dropdown */}
-        <div style={{ position: "relative", marginBottom: "1.5rem", width: "200px" }}>
-          <button
-            onClick={() => setFilterOpen(!filterOpen)}
-            style={{
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "white",
-              padding: "0.6rem 1.2rem",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "0.95rem",
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              width: "100%",
-            }}
-          >
-            <span>Filter ({selectedFilters.length}) ▼</span>
-          </button>
+        {/* Filters */}
+        <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
+          {/* Transaction Type Filter */}
+          <div style={{ position: "relative", width: "200px" }}>
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "white",
+                padding: "0.6rem 1.2rem",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <span>Type ({selectedFilters.length}) ▼</span>
+            </button>
 
-          {filterOpen && (
-            <>
-              <div
-                style={{
-                  position: "fixed",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 998,
-                }}
-                onClick={() => setFilterOpen(false)}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  marginTop: "0.5rem",
-                  background: "#1e293b",
-                  borderRadius: "8px",
-                  padding: "0.75rem",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-                  zIndex: 999,
-                  minWidth: "200px",
-                }}
-              >
-                {["Waiver", "Trade", "Pick Up/Drop"].map((filter) => (
-                  <label
-                    key={filter}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.75rem",
-                      padding: "0.6rem 0.5rem",
-                      cursor: "pointer",
-                      borderRadius: "6px",
-                      transition: "background 0.2s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "rgba(255,255,255,0.05)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "transparent")
-                    }
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedFilters.includes(filter)}
-                      onChange={() => toggleFilter(filter)}
+            {filterOpen && (
+              <>
+                <div
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 998,
+                  }}
+                  onClick={() => setFilterOpen(false)}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    marginTop: "0.5rem",
+                    background: "#1e293b",
+                    borderRadius: "8px",
+                    padding: "0.75rem",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                    zIndex: 999,
+                    minWidth: "200px",
+                  }}
+                >
+                  {["Waiver", "Trade", "Pick Up/Drop"].map((filter) => (
+                    <label
+                      key={filter}
                       style={{
-                        width: "16px",
-                        height: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        padding: "0.6rem 0.5rem",
                         cursor: "pointer",
-                        accentColor: "#f59e0b",
+                        borderRadius: "6px",
+                        transition: "background 0.2s",
                       }}
-                    />
-                    <span style={{ color: "white", fontWeight: 600, fontSize: "0.9rem" }}>
-                      {filter}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </>
-          )}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background = "rgba(255,255,255,0.05)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = "transparent")
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedFilters.includes(filter)}
+                        onChange={() => toggleFilter(filter)}
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          cursor: "pointer",
+                          accentColor: "#f59e0b",
+                        }}
+                      />
+                      <span style={{ color: "white", fontWeight: 600, fontSize: "0.9rem" }}>
+                        {filter}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Manager Filter */}
+          <div style={{ position: "relative", width: "220px" }}>
+            <button
+              onClick={() => setManagerFilterOpen(!managerFilterOpen)}
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "white",
+                padding: "0.6rem 1.2rem",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <span>Manager ({selectedManagers.length}) ▼</span>
+            </button>
+
+            {managerFilterOpen && (
+              <>
+                <div
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 998,
+                  }}
+                  onClick={() => setManagerFilterOpen(false)}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    marginTop: "0.5rem",
+                    background: "#1e293b",
+                    borderRadius: "8px",
+                    padding: "0.75rem",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                    zIndex: 999,
+                    minWidth: "220px",
+                    maxHeight: "300px",
+                    overflowY: "auto",
+                  }}
+                >
+                  {allManagers.map((manager) => (
+                    <label
+                      key={manager}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        padding: "0.6rem 0.5rem",
+                        cursor: "pointer",
+                        borderRadius: "6px",
+                        transition: "background 0.2s",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background = "rgba(255,255,255,0.05)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = "transparent")
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedManagers.includes(manager)}
+                        onChange={() => toggleManagerFilter(manager)}
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          cursor: "pointer",
+                          accentColor: "#f59e0b",
+                        }}
+                      />
+                      <span style={{ color: "white", fontWeight: 600, fontSize: "0.9rem" }}>
+                        {manager}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Transactions List */}
@@ -266,7 +399,7 @@ export default function TransactionsPage() {
                         Date processed
                       </div>
                       <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
-                        {new Date(transaction.timestamp).toLocaleDateString()}
+                        {new Date(transaction.timestamp).toLocaleString()}
                       </div>
                     </div>
 
@@ -342,7 +475,7 @@ export default function TransactionsPage() {
                         Date processed
                       </div>
                       <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
-                        {new Date(transaction.timestamp).toLocaleDateString()}
+                        {new Date(transaction.timestamp).toLocaleString()}
                       </div>
                     </div>
                   </>
@@ -412,7 +545,7 @@ export default function TransactionsPage() {
                         Date processed
                       </div>
                       <div style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
-                        {new Date(transaction.timestamp).toLocaleDateString()}
+                        {new Date(transaction.timestamp).toLocaleString()}
                       </div>
                     </div>
                   </>

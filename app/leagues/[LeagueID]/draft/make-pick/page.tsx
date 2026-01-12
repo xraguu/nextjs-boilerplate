@@ -3,23 +3,27 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
-import { TEAMS } from "@/lib/teams";
-import TeamModal from "@/components/TeamModal";
+import DraftTeamModal from "@/components/DraftTeamModal";
 
-// Mock available teams (teams not yet drafted)
-// Using deterministic values based on index to avoid hydration errors
-const availableTeams = TEAMS.slice(1, 15).map((team, index) => ({
-  ...team,
-  rank: index + 1,
-  fptsLS: 240 - (index * 3),
-  avgLS: 55 - index,
-  goals: 75 - (index * 2),
-  shots: 650 - (index * 10),
-  saves: 140 - (index * 3),
-  assists: 55 - index,
-  demos: 32 - index,
-  record: `${8 - Math.floor(index / 2)}-${3 + Math.floor(index / 2)}`
-}));
+// Available teams will be fetched from API
+interface MLETeam {
+  id: string;
+  name: string;
+  leagueId: string;
+  slug: string;
+  logoPath: string;
+  primaryColor: string;
+  secondaryColor: string;
+  rank?: number;
+  fptsLS?: number;
+  avgLS?: number;
+  goals?: number;
+  shots?: number;
+  saves?: number;
+  assists?: number;
+  demos?: number;
+  record?: string;
+}
 
 // Mock manager list
 const managers = [
@@ -38,9 +42,9 @@ const managers = [
 ];
 
 // Mock manager rosters
-const mockRosters = {
+const mockRosters: Record<string, Array<{ slot: string; team: MLETeam | null; pick: string }>> = {
   "Fantastic Ballers": [
-    { slot: "2s", team: TEAMS[0], pick: "1.1 (1)" },
+    { slot: "2s", team: null, pick: "1.1 (1)" },
     { slot: "2s", team: null, pick: "" },
     { slot: "3s", team: null, pick: "" },
     { slot: "3s", team: null, pick: "" },
@@ -167,11 +171,14 @@ export default function MakePickPage() {
   const leagueId = params.LeagueID as string;
 
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<typeof availableTeams[0] | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<MLETeam | null>(null);
   const [selectedManager, setSelectedManager] = useState("Fantastic Ballers");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [modalTeam, setModalTeam] = useState<typeof TEAMS[0] | null>(null);
+  const [modalTeam, setModalTeam] = useState<MLETeam | null>(null);
+  const [availableTeams, setAvailableTeams] = useState<MLETeam[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentManagerId, setCurrentManagerId] = useState<string | null>(null);
 
   // Mock: Currently it's NOT the user's pick (Pixies is on the clock, user is Fantastic Ballers)
   const isMyPick = false; // In real implementation, this would check if current pick manager === user's manager
@@ -181,7 +188,23 @@ export default function MakePickPage() {
   const [draftStatus, setDraftStatus] = useState<string>("not_started");
   const [timeRemaining, setTimeRemaining] = useState(0);
 
-  // Fetch draft state to get status and timer
+  // Fetch current user session
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        if (response.ok) {
+          const session = await response.json();
+          setCurrentUserId(session?.user?.id || null);
+        }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+      }
+    };
+    fetchSession();
+  }, []);
+
+  // Fetch draft state to get status, timer, and available teams
   useEffect(() => {
     const fetchDraftState = async () => {
       try {
@@ -189,6 +212,32 @@ export default function MakePickPage() {
         if (response.ok) {
           const data = await response.json();
           setDraftStatus(data.status);
+
+          // Set current manager ID when user team is found
+          if (currentUserId && data.fantasyTeams) {
+            const userTeam = data.fantasyTeams.find((t: any) => t.ownerUserId === currentUserId);
+            if (userTeam && !currentManagerId) {
+              setCurrentManagerId(userTeam.id);
+            }
+          }
+
+          // Update available teams from draft state
+          if (data.availableTeams) {
+            // Add mock stats for display (in production, these would come from API)
+            const teamsWithStats = data.availableTeams.map((team: MLETeam, index: number) => ({
+              ...team,
+              rank: index + 1,
+              fptsLS: 240 - (index * 3),
+              avgLS: 55 - index,
+              goals: 75 - (index * 2),
+              shots: 650 - (index * 10),
+              saves: 140 - (index * 3),
+              assists: 55 - index,
+              demos: 32 - index,
+              record: `${8 - Math.floor(index / 2)}-${3 + Math.floor(index / 2)}`
+            }));
+            setAvailableTeams(teamsWithStats);
+          }
 
           // Update timer if draft is in progress
           if (data.status === "in_progress" && data.currentPickDeadline) {
@@ -206,7 +255,7 @@ export default function MakePickPage() {
     fetchDraftState();
     const interval = setInterval(fetchDraftState, 3000); // Poll every 3 seconds
     return () => clearInterval(interval);
-  }, [leagueId]);
+  }, [leagueId, currentUserId, currentManagerId]);
 
   // Timer countdown
   useEffect(() => {
@@ -234,19 +283,7 @@ export default function MakePickPage() {
     return false;
   });
 
-  const [draftQueue, setDraftQueue] = useState<typeof availableTeams>(() => {
-    if (typeof window !== 'undefined') {
-      const savedQueue = localStorage.getItem("draftQueue");
-      if (savedQueue) {
-        try {
-          return JSON.parse(savedQueue);
-        } catch (e) {
-          console.error("Failed to parse draft queue from localStorage", e);
-        }
-      }
-    }
-    return [];
-  });
+  const [draftQueue, setDraftQueue] = useState<MLETeam[]>([]);
 
   const toggleAutodraft = () => {
     const newValue = !autodraftEnabled;
@@ -254,10 +291,24 @@ export default function MakePickPage() {
     localStorage.setItem("autodraftEnabled", String(newValue));
   };
 
+  // Load queue from localStorage when managerId is available
+  useEffect(() => {
+    if (currentManagerId && typeof window !== "undefined") {
+      const saved = localStorage.getItem(`draftQueue_${currentManagerId}`);
+      try {
+        setDraftQueue(saved ? JSON.parse(saved) : []);
+      } catch {
+        setDraftQueue([]);
+      }
+    }
+  }, [currentManagerId]);
+
   // Sync queue changes to localStorage
   useEffect(() => {
-    localStorage.setItem("draftQueue", JSON.stringify(draftQueue));
-  }, [draftQueue]);
+    if (currentManagerId && typeof window !== "undefined") {
+      localStorage.setItem(`draftQueue_${currentManagerId}`, JSON.stringify(draftQueue));
+    }
+  }, [draftQueue, currentManagerId]);
 
   // Filter and sort state
   const [leagueFilter, setLeagueFilter] = useState<"All" | "Foundation" | "Academy" | "Champion" | "Master" | "Premier">("All");
@@ -329,13 +380,9 @@ export default function MakePickPage() {
   return (
     <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
       {/* Team Stats Modal */}
-      <TeamModal
-        team={showModal && modalTeam ? {
-          ...modalTeam,
-          rosteredBy: undefined
-        } : null}
+      <DraftTeamModal
+        team={showModal && modalTeam ? modalTeam : null}
         onClose={() => setShowModal(false)}
-        isDraftContext={true}
       />
 
       {/* Confirmation Modal */}
@@ -1099,60 +1146,91 @@ export default function MakePickPage() {
 
           {/* Content based on active tab */}
           {rightPanelTab === "roster" && (
-            <div>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid rgba(255,255,255,0.2)" }}>
-                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Slot</th>
-                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "left", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Team</th>
-                    <th style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>Pick</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentRoster.map((slot, idx) => (
-                    <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                      <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--text-muted)" }}>
-                        {slot.slot}
-                      </td>
-                      <td style={{ padding: "0.75rem 0.5rem" }}>
-                        {slot.team ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <Image
-                              src={slot.team.logoPath}
-                              alt={slot.team.name}
-                              width={20}
-                              height={20}
-                              style={{ borderRadius: "4px" }}
-                            />
-                            <span
-                              onClick={() => {
-                                setModalTeam(slot.team);
-                                setShowModal(true);
-                              }}
-                              style={{
-                                fontSize: "0.85rem",
-                                fontWeight: 600,
-                                color: "var(--text-main)",
-                                cursor: "pointer",
-                                transition: "color 0.2s"
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
-                              onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
-                            >
-                              {slot.team.leagueId} {slot.team.name}
-                            </span>
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>-</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "0.75rem 0.5rem", textAlign: "right", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                        {slot.pick || "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{
+              background: "rgba(255,255,255,0.03)",
+              borderRadius: "8px",
+              overflow: "hidden",
+            }}>
+              {/* Header */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "60px 1fr 80px",
+                padding: "0.75rem 1rem",
+                background: "rgba(255,255,255,0.05)",
+                borderBottom: "1px solid rgba(255,255,255,0.1)",
+              }}>
+                <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                  Slot
+                </div>
+                <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                  Team
+                </div>
+                <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)", textAlign: "right" }}>
+                  Pick
+                </div>
+              </div>
+
+              {/* Roster Slots */}
+              {currentRoster.map((slot, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "60px 1fr 80px",
+                    padding: "0.75rem 1rem",
+                    borderBottom: idx < currentRoster.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                    alignItems: "center",
+                  }}
+                >
+                  {/* Slot Position */}
+                  <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                    {slot.slot}
+                  </div>
+
+                  {/* Team */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    {slot.team ? (
+                      <>
+                        <Image
+                          src={slot.team.logoPath}
+                          alt={slot.team.name}
+                          width={24}
+                          height={24}
+                          style={{ borderRadius: "4px", cursor: "pointer" }}
+                          onClick={() => {
+                            setModalTeam(slot.team);
+                            setShowModal(true);
+                          }}
+                        />
+                        <span
+                          onClick={() => {
+                            setModalTeam(slot.team);
+                            setShowModal(true);
+                          }}
+                          style={{
+                            fontSize: "0.9rem",
+                            fontWeight: 600,
+                            color: "var(--text-main)",
+                            cursor: "pointer",
+                            transition: "color 0.2s"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                        >
+                          {slot.team.leagueId} {slot.team.name}
+                        </span>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>-</span>
+                    )}
+                  </div>
+
+                  {/* Pick Number */}
+                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "right" }}>
+                    {slot.pick || "-"}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -1202,9 +1280,28 @@ export default function MakePickPage() {
                         alt={team.name}
                         width={24}
                         height={24}
-                        style={{ borderRadius: "4px" }}
+                        style={{ borderRadius: "4px", cursor: "pointer" }}
+                        onClick={() => {
+                          setModalTeam(team);
+                          setShowModal(true);
+                        }}
                       />
-                      <span style={{ flex: 1, fontSize: "0.9rem", fontWeight: 600, color: "var(--text-main)" }}>
+                      <span
+                        onClick={() => {
+                          setModalTeam(team);
+                          setShowModal(true);
+                        }}
+                        style={{
+                          flex: 1,
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                          color: "var(--text-main)",
+                          cursor: "pointer",
+                          transition: "color 0.2s"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+                        onMouseLeave={(e) => e.currentTarget.style.color = "var(--text-main)"}
+                      >
                         {team.leagueId} {team.name}
                       </span>
 

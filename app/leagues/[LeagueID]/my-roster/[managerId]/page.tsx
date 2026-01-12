@@ -1744,7 +1744,7 @@ export default function MyRosterPage() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {trades.map((trade) => (
+                {trades.filter(trade => trade.status === "pending").map((trade) => (
                   <div
                     key={trade.id}
                     style={{
@@ -1788,7 +1788,7 @@ export default function MyRosterPage() {
                             color: "var(--text-muted)",
                           }}
                         >
-                          {new Date(trade.createdAt).toLocaleDateString()}
+                          {new Date(trade.createdAt).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -1850,9 +1850,22 @@ export default function MyRosterPage() {
                                 style={{ borderRadius: "4px" }}
                               />
                               <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTeam(team);
+                                  setShowModal(true);
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.color = "var(--accent)")
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.color = "var(--text-main)")
+                                }
                                 style={{
                                   fontSize: "0.9rem",
                                   color: "var(--text-main)",
+                                  cursor: "pointer",
+                                  transition: "color 0.2s",
                                 }}
                               >
                                 {team.name}
@@ -1921,9 +1934,22 @@ export default function MyRosterPage() {
                                 style={{ borderRadius: "4px" }}
                               />
                               <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTeam(team);
+                                  setShowModal(true);
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.color = "var(--accent)")
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.color = "var(--text-main)")
+                                }
                                 style={{
                                   fontSize: "0.9rem",
                                   color: "var(--text-main)",
+                                  cursor: "pointer",
+                                  transition: "color 0.2s",
                                 }}
                               >
                                 {team.name}
@@ -1982,6 +2008,29 @@ export default function MyRosterPage() {
                           }}
                         >
                           Reject
+                        </button>
+                        <button
+                          onClick={async () => {
+                            // Store the original trade ID to reject after counter offer
+                            sessionStorage.setItem("counterTradeId", trade.id);
+                            sessionStorage.setItem("counterTradeLeagueId", leagueId);
+                            sessionStorage.setItem("counterTradeTeamId", teamId || "");
+
+                            // Navigate to trade page with the proposer's team
+                            window.location.href = `/leagues/${leagueId}/opponents/${trade.proposer.teamId}/trade`;
+                          }}
+                          style={{
+                            background: "rgba(251, 191, 36, 0.2)",
+                            border: "1px solid #fbbf24",
+                            color: "#fbbf24",
+                            padding: "0.5rem 1.5rem",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "0.9rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Counter
                         </button>
                         <button
                           onClick={async () => {
