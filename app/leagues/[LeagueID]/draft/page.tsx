@@ -297,7 +297,7 @@ export default function DraftPage() {
   return (
     <div>
       {/* Team Stats Modal */}
-      <TeamModal
+      <DraftTeamModal
         team={showModal && selectedTeam ? selectedTeam : null}
         onClose={() => setShowModal(false)}
       />

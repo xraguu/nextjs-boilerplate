@@ -367,8 +367,8 @@ export default function MakePickPage() {
 
     // Apply sorting
     return filtered.sort((a, b) => {
-      const aValue = a[sortColumn];
-      const bValue = b[sortColumn];
+      const aValue = a[sortColumn] as number;
+      const bValue = b[sortColumn] as number;
       if (sortDirection === "asc") {
         return aValue > bValue ? 1 : -1;
       } else {
