@@ -300,6 +300,7 @@ export default function DraftPage() {
       <TeamModal
         team={showModal && selectedTeam ? selectedTeam : null}
         onClose={() => setShowModal(false)}
+        isDraftContext={true}
       />
 
       <div style={{ minHeight: "100vh", padding: "2rem 1rem" }}>
