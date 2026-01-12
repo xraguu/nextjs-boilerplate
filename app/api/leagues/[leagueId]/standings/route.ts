@@ -153,13 +153,13 @@ export async function GET(
           avgPoints,
           topTeam: topTeam
             ? {
-                id: topTeam.id,
-                name: topTeam.name,
-                leagueId: topTeam.leagueId,
-                slug: topTeam.slug,
-                logoPath: topTeam.logoPath,
-                primaryColor: topTeam.primaryColor,
-                secondaryColor: topTeam.secondaryColor,
+                id: topTeam!.id,
+                name: topTeam!.name,
+                leagueId: topTeam!.leagueId,
+                slug: topTeam!.slug,
+                logoPath: topTeam!.logoPath,
+                primaryColor: topTeam!.primaryColor,
+                secondaryColor: topTeam!.secondaryColor,
               }
             : null,
           topTeamFpts,
