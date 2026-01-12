@@ -243,11 +243,7 @@ export default function DraftPage() {
     <div>
       {/* Team Stats Modal */}
       <TeamModal
-        team={showModal && selectedTeam ? {
-          ...selectedTeam,
-          teamPrimaryColor: selectedTeam.primaryColor,
-          teamSecondaryColor: selectedTeam.secondaryColor,
-        } : null}
+        team={showModal && selectedTeam ? selectedTeam : null}
         onClose={() => setShowModal(false)}
         isDraftContext={true}
       />
