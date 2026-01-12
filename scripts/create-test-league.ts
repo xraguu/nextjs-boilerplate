@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { generateFantasyTeamId } from "../lib/id-generator";
+import { randomUUID } from "crypto";
 
 async function createTestLeague() {
   try {
@@ -38,8 +40,10 @@ async function createTestLeague() {
     console.log("✅ League created:", league.id);
 
     // Create a fantasy team for the user
+    const teamId = generateFantasyTeamId(league.id, user.id);
     const fantasyTeam = await prisma.fantasyTeam.create({
       data: {
+        id: teamId,
         fantasyLeagueId: league.id,
         ownerUserId: user.id,
         displayName: "Test Team Alpha",
@@ -56,8 +60,10 @@ async function createTestLeague() {
     const otherTeams = [];
     for (let i = 2; i <= 6; i++) {
       // Create a dummy user for each team
+      const userId = randomUUID();
       const dummyUser = await prisma.user.create({
         data: {
+          id: userId,
           discordId: `dummy-${Date.now()}-${i}`,
           displayName: `Player ${i}`,
           role: "user",
@@ -65,8 +71,10 @@ async function createTestLeague() {
         },
       });
 
+      const teamId = generateFantasyTeamId(league.id, dummyUser.id);
       const team = await prisma.fantasyTeam.create({
         data: {
+          id: teamId,
           fantasyLeagueId: league.id,
           ownerUserId: dummyUser.id,
           displayName: `Team ${String.fromCharCode(64 + i)}`,
