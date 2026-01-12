@@ -5,6 +5,17 @@ import { parse } from "csv-parse/sync";
 
 const prisma = new PrismaClient();
 
+// CSV record type
+interface PlayerCSVRecord {
+  name?: string;
+  salary?: string;
+  member_id?: string;
+  skill_group?: string;
+  franchise?: string;
+  "Franchise Staff Position"?: string;
+  slot?: string;
+}
+
 // Map full league names to abbreviations
 const LEAGUE_MAP: Record<string, string> = {
   "Premier League": "PL",
@@ -70,7 +81,7 @@ async function main() {
     relax_column_count: true,
     escape: '"',
     quote: false, // Disable quote handling entirely
-  });
+  }) as PlayerCSVRecord[];
 
   console.log(`📊 Found ${records.length} players to process`);
 
