@@ -359,7 +359,7 @@ export default function MyRosterPage() {
         const stats = slot.mleTeam!.weeklyStats || {};
 
         return {
-          ...slot.mleTeam,
+          ...slot.mleTeam!,
           displayStats: {
             score: slot.fantasyPoints || 0,
             fprk: index + 1,
@@ -1088,8 +1088,8 @@ export default function MyRosterPage() {
                             }}
                           >
                             <Image
-                              src={slot.mleTeam.logoPath}
-                              alt={slot.mleTeam.name}
+                              src={slot.mleTeam!.logoPath}
+                              alt={slot.mleTeam!.name}
                               width={32}
                               height={32}
                               style={{ borderRadius: "4px" }}
@@ -1099,7 +1099,7 @@ export default function MyRosterPage() {
                                 onClick={(e) => {
                                   if (!moveMode) {
                                     e.stopPropagation();
-                                    setSelectedTeam(slot.mleTeam);
+                                    setSelectedTeam(slot.mleTeam!);
                                     setShowModal(true);
                                   }
                                 }}
@@ -1121,7 +1121,7 @@ export default function MyRosterPage() {
                                     "var(--text-main)")
                                 }
                               >
-                                {slot.mleTeam.leagueId} {slot.mleTeam.name}
+                                {slot.mleTeam!.leagueId} {slot.mleTeam!.name}
                               </div>
                               <div
                                 style={{

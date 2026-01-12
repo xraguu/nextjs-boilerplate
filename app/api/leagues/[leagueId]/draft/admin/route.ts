@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { generateRosterSlotId } from "@/lib/id-generator";
 
 /**
  * POST /api/leagues/[leagueId]/draft/admin
@@ -249,8 +250,15 @@ export async function POST(
         const nextBenchIndex = existingRosterSlots.length;
 
         if (nextBenchIndex < benchSlots) {
+          const rosterSlotId = generateRosterSlotId(
+            fantasyTeamId,
+            1,
+            "be",
+            nextBenchIndex
+          );
           await prisma.rosterSlot.create({
             data: {
+              id: rosterSlotId,
               fantasyTeamId,
               mleTeamId,
               week: 1,

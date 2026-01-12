@@ -31,6 +31,7 @@ export async function GET(
             id: true,
             currentWeek: true,
             rosterConfig: true,
+            waiverSystem: true,
           },
         },
         owner: {
