@@ -19,7 +19,7 @@ export interface TeamPreview {
   teamExists: boolean;
   validPicks: number;
   invalidPicks: string[];
-  userId?: number;
+  userId?: string;
 }
 
 export interface ImportValidation {
