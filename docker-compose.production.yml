@@ -3,6 +3,7 @@ version: '3.8'
 services:
   app:
     container_name: fantasy-sports-app
+    image: fantasy-sports-app:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,28 +11,25 @@ services:
         NODE_ENV: production
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - AUTH_SECRET=${AUTH_SECRET}
-      - AUTH_URL=${AUTH_URL}
-      - AUTH_DISCORD_ID=${AUTH_DISCORD_ID}
-      - AUTH_DISCORD_SECRET=${AUTH_DISCORD_SECRET}
-      - ADMIN_DISCORD_IDS=${ADMIN_DISCORD_IDS}
       - PORT=3000
       - HOSTNAME=0.0.0.0
-    restart: unless-stopped
+    restart: always
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 5
+      start_period: 60s
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "5"
+        compress: "true"
     deploy:
       resources:
         limits:
@@ -42,7 +40,11 @@ services:
           memory: 512M
     networks:
       - app-network
+    labels:
+      - "com.docker.compose.project=fantasy-sports"
+      - "traefik.enable=false"
 
 networks:
   app-network:
     driver: bridge
+    name: fantasy-sports-network

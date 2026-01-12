@@ -1,0 +1,38 @@
+# Systemd Service File for Fantasy Sports App
+# Place this file at: /etc/systemd/system/fantasy-app.service
+# This is an alternative to using Docker Compose
+# Use this if you want systemd to manage your Docker container
+
+[Unit]
+Description=Fantasy Sports Application
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/var/www/fantasy-app
+EnvironmentFile=/var/www/fantasy-app/.env
+
+# Start command
+ExecStart=/usr/bin/docker-compose -f /var/www/fantasy-app/docker-compose.production.yml up -d
+
+# Stop command
+ExecStop=/usr/bin/docker-compose -f /var/www/fantasy-app/docker-compose.production.yml down
+
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+
+# Security settings
+User=root
+Group=docker
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=fantasy-app
+
+[Install]
+WantedBy=multi-user.target
