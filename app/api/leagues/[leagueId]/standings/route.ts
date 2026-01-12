@@ -127,7 +127,7 @@ export async function GET(
           );
         };
 
-        let topTeam = null;
+        let topTeam: typeof rosterSlots[0]["mleTeam"] | null = null;
         let topTeamFpts = 0;
 
         rosterSlots.forEach((slot) => {
