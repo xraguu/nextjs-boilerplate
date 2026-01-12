@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TEAMS } from "@/lib/teams";
+import { TEAMS, Team } from "@/lib/teams";
 import Image from "next/image";
 
 // Mock waiver claims data
@@ -1110,7 +1110,7 @@ export default function TransactionsPage() {
                       >
                         {trade.proposerTeam} Gives
                       </div>
-                      {trade.proposerGives.map((team, idx) => (
+                      {trade.proposerGives.map((team: Team, idx) => (
                         <div
                           key={idx}
                           style={{
@@ -1152,7 +1152,7 @@ export default function TransactionsPage() {
                       >
                         {trade.receiverTeam} Gives
                       </div>
-                      {trade.receiverGives.map((team, idx) => (
+                      {trade.receiverGives.map((team: Team, idx) => (
                         <div
                           key={idx}
                           style={{
