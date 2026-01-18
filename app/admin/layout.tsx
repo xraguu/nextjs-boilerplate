@@ -113,6 +113,8 @@ export default function AdminLayout({
   const adminNavItems = [
     { label: "Dashboard", path: "/admin" },
     { label: "Manage Leagues", path: "/admin/leagues" },
+    { label: "Draft Import", path: "/admin/draft-import" },
+    { label: "Generate Schedule", path: "/admin/generate-schedule" },
     { label: "Lock Lineups", path: "/admin/lock-lineups" },
     { label: "Transactions", path: "/admin/waivers" },
     { label: "Manual Stats Override", path: "/admin/stats" },

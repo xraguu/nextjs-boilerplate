@@ -74,8 +74,9 @@ export default function LeagueNavbar() {
 
         {/* Right: links */}
         <nav className="nav-links flex items-center gap-4">
-          {/* Draft Button */}
-          <Link
+          {/* Draft Button - Hidden for now (using CSV import instead) */}
+          {/* Uncomment for next season when draft feature is ready */}
+          {/* <Link
             href={`/leagues/${leagueId}/draft`}
             style={{
               background: "linear-gradient(135deg, #d4af37 0%, #f2b632 100%)",
@@ -102,7 +103,7 @@ export default function LeagueNavbar() {
             }}
           >
             Draft
-          </Link>
+          </Link> */}
 
           {/* Current Week Pill - Only show after draft is complete */}
           {isDraftComplete && (
