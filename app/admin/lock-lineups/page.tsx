@@ -1,111 +1,149 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { TEAMS } from "@/lib/teams";
-
-// Mock roster data for modal
-const generateMockRoster = (managerName: string) => {
-  return [
-    { slot: "2s", team: TEAMS[0], locked: false },
-    { slot: "2s", team: TEAMS[1], locked: true },
-    { slot: "3s", team: TEAMS[2], locked: false },
-    { slot: "3s", team: TEAMS[3], locked: true },
-    { slot: "FLX", team: TEAMS[4], locked: false },
-    { slot: "BE", team: TEAMS[5], locked: false },
-    { slot: "BE", team: TEAMS[6], locked: true },
-    { slot: "BE", team: TEAMS[7], locked: false },
-  ];
-};
-
-// Mock lineup status data
-const mockLineupStatus = [
-  { id: "1", fantasyTeamId: "test-2025-nick", manager: "Nick", teamName: "Nick's Bumps", league: "2025-alpha", week: 3, locked: false, lastUpdated: "2025-11-16 2:30 PM" },
-  { id: "2", fantasyTeamId: "test-2025-rover", manager: "Rover", teamName: "Rover's Rockets", league: "2025-alpha", week: 3, locked: true, lastUpdated: "2025-11-15 10:15 AM" },
-  { id: "3", fantasyTeamId: "test-2025-flip", manager: "FlipReset", teamName: "Ceiling Shot Squad", league: "2025-alpha", week: 3, locked: true, lastUpdated: "2025-11-15 11:30 AM" },
-  { id: "4", fantasyTeamId: "test-2025-air", manager: "AirDribbler", teamName: "Musty Flick Masters", league: "2025-beta", week: 3, locked: false, lastUpdated: "2025-11-16 1:45 PM" },
-  { id: "5", fantasyTeamId: "test-2025-speed", manager: "SpeedDemon", teamName: "Boost Stealers", league: "2025-beta", week: 3, locked: true, lastUpdated: "2025-11-15 9:20 AM" },
-  { id: "6", fantasyTeamId: "test-2025-musty", manager: "MustyCrew", teamName: "Demo Kings", league: "2025-alpha", week: 3, locked: false, lastUpdated: "2025-11-16 3:10 PM" },
-  { id: "7", fantasyTeamId: "test-2025-ceiling", manager: "CeilingShotz", teamName: "Aerial Aces", league: "2025-beta", week: 3, locked: true, lastUpdated: "2025-11-15 8:45 AM" },
-  { id: "8", fantasyTeamId: "test-2025-wave", manager: "WaveDash", teamName: "Speed Flip Squad", league: "2025-gamma", week: 3, locked: false, lastUpdated: "2025-11-16 12:00 PM" },
-  { id: "9", fantasyTeamId: "test-2025-flip2", manager: "FlipMaster", teamName: "Reset Rookies", league: "2025-gamma", week: 3, locked: true, lastUpdated: "2025-11-15 7:30 AM" },
-  { id: "10", fantasyTeamId: "test-2025-boost", manager: "BoostBoy", teamName: "Kickoff Kings", league: "2025-alpha", week: 3, locked: false, lastUpdated: "2025-11-16 4:20 PM" },
-  { id: "11", fantasyTeamId: "test-2025-demo", manager: "DemoLord", teamName: "Bumper Cars", league: "2025-beta", week: 3, locked: true, lastUpdated: "2025-11-15 6:50 AM" },
-  { id: "12", fantasyTeamId: "test-2025-save", manager: "SaveGod", teamName: "Wall Warriors", league: "2025-gamma", week: 3, locked: false, lastUpdated: "2025-11-16 5:00 PM" },
-];
 
 export default function LockLineupsPage() {
   const [currentWeek, setCurrentWeek] = useState(3);
-  const [lineups, setLineups] = useState(mockLineupStatus);
+  const [lineups, setLineups] = useState<any[]>([]);
   const [filterLeague, setFilterLeague] = useState("all");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showRosterModal, setShowRosterModal] = useState(false);
-  const [selectedManager, setSelectedManager] = useState<typeof mockLineupStatus[0] | null>(null);
-  const [managerRoster, setManagerRoster] = useState<ReturnType<typeof generateMockRoster>>([]);
+  const [selectedManager, setSelectedManager] = useState<any | null>(null);
+  const [managerRoster, setManagerRoster] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [leagues, setLeagues] = useState<any[]>([]);
 
-  const toggleLock = (id: string) => {
-    setLineups((prev) =>
-      prev.map((lineup) =>
-        lineup.id === id
-          ? {
-              ...lineup,
-              locked: !lineup.locked,
-              lastUpdated: new Date().toLocaleString("en-US", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-            }
-          : lineup
-      )
-    );
-  };
+  // Fetch lineups when week or league filter changes
+  useEffect(() => {
+    const fetchLineups = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          week: currentWeek.toString(),
+        });
+        if (filterLeague !== "all") {
+          params.append("leagueId", filterLeague);
+        }
 
-  const lockAll = () => {
-    setLineups((prev) =>
-      prev.map((lineup) => ({
-        ...lineup,
-        locked: true,
-        lastUpdated: new Date().toLocaleString("en-US", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
+        const response = await fetch(
+          `/api/admin/weeks/lock-lineups?${params}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch lineups");
+
+        const data = await response.json();
+        setLineups(data.lineups || []);
+      } catch (error) {
+        console.error("Error fetching lineups:", error);
+        alert("Failed to fetch lineups");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLineups();
+  }, [currentWeek, filterLeague]);
+
+  // Fetch available leagues
+  useEffect(() => {
+    const fetchLeagues = async () => {
+      try {
+        const response = await fetch("/api/leagues");
+        if (!response.ok) throw new Error("Failed to fetch leagues");
+
+        const data = await response.json();
+        setLeagues(data.leagues || []);
+      } catch (error) {
+        console.error("Error fetching leagues:", error);
+      }
+    };
+
+    fetchLeagues();
+  }, []);
+
+  const lockAll = async () => {
+    try {
+      const response = await fetch("/api/admin/weeks/lock-lineups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          week: currentWeek,
+          action: "lock",
+          leagueId: filterLeague,
         }),
-      }))
-    );
-    setShowConfirmModal(false);
-    alert("All lineups have been locked!");
+      });
+
+      if (!response.ok) throw new Error("Failed to lock all lineups");
+
+      setShowConfirmModal(false);
+      alert("All lineups have been locked!");
+
+      // Refresh data
+      const params = new URLSearchParams({ week: currentWeek.toString() });
+      if (filterLeague !== "all") params.append("leagueId", filterLeague);
+      const refreshResponse = await fetch(
+        `/api/admin/weeks/lock-lineups?${params}`
+      );
+      const data = await refreshResponse.json();
+      setLineups(data.lineups || []);
+    } catch (error) {
+      console.error("Error locking lineups:", error);
+      alert("Failed to lock lineups");
+    }
   };
 
-  const openRosterModal = (manager: typeof mockLineupStatus[0]) => {
+  const openRosterModal = (manager: any) => {
     setSelectedManager(manager);
-    setManagerRoster(generateMockRoster(manager.manager));
+    setManagerRoster(manager.slots || []);
     setShowRosterModal(true);
   };
 
   const toggleTeamLock = (index: number) => {
-    setManagerRoster(prev => prev.map((team, i) =>
-      i === index ? { ...team, locked: !team.locked } : team
-    ));
+    setManagerRoster((prev) =>
+      prev.map((slot, i) =>
+        i === index ? { ...slot, isLocked: !slot.isLocked } : slot
+      )
+    );
   };
 
   const lockWholeRoster = () => {
-    setManagerRoster(prev => prev.map(team => ({ ...team, locked: true })));
+    setManagerRoster((prev) =>
+      prev.map((slot) => ({ ...slot, isLocked: true }))
+    );
   };
 
-  const saveRosterLocks = () => {
-    const allLocked = managerRoster.every(team => team.locked);
-    setLineups(prev => prev.map(lineup =>
-      lineup.id === selectedManager?.id
-        ? { ...lineup, locked: allLocked, lastUpdated: new Date().toLocaleString("en-US") }
-        : lineup
-    ));
-    setShowRosterModal(false);
-    alert("Roster locks updated!");
+  const saveRosterLocks = async () => {
+    try {
+      const slotIds = managerRoster.map((slot) => slot.id);
+      const allLocked = managerRoster.every((slot) => slot.isLocked);
+
+      const response = await fetch("/api/admin/weeks/lock-lineups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          week: currentWeek,
+          action: allLocked ? "lock" : "unlock",
+          fantasyTeamId: selectedManager?.fantasyTeamId,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save roster locks");
+
+      setShowRosterModal(false);
+      alert("Roster locks updated!");
+
+      // Refresh data
+      const params = new URLSearchParams({ week: currentWeek.toString() });
+      if (filterLeague !== "all") params.append("leagueId", filterLeague);
+      const refreshResponse = await fetch(
+        `/api/admin/weeks/lock-lineups?${params}`
+      );
+      const data = await refreshResponse.json();
+      setLineups(data.lineups || []);
+    } catch (error) {
+      console.error("Error saving roster locks:", error);
+      alert("Failed to save roster locks");
+    }
   };
 
   const filteredLineups =
@@ -177,21 +215,27 @@ export default function LockLineupsPage() {
                   {managerRoster.map((item, index) => (
                     <tr key={index} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                       <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.9rem", color: "var(--accent)", fontWeight: 600 }}>
-                        {item.slot}
+                        {item.position}
                       </td>
                       <td style={{ padding: "0.75rem 0.5rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <Image
-                            src={item.team.logoPath}
-                            alt={item.team.name}
-                            width={32}
-                            height={32}
-                            style={{ borderRadius: "4px" }}
-                          />
-                          <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
-                            {item.team.leagueId} {item.team.name}
+                        {item.mleTeam ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <Image
+                              src={item.mleTeam.logoPath}
+                              alt={item.mleTeam.name}
+                              width={32}
+                              height={32}
+                              style={{ borderRadius: "4px" }}
+                            />
+                            <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                              {item.mleTeam.leagueId} {item.mleTeam.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
+                            Empty Slot
                           </span>
-                        </div>
+                        )}
                       </td>
                       <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
                         <div style={{ width: "100%", maxWidth: "120px", margin: "0 auto" }}>
@@ -203,24 +247,24 @@ export default function LockLineupsPage() {
                             overflow: "hidden"
                           }}>
                             <div style={{
-                              width: item.locked ? "100%" : "0%",
+                              width: item.isLocked ? "100%" : "0%",
                               height: "100%",
                               background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
                               transition: "width 0.3s ease"
                             }} />
                           </div>
                           <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                            {item.locked ? "Locked" : "Unlocked"}
+                            {item.isLocked ? "Locked" : "Unlocked"}
                           </div>
                         </div>
                       </td>
                       <td style={{ padding: "0.75rem 0.5rem", textAlign: "right" }}>
                         <button
-                          className={item.locked ? "btn btn-ghost" : "btn btn-warning"}
+                          className={item.isLocked ? "btn btn-ghost" : "btn btn-warning"}
                           style={{ padding: "0.4rem 1rem", fontSize: "0.85rem" }}
                           onClick={() => toggleTeamLock(index)}
                         >
-                          {item.locked ? "Unlock" : "Lock"}
+                          {item.isLocked ? "Unlock" : "Lock"}
                         </button>
                       </td>
                     </tr>
@@ -377,9 +421,11 @@ export default function LockLineupsPage() {
               }}
             >
               <option value="all">All Leagues</option>
-              <option value="2025-alpha">2025 Alpha</option>
-              <option value="2025-beta">2025 Beta</option>
-              <option value="2025-gamma">2025 Gamma</option>
+              {leagues.map((league) => (
+                <option key={league.id} value={league.id}>
+                  {league.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -561,7 +607,34 @@ export default function LockLineupsPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredLineups.map((lineup) => (
+            {loading ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  style={{
+                    padding: "2rem",
+                    textAlign: "center",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Loading lineups...
+                </td>
+              </tr>
+            ) : filteredLineups.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  style={{
+                    padding: "2rem",
+                    textAlign: "center",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  No lineups found for week {currentWeek}
+                </td>
+              </tr>
+            ) : (
+              filteredLineups.map((lineup) => (
               <tr
                 key={lineup.id}
                 style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
@@ -631,7 +704,8 @@ export default function LockLineupsPage() {
                   </button>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>

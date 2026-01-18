@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import PlayerModal from "./PlayerModal";
+import MatchupDetailsModal from "./MatchupDetailsModal";
 
 interface PlayerWithStats {
   id: string;
@@ -128,6 +129,9 @@ export default function TeamModal({
   } | null>(null);
   const [players, setPlayers] = useState<PlayerWithStats[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
+  const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
+  const [matchupData, setMatchupData] = useState<any>(null);
+  const [loadingMatchup, setLoadingMatchup] = useState(false);
 
   // Fetch players when team changes
   useEffect(() => {
@@ -189,6 +193,34 @@ export default function TeamModal({
     fetchStaff();
   }, [team?.id]);
 
+  // Fetch matchup data when a week is selected
+  useEffect(() => {
+    if (!selectedWeek || !team) return;
+
+    const fetchMatchupData = async () => {
+      try {
+        setLoadingMatchup(true);
+        const response = await fetch(
+          `/api/leagues/${team.leagueId}/mle-teams/${team.id}/weekly-matchup?week=${selectedWeek}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch matchup data");
+        }
+
+        const data = await response.json();
+        setMatchupData(data);
+      } catch (error) {
+        console.error("Error fetching matchup data:", error);
+        setMatchupData(null);
+      } finally {
+        setLoadingMatchup(false);
+      }
+    };
+
+    fetchMatchupData();
+  }, [selectedWeek, team?.id, team?.leagueId]);
+
   if (!team) return null;
 
   const handlePlayerSort = (column: string) => {
@@ -207,6 +239,15 @@ export default function TeamModal({
       setWeeklySortColumn(column);
       setWeeklySortDirection(column === "week" ? "asc" : "desc");
     }
+  };
+
+  const handleWeekClick = (week: number) => {
+    setSelectedWeek(week);
+  };
+
+  const handleCloseMatchupModal = () => {
+    setSelectedWeek(null);
+    setMatchupData(null);
   };
 
   const sortedPlayers = [...players].sort((a, b) => {
@@ -1024,8 +1065,18 @@ export default function TeamModal({
                   {sortedWeeklyStats.map((week) => (
                     <tr
                       key={week.week}
+                      onClick={() => handleWeekClick(week.week)}
                       style={{
                         borderBottom: "1px solid rgba(255,255,255,0.1)",
+                        cursor: "pointer",
+                        transition: "background 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "rgba(255,255,255,0.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
                       }}
                     >
                       <td
@@ -1172,6 +1223,15 @@ export default function TeamModal({
             player={selectedPlayer}
             team={team}
             onClose={() => setSelectedPlayer(null)}
+          />
+        )}
+
+        {/* Matchup Details Modal */}
+        {selectedWeek && (
+          <MatchupDetailsModal
+            matchupData={matchupData}
+            onClose={handleCloseMatchupModal}
+            isLoading={loadingMatchup}
           />
         )}
       </div>

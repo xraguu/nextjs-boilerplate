@@ -9,130 +9,6 @@ import TeamModal from "@/components/TeamModal";
 
 // Mock leagues data removed - now fetched from /api/leagues based on user session
 
-// Mock global leaderboard - top performers across all leagues
-const mockGlobalLeaderboard = [
-  {
-    rank: 1,
-    manager: "FlipReset",
-    team: "Ceiling Shot Squad",
-    league: "2025 Alpha",
-    wins: 7,
-    losses: 1,
-    winRate: 87.5,
-    totalPoints: 1250.5,
-    avgPoints: 156.3,
-    isYou: false,
-  },
-  {
-    rank: 2,
-    manager: "AirDribbler",
-    team: "Musty Flick Masters",
-    league: "2025 Beta",
-    wins: 6,
-    losses: 2,
-    winRate: 75.0,
-    totalPoints: 1180.0,
-    avgPoints: 147.5,
-    isYou: false,
-  },
-  {
-    rank: 3,
-    manager: "Nick",
-    team: "Nick's Bumps",
-    league: "2025 Alpha",
-    wins: 5,
-    losses: 3,
-    winRate: 62.5,
-    totalPoints: 1150.0,
-    avgPoints: 143.8,
-    isYou: true,
-  },
-  {
-    rank: 4,
-    manager: "SpeedDemon",
-    team: "Boost Stealers",
-    league: "2024 Championship",
-    wins: 5,
-    losses: 3,
-    winRate: 62.5,
-    totalPoints: 1120.5,
-    avgPoints: 140.1,
-    isYou: false,
-  },
-  {
-    rank: 5,
-    manager: "Kuxir",
-    team: "Pinch Masters",
-    league: "2025 Alpha",
-    wins: 4,
-    losses: 4,
-    winRate: 50.0,
-    totalPoints: 1050.0,
-    avgPoints: 131.3,
-    isYou: false,
-  },
-  {
-    rank: 6,
-    manager: "Squishy",
-    team: "Double Tap Dynasty",
-    league: "2025 Beta",
-    wins: 4,
-    losses: 4,
-    winRate: 50.0,
-    totalPoints: 1020.0,
-    avgPoints: 127.5,
-    isYou: false,
-  },
-  {
-    rank: 7,
-    manager: "Jstn",
-    team: "Zero Second Goals",
-    league: "2024 Championship",
-    wins: 3,
-    losses: 5,
-    winRate: 37.5,
-    totalPoints: 980.5,
-    avgPoints: 122.6,
-    isYou: false,
-  },
-  {
-    rank: 8,
-    manager: "Rover",
-    team: "Air Dribble Demons",
-    league: "2025 Beta",
-    wins: 3,
-    losses: 5,
-    winRate: 37.5,
-    totalPoints: 950.0,
-    avgPoints: 118.8,
-    isYou: false,
-  },
-  {
-    rank: 9,
-    manager: "Garrett",
-    team: "Flip Reset Kings",
-    league: "2025 Alpha",
-    wins: 2,
-    losses: 6,
-    winRate: 25.0,
-    totalPoints: 890.0,
-    avgPoints: 111.3,
-    isYou: false,
-  },
-  {
-    rank: 10,
-    manager: "Turbo",
-    team: "Demo Destroyers",
-    league: "2024 Championship",
-    wins: 1,
-    losses: 7,
-    winRate: 12.5,
-    totalPoints: 820.5,
-    avgPoints: 102.6,
-    isYou: false,
-  },
-];
-
 // Top performing teams - using actual MLE teams
 // Static values to prevent hydration errors (no Math.random())
 const mockTopTeams = TEAMS.slice(0, 10).map((team, index) => ({
@@ -252,6 +128,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [userLeagues, setUserLeagues] = useState<any[]>([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
+  const [globalLeaderboard, setGlobalLeaderboard] = useState<any[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+  const [gameMode, setGameMode] = useState<"2s" | "3s" | "all">("all");
 
   // Fetch top teams from API
   useEffect(() => {
@@ -272,6 +151,29 @@ export default function HomePage() {
     };
 
     fetchTopTeams();
+  }, []);
+
+  // Fetch global leaderboard from API
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const response = await fetch(`/api/leaderboard/global`);
+        if (response.ok) {
+          const data = await response.json();
+          setGlobalLeaderboard(data.leaderboard || []);
+        } else {
+          console.warn("Failed to fetch global leaderboard");
+          setGlobalLeaderboard([]);
+        }
+      } catch (error) {
+        console.error("Error fetching global leaderboard:", error);
+        setGlobalLeaderboard([]);
+      } finally {
+        setLoadingLeaderboard(false);
+      }
+    };
+
+    fetchLeaderboard();
   }, []);
 
   // Check if user is admin
@@ -330,7 +232,21 @@ export default function HomePage() {
     }
   };
 
-  const sortedTeams = [...topTeams].sort((a, b) => {
+  // Filter teams by game mode
+  const filteredTeams = topTeams.filter((team) => {
+    if (gameMode === "all") return true;
+    // Check if team league is 2s or 3s based on leagueId
+    // Assuming 2s leagues: PL, ML, CL
+    // Assuming 3s leagues: AL, FL
+    const is2sLeague = ["PL", "ML", "CL"].includes(team.leagueId);
+    const is3sLeague = ["AL", "FL"].includes(team.leagueId);
+
+    if (gameMode === "2s") return is2sLeague;
+    if (gameMode === "3s") return is3sLeague;
+    return true;
+  });
+
+  const sortedTeams = [...filteredTeams].sort((a, b) => {
     let aValue: number | string = 0;
     let bValue: number | string = 0;
 
@@ -728,7 +644,34 @@ export default function HomePage() {
                 </tr>
               </thead>
               <tbody>
-                {mockGlobalLeaderboard.map((player) => (
+                {loadingLeaderboard ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      style={{
+                        padding: "2rem",
+                        textAlign: "center",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      Loading leaderboard...
+                    </td>
+                  </tr>
+                ) : globalLeaderboard.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      style={{
+                        padding: "2rem",
+                        textAlign: "center",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      No leaderboard data available yet
+                    </td>
+                  </tr>
+                ) : (
+                  globalLeaderboard.map((player) => (
                   <tr
                     key={player.rank}
                     style={{
@@ -822,7 +765,8 @@ export default function HomePage() {
                       {player.avgPoints.toFixed(1)}
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -830,9 +774,63 @@ export default function HomePage() {
 
         {/* Team Stats Section */}
         <section className="card" style={{ marginTop: "1.5rem" }}>
-          <div className="card-header">
-            <h2 className="card-title">Team Stats</h2>
-            <span className="card-subtitle">Top 10 performing MLE teams</span>
+          <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <h2 className="card-title">Team Stats</h2>
+              <span className="card-subtitle">Top 10 performing MLE teams</span>
+            </div>
+
+            {/* 2s/3s Switch */}
+            <div style={{ display: "flex", gap: "0.5rem", background: "rgba(255,255,255,0.1)", padding: "0.4rem", borderRadius: "8px" }}>
+              <button
+                onClick={() => setGameMode("all")}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "all" ? "var(--accent)" : "transparent",
+                  color: gameMode === "all" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setGameMode("2s")}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "2s" ? "var(--accent)" : "transparent",
+                  color: gameMode === "2s" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                2s
+              </button>
+              <button
+                onClick={() => setGameMode("3s")}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: gameMode === "3s" ? "var(--accent)" : "transparent",
+                  color: gameMode === "3s" ? "#1a1a2e" : "var(--text-main)",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                3s
+              </button>
+            </div>
           </div>
 
           <div style={{ marginTop: "1rem", overflowX: "auto" }}>
